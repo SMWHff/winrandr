@@ -66,13 +66,19 @@ def _build_parser():
     parser.add_argument("--version", action="version", version=f"winrandr {__version__}")
     parser.add_argument("--listmodes", action="store_true", help="列出每个显示器所有可用分辨率")
     parser.add_argument("-q", "--query", action="store_true", help="查询当前显示状态")
+    parser.add_argument("--current", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--prop", action="store_true", help="显示显示器扩展属性（设备 ID、状态标志等）")
-    parser.add_argument("--dry-run", action="store_true", help="模拟操作，不实际更改配置")
+    parser.add_argument("--dry-run", "--dryrun", action="store_true", help="模拟操作，不实际更改配置")
     parser.add_argument("--verbose", "-v", action="store_true", help="详细日志输出（调试用）")
     parser.add_argument("--output", "-o", help="显示器名（如 DISPLAY1）")
     parser.add_argument("--auto", action="store_true", help="启用显示器并使用首选分辨率")
     parser.add_argument("--mode", "-m", help="分辨率（如 1920x1080）")
     parser.add_argument("-s", "--size", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--orientation",
+        choices=["normal", "inverted", "left", "right", "0", "1", "2", "3"],
+        help=argparse.SUPPRESS,
+    )
     parser.add_argument("--rate", "-r", type=float, help="刷新率（Hz）")
     parser.add_argument("--pos", "-p", help="桌面位置（如 0x0, +1920+0; 负数用 --pos=-1920x0）")
     parser.add_argument(
@@ -88,9 +94,11 @@ def _build_parser():
         help="亮度值（0.1-2.0，1.0 为正常）",
     )
     parser.add_argument(
-        "--reflect", choices=["x", "y", "xy"],
+        "--reflect", choices=["normal", "x", "y", "xy"],
         help="镜像翻转（仅 xy 支持，等同于旋转 180°）",
     )
+    parser.add_argument("-x", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("-y", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument(
         "--gamma", metavar="R:G:B",
         help="伽马校正（如 1.0:0.9:0.8，三通道独立）",
@@ -119,9 +127,21 @@ def main():
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    # -s/--size 作为 --mode 的兼容别名（必须在 mod_ops 判断之前）
+    # 兼容别名转换（必须在 mod_ops 判断之前）
     if args.size and not args.mode:
         args.mode = args.size
+    if args.orientation and not args.rotate:
+        args.rotate = args.orientation.replace("0", "normal").replace("1", "normal") \
+            .replace("2", "inverted").replace("3", "left") \
+            if args.orientation in ("0", "1", "2", "3") else args.orientation
+    if args.reflect == "normal":
+        args.reflect = None
+    if args.x and args.y:
+        args.reflect = "xy"
+    elif args.x:
+        args.reflect = "x"
+    elif args.y:
+        args.reflect = "y"
 
     mod_ops = [args.mode, args.pos, args.rotate, args.primary, args.preferred,
                args.off, args.brightness, args.reflect, args.gamma,
@@ -234,6 +254,8 @@ def main():
         print(f"已将 {args.output} 亮度设为 {args.brightness}")
 
     if args.reflect:
+        if args.reflect in ("x", "y"):
+            _fail(f"单轴镜像翻转（-{args.reflect}）在 Windows 上无标准 API 支持")
         if not args.dry_run:
             if not set_reflect(device_name, args.reflect):
                 _fail("设置镜像翻转失败")

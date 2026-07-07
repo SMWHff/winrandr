@@ -229,6 +229,55 @@ def test_parser_query_short():
     assert args.query is True
 
 
+def test_parser_orientation():
+    p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "--orientation", "left"])
+    assert args.orientation == "left"
+
+
+def test_parser_orientation_numeric():
+    p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "--orientation", "0"])
+    assert args.orientation == "0"
+
+
+def test_parser_current():
+    p = _build_parser()
+    args = p.parse_args(["--current"])
+    assert args.current is True
+
+
+def test_parser_dryrun_alias():
+    p = _build_parser()
+    args = p.parse_args(["--dryrun"])
+    assert args.dry_run is True
+
+
+def test_parser_reflect_normal():
+    p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "--reflect", "normal"])
+    assert args.reflect == "normal"
+
+
+def test_parser_reflect_x():
+    p = _build_parser()
+    args = p.parse_args(["-x", "-o", "DISPLAY1"])
+    assert args.x is True
+
+
+def test_parser_reflect_y():
+    p = _build_parser()
+    args = p.parse_args(["-y", "-o", "DISPLAY1"])
+    assert args.y is True
+
+
+def test_parser_reflect_xy_flags():
+    p = _build_parser()
+    args = p.parse_args(["-x", "-y", "-o", "DISPLAY1"])
+    assert args.x is True
+    assert args.y is True
+
+
 def test_parser_prop():
     p = _build_parser()
     args = p.parse_args(["--prop"])
