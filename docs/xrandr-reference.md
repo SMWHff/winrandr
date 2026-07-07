@@ -195,6 +195,8 @@ HDMI-1 disconnected
 | `--brightness` | `--brightness` | ✅ |
 | `--reflect xy` | `--reflect xy` | ✅ |
 | `--gamma r:g:b` | `--gamma` | ✅ |
+| `--preferred` | `--preferred` | ✅ |
+| `--verbose` | `--verbose, -v` | ✅ |
 | `--left-of / --right-of` | `--left-of / --right-of` | ✅ |
 | `--above / --below` | `--above / --below` | ✅ |
 | `--same-as` | `--same-as` | ✅ |

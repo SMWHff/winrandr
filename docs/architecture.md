@@ -5,7 +5,7 @@
 ```
 main.py  ──→  winrandr/
               ├── cli.py          argparse + 输出格式化
-              ├── api.py          公开 API (10 函数，含子模块 re-export)
+              ├── api.py          公开 API (11 函数，含子模块 re-export)
               ├── features/
               │   ├── gamma.py    伽马校正与亮度
               │   └── layout.py   位置/旋转/主屏/关闭/相对定位
@@ -26,8 +26,8 @@ main.py  ──→  winrandr/
 - 日志初始化
 
 ### winrandr/api.py
-- `list_displays` / `set_resolution`（核心查询与分辨率）
-- 10 个公开函数（其中 8 个委托给 `features/` 子模块）
+- `list_displays` / `set_resolution` / `set_preferred_resolution`（查询与分辨率）
+- 11 个公开函数（其中 9 个委托给 `features/` 子模块）
 - 模式枚举（`_enumerate_modes`）
 
 ### winrandr/features/gamma.py
@@ -59,6 +59,7 @@ main.py  ──→  winrandr/
 |------|------|------|
 | `list_displays()` | 无 | 返回 `list[DisplayInfo]`（含所有可用模式） |
 | `set_resolution(name, w, h, rr)` | 设备名、宽、高、刷新率 | 改分辨率 |
+| `set_preferred_resolution(name)` | 设备名 | 恢复注册表首选分辨率 |
 | `set_position(name, x, y)` | 设备名、X、Y | 改桌面位置 |
 | `set_rotation(name, deg)` | 设备名、角度 | 改旋转 |
 | `set_primary(name)` | 设备名 | 设为主显示器 |

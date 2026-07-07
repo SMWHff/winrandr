@@ -12,7 +12,7 @@ winrandr/
 ├── __init__.py           版本号 + 公开 API 重导出
 ├── __main__.py           python -m winrandr 入口
 ├── cli.py                CLI 层：argparse + xrandr 风格输出
-├── api.py                公开 API：10 个函数（含子模块 re-export）
+├── api.py                公开 API：11 个函数（含子模块 re-export）
 ├── features/
 │   ├── gamma.py          伽马校正与亮度
 │   └── layout.py         位置/旋转/主屏/关闭/相对定位

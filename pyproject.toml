@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta:__legacy__"
 name = "winrandr"
 version = "0.1.0"
 description = "xrandr-like display configuration tool for Windows"
-readme = "docs/usage.md"
+readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
@@ -29,9 +29,9 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/example/winrandr"
-Source = "https://github.com/example/winrandr"
-BugTracker = "https://github.com/example/winrandr/issues"
+Homepage = "https://github.com/SMWHff/winrandr"
+Source = "https://github.com/SMWHff/winrandr"
+BugTracker = "https://github.com/SMWHff/winrandr/issues"
 
 [project.scripts]
 winrandr = "winrandr.cli:main"
