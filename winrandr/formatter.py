@@ -13,24 +13,16 @@ def format_displays(displays, list_modes: bool = False) -> str:
 
     if displays:
         connected = [d for d in displays if d.connected]
-        dpi_info = ""
         if connected:
             max_x = max(d.position_x + d.width for d in connected)
             max_y = max(d.position_y + d.height for d in connected)
-            for d in connected:
-                if d.width_mm and d.height_mm:
-                    dpi_x = round(d.width / (d.width_mm / 25.4))
-                    dpi_y = round(d.height / (d.height_mm / 25.4))
-                    dpi_info = f", dpi {dpi_x}x{dpi_y}"
-                    break
-            lines.append(f"Screen 0: current {max_x} x {max_y}{dpi_info}")
+            lines.append(f"Screen 0: current {max_x} x {max_y}")
         else:
             lines.append("Screen 0: current (no active displays)")
         lines.append("")
 
     for d in displays:
         name = _short_name(d.name)
-        primary = "*" if d.is_primary else " "
         status = "connected" if d.connected else "disconnected"
         friendly = f" ({d.friendly_name})" if d.friendly_name else ""
 
@@ -39,19 +31,15 @@ def format_displays(displays, list_modes: bool = False) -> str:
                 (k for k, v in ROTATION_FROM_NAME.items() if v == d.rotation), "normal"
             )
             mm = f" {d.width_mm}mm x {d.height_mm}mm" if d.width_mm and d.height_mm else ""
+            primary = "primary " if d.is_primary else ""
             lines.append(
-                f" {primary}{name} {status} {d.width}x{d.height}+{d.position_x}+{d.position_y}"
+                f"{name} {status} {primary}{d.width}x{d.height}+{d.position_x}+{d.position_y}"
                 f" ({rot_name}){mm}{friendly}"
             )
+            if d.modes:
+                _fmt_modes(lines, d.modes)
         else:
-            lines.append(f" {primary}{name} {status}{friendly}")
-
-        if d.connected and list_modes and d.modes:
-            _fmt_modes(lines, d.modes)
-        elif d.connected and not list_modes:
-            rr_str = f"  {d.refresh_rate} Hz" if d.refresh_rate > 0 else ""
-            if rr_str:
-                lines.append(f"   {rr_str}")
+            lines.append(f"{name} {status}{friendly}")
 
         if d.properties:
             _fmt_props(lines, d.properties)

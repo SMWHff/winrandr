@@ -20,12 +20,13 @@ def test_format_displays_basic():
             modes=[DisplayMode(1920, 1080, 60.0, is_current=True, is_preferred=True)],
         ),
     ]
-    out = format_displays(displays, list_modes=True)
-    assert "Screen 0:" in out
+    out = format_displays(displays)
+    assert "Screen 0: current 1920 x 1080" in out
     assert "DISPLAY1" in out
     assert "connected" in out
     assert "1920x1080" in out
-    assert "dpi" in out
+    assert "primary" in out
+    assert "60.00*+" in out  # modes always shown now
 
 
 def test_format_displays_disconnected():
@@ -51,7 +52,7 @@ def test_format_displays_with_props():
             position_x=0, position_y=0,
             is_primary=True, rotation=0,
             width_mm=527, height_mm=296, connected=True,
-            modes=[],
+            modes=[DisplayMode(1920, 1080, 60.0, is_current=True, is_preferred=True)],
             properties={
                 "device_id": "MONITOR\\TEST123",
                 "state_flags": "attached, primary",
@@ -59,7 +60,24 @@ def test_format_displays_with_props():
             },
         ),
     ]
-    out = format_displays(displays, list_modes=False)
+    out = format_displays(displays)
     assert "device id: MONITOR\\TEST123" in out
     assert "state flags: attached, primary" in out
     assert "adapter: PCI\\VEN_1234" in out
+
+
+def test_format_displays_non_primary():
+    """非主显示器不带 primary 关键字。"""
+    displays = [
+        DisplayInfo(
+            name=r"\\.\DISPLAY1", friendly_name="", connected=True,
+            width=1920, height=1080, refresh_rate=60.0,
+            position_x=0, position_y=0,
+            is_primary=False, rotation=0,
+            width_mm=527, height_mm=296,
+            modes=[DisplayMode(1920, 1080, 60.0, is_current=True, is_preferred=True)],
+        ),
+    ]
+    out = format_displays(displays)
+    assert "DISPLAY1 connected 1920x1080+0+0" in out
+    assert "primary" not in out.split("\n")[2]  # display line doesn't have primary
