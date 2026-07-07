@@ -104,6 +104,38 @@ winrandr --output DISPLAY1 --preferred
 
 恢复到注册表中保存的默认分辨率和刷新率。
 
+### 自动配置
+
+```bash
+winrandr --output DISPLAY1 --auto            # 启用显示器并使用首选分辨率
+```
+
+等效于 xrandr `--auto`，启用指定显示器并设置为首选分辨率。与 `--dry-run` 联用可模拟操作。
+
+### 模拟操作
+
+```bash
+winrandr --output DISPLAY1 --mode 1920x1080 --dry-run   # 只显示将执行的操作，不实际更改
+winrandr --output DISPLAY1 --auto --dry-run
+```
+
+`--dry-run` 可加在任何修改操作前，输出模拟信息但不实际调用 Win32 API。用于安全预览配置变更。
+
+### 列出 GPU 适配器
+
+```bash
+winrandr --listproviders
+```
+
+输出：
+```
+Providers:
+  Provider 0: Intel(R) HD Graphics 630 (\\.\DISPLAY1)
+  Provider 1: OrayIddDriver Device (\\.\DISPLAY3)
+```
+
+列出所有 GPU 适配器和虚拟显示驱动。
+
 ### 关闭显示器
 
 ```bash

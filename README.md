@@ -109,6 +109,8 @@ Screen 0: current 1920 x 1080
 | `--brightness VAL` | 亮度（0.1–2.0，1.0 正常） |
 | `--gamma R:G:B` | 伽马校正（如 1.0:0.9:0.8） |
 | `--reflect xy` | 镜像翻转（等同旋转 180°） |
+| `--auto` | 启用显示器并使用首选分辨率 |
+| `--dry-run` | 模拟操作，不实际更改配置 |
 
 ### 其他
 
@@ -117,6 +119,8 @@ Screen 0: current 1920 x 1080
 | `--verbose, -v` | DEBUG 级别日志 |
 | `--version` | 显示版本号 |
 | `--help` | 显示帮助 |
+| `--listproviders` | 列出 GPU 适配器 |
+| `--json` | JSON 格式输出（脚本解析用） |
 
 ## 与 xrandr 对照
 
@@ -136,6 +140,9 @@ Screen 0: current 1920 x 1080
 | `--above / --below` | `--above / --below` | ✅ |
 | `--same-as` | `--same-as` | ✅ |
 | `--preferred` | `--preferred` | ✅ |
+| `--auto` | `--auto` | ✅ |
+| `--dry-run` | `--dry-run` | ✅ |
+| `--listproviders` | `--listproviders` | ✅ |
 | `--reflect x\|y` | — | ❌ 无标准 Win32 API |
 | `--scale / --transform` | — | ❌ 无标准 Win32 API |
 | `--fb / --panning` | — | ❌ 无标准 Win32 API |

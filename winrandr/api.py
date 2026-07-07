@@ -11,12 +11,12 @@ from winrandr.constants import (
     ROTATION_DEGREES,
     CDS_UPDATEREGISTRY, DISP_CHANGE_SUCCESSFUL, ENUM_CURRENT_SETTINGS,
 )
-from winrandr.structures import DEVMODE
+from winrandr.structures import DEVMODE, DISPLAY_DEVICE
 from winrandr.bindings import (
     query_active_config, get_gdi_name,
     get_friendly_name_via_enum, get_screen_size_mm,
     get_resolution_refresh_via_enum,
-    _ChangeDisplaySettingsEx, _EnumDisplaySettings,
+    _ChangeDisplaySettingsEx, _EnumDisplaySettings, _EnumDisplayDevices,
 )
 
 from winrandr.features.gamma import set_brightness, set_gamma  # noqa: F401
@@ -175,3 +175,26 @@ def set_preferred_resolution(device_name: str) -> bool:
         dm.dmPelsHeight,
         float(dm.dmDisplayFrequency) if dm.dmDisplayFrequency > 0 else 0,
     )
+
+
+def set_auto(device_name: str) -> bool:
+    """启用显示器并使用首选分辨率（等效于 xrandr --auto）。"""
+    return set_preferred_resolution(device_name)
+
+
+def list_providers() -> list[dict]:
+    """列举 GPU 适配器。"""
+    providers = []
+    dd = DISPLAY_DEVICE()
+    dd.cb = sizeof(DISPLAY_DEVICE)
+    i = 0
+    while _EnumDisplayDevices(None, i, byref(dd), 0):
+        providers.append({
+            "name": dd.DeviceName,
+            "string": dd.DeviceString,
+            "flags": dd.StateFlags,
+        })
+        dd = DISPLAY_DEVICE()
+        dd.cb = sizeof(DISPLAY_DEVICE)
+        i += 1
+    return providers

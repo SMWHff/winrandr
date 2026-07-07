@@ -10,8 +10,10 @@ from winrandr.api import (
     list_displays, set_resolution, set_preferred_resolution,
     set_position, set_position_relative, set_rotation,
     set_primary, set_off, set_brightness, set_gamma, set_reflect,
+    set_auto, list_providers,
 )
 from winrandr.constants import ROTATION_FROM_NAME
+from winrandr.formatter import format_displays, _short_name
 
 
 def _setup_logging():
@@ -29,10 +31,6 @@ def _setup_logging():
     )
 
 
-def _short_name(name: str) -> str:
-    return name.replace("\\\\.\\", "").strip()
-
-
 def _normalize_name(name: str) -> str:
     n = name.strip().upper()
     prefix = "\\\\.\\"
@@ -41,68 +39,6 @@ def _normalize_name(name: str) -> str:
     if n.startswith("DISPLAY"):
         return prefix + n
     return prefix + "DISPLAY" + n if n.isdigit() else name
-
-
-def _format_displays(displays, list_modes: bool = False):
-    """以类 xrandr 风格输出显示器信息。"""
-    lines = []
-
-    # 计算总虚拟桌面大小
-    if displays:
-        max_x = max((d.position_x + d.width) for d in displays if d.connected)
-        max_y = max((d.position_y + d.height) for d in displays if d.connected)
-        lines.append(f"Screen 0: current {max_x} x {max_y}")
-        lines.append("")
-
-    for d in displays:
-        name = _short_name(d.name)
-        primary = "*" if d.is_primary else " "
-        status = "connected" if d.connected else "disconnected"
-        friendly = f" ({d.friendly_name})" if d.friendly_name else ""
-
-        if d.connected:
-            rot_name = next(
-                (k for k, v in ROTATION_FROM_NAME.items() if v == d.rotation), "normal"
-            )
-            mm = f" {d.width_mm}mm x {d.height_mm}mm" if d.width_mm and d.height_mm else ""
-            lines.append(
-                f" {primary}{name} {status} {d.width}x{d.height}+{d.position_x}+{d.position_y}"
-                f" ({rot_name}){mm}{friendly}"
-            )
-        else:
-            lines.append(f" {primary}{name} {status}{friendly}")
-
-        if d.connected and list_modes and d.modes:
-            _fmt_modes(lines, d.modes)
-        elif d.connected and not list_modes:
-            rr_str = f"  {d.refresh_rate} Hz" if d.refresh_rate > 0 else ""
-            if rr_str:
-                lines.append(f"   {rr_str}")
-
-        lines.append("")
-
-    return "\n".join(lines)
-
-
-def _fmt_modes(lines, modes):
-    """格式化模式列表，类似 xrandr 的显示方式。"""
-    from collections import defaultdict
-
-    # 按分辨率分组
-    grouped = defaultdict(list)
-    for m in modes:
-        grouped[(m.width, m.height)].append(m)
-
-    for (w, h), mlist in sorted(grouped.items()):
-        rates = []
-        for m in sorted(mlist, key=lambda x: -x.refresh_rate):
-            tag = ""
-            if m.is_current:
-                tag += "*"
-            if m.is_preferred:
-                tag += "+"
-            rates.append(f"{m.refresh_rate:.2f}{tag}")
-        lines.append(f"   {w}x{h}  {' '.join(rates)}")
 
 
 def _build_parser():
@@ -129,8 +65,10 @@ def _build_parser():
     )
     parser.add_argument("--version", action="version", version=f"winrandr {__version__}")
     parser.add_argument("--listmodes", action="store_true", help="列出每个显示器所有可用分辨率")
+    parser.add_argument("--dry-run", action="store_true", help="模拟操作，不实际更改配置")
     parser.add_argument("--verbose", "-v", action="store_true", help="详细日志输出（调试用）")
     parser.add_argument("--output", "-o", help="显示器名（如 DISPLAY1）")
+    parser.add_argument("--auto", action="store_true", help="启用显示器并使用首选分辨率")
     parser.add_argument("--mode", "-m", help="分辨率（如 1920x1080）")
     parser.add_argument("--rate", "-r", type=float, help="刷新率（Hz）")
     parser.add_argument("--pos", "-p", help="桌面位置（如 0x0, +1920+0; 负数用 --pos=-1920x0）")
@@ -161,6 +99,7 @@ def _build_parser():
     rel_group.add_argument("--above", metavar="REF", help="放在参考显示器上方")
     rel_group.add_argument("--below", metavar="REF", help="放在参考显示器下方")
     rel_group.add_argument("--same-as", metavar="REF", help="与参考显示器同位置（镜像）")
+    parser.add_argument("--listproviders", action="store_true", help="列出 GPU 适配器")
     return parser
 
 
@@ -179,7 +118,18 @@ def main():
 
     mod_ops = [args.mode, args.pos, args.rotate, args.primary, args.preferred,
                args.off, args.brightness, args.reflect, args.gamma,
-               args.left_of, args.right_of, args.above, args.below, args.same_as]
+               args.left_of, args.right_of, args.above, args.below, args.same_as,
+               args.auto]
+
+    if args.listproviders:
+        providers = list_providers()
+        if not providers:
+            print("未检测到 GPU 适配器。")
+        else:
+            print("Providers:")
+            for i, p in enumerate(providers):
+                print(f"  Provider {i}: {p['string']} ({p['name']})")
+        return
 
     if not any(mod_ops):
         displays = list_displays()
@@ -197,13 +147,19 @@ def main():
             print(json.dumps([asdict(d) for d in displays],
                              indent=2, ensure_ascii=False))
         else:
-            print(_format_displays(displays, list_modes=args.listmodes))
+            print(format_displays(displays, list_modes=args.listmodes))
         return
 
     if not args.output:
         parser.error("--output 为必填参数")
 
     device_name = _normalize_name(args.output)
+
+    if args.auto:
+        if not args.dry_run:
+            if not set_auto(device_name):
+                _fail("自动配置失败")
+        print(f"已启用 {args.output}（首选分辨率）")
 
     if args.mode:
         if "x" not in args.mode.lower():
@@ -214,8 +170,9 @@ def main():
         except ValueError:
             parser.error("--mode 格式错误")
         rate = args.rate or 0
-        if not set_resolution(device_name, width, height, rate):
-            _fail("设置分辨率失败")
+        if not args.dry_run:
+            if not set_resolution(device_name, width, height, rate):
+                _fail("设置分辨率失败")
         print(f"已设置 {args.output} 为 {width}x{height}" +
               (f" @ {rate}Hz" if rate else ""))
 
@@ -230,39 +187,46 @@ def main():
             x, y = int(parts[0].lstrip("+")), int(parts[1].lstrip("+"))
         except ValueError:
             parser.error("--pos 格式错误")
-        if not set_position(device_name, x, y):
-            _fail("设置位置失败（SDC 可能不可用）")
+        if not args.dry_run:
+            if not set_position(device_name, x, y):
+                _fail("设置位置失败（SDC 可能不可用）")
         print(f"已将 {args.output} 移动到 ({x}, {y})")
 
     if args.rotate:
         deg = ROTATION_FROM_NAME[args.rotate]
-        if not set_rotation(device_name, deg):
-            _fail("设置旋转失败（SDC 可能不可用）")
+        if not args.dry_run:
+            if not set_rotation(device_name, deg):
+                _fail("设置旋转失败（SDC 可能不可用）")
         print(f"已将 {args.output} 旋转为 {args.rotate} ({deg}°)")
 
     if args.primary:
-        if not set_primary(device_name):
-            _fail("设置主显示器失败（SDC 可能不可用）")
+        if not args.dry_run:
+            if not set_primary(device_name):
+                _fail("设置主显示器失败（SDC 可能不可用）")
         print(f"已将 {args.output} 设为主显示器")
 
     if args.preferred:
-        if not set_preferred_resolution(device_name):
-            _fail("设置首选分辨率失败")
+        if not args.dry_run:
+            if not set_preferred_resolution(device_name):
+                _fail("设置首选分辨率失败")
         print(f"已将 {args.output} 设为首选分辨率")
 
     if args.off:
-        if not set_off(device_name):
-            _fail("关闭显示器失败（SDC 可能不可用）")
+        if not args.dry_run:
+            if not set_off(device_name):
+                _fail("关闭显示器失败（SDC 可能不可用）")
         print(f"已关闭 {args.output}")
 
     if args.brightness is not None:
-        if not set_brightness(device_name, args.brightness):
-            _fail("设置亮度失败（伽马表可能不可用）")
+        if not args.dry_run:
+            if not set_brightness(device_name, args.brightness):
+                _fail("设置亮度失败（伽马表可能不可用）")
         print(f"已将 {args.output} 亮度设为 {args.brightness}")
 
     if args.reflect:
-        if not set_reflect(device_name, args.reflect):
-            _fail("设置镜像翻转失败")
+        if not args.dry_run:
+            if not set_reflect(device_name, args.reflect):
+                _fail("设置镜像翻转失败")
         print(f"已将 {args.output} 设为 {args.reflect} 镜像翻转")
 
     if args.gamma:
@@ -277,8 +241,9 @@ def main():
             r, g, b = vals
         else:
             parser.error("--gamma 格式错误，使用 R:G:B 或单一值")
-        if not set_gamma(device_name, r, g, b):
-            _fail("设置伽马校正失败（伽马表可能不可用）")
+        if not args.dry_run:
+            if not set_gamma(device_name, r, g, b):
+                _fail("设置伽马校正失败（伽马表可能不可用）")
         print(f"已将 {args.output} 伽马设为 {r}:{g}:{b}")
 
     rel_map = {
@@ -288,8 +253,9 @@ def main():
     for attr, relation in rel_map.items():
         ref = getattr(args, attr, None)
         if ref:
-            if not set_position_relative(device_name, ref, relation):
-                _fail("相对定位失败（SDC 可能不可用）")
+            if not args.dry_run:
+                if not set_position_relative(device_name, ref, relation):
+                    _fail("相对定位失败（SDC 可能不可用）")
             print(f"已将 {args.output} 放在 {ref} 的 {relation}")
             break
 

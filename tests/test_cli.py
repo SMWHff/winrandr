@@ -2,7 +2,8 @@
 
 import pytest
 
-from winrandr.cli import _build_parser, _normalize_name, _short_name
+from winrandr.cli import _build_parser, _normalize_name
+from winrandr.formatter import _short_name, _fmt_modes
 
 
 def test_short_name():
@@ -157,7 +158,7 @@ def test_parser_position_negative_y():
 def test_fmt_modes_preferred_flag():
     """验证 + 标记始终在首选模式上，不受 has_cur 影响。"""
     from winrandr.models import DisplayMode
-    from winrandr.cli import _fmt_modes
+    from winrandr.formatter import _fmt_modes
     modes = [
         DisplayMode(1920, 1080, 60.0, is_current=True, is_preferred=False),
         DisplayMode(1920, 1080, 59.94, is_current=False, is_preferred=True),
@@ -174,3 +175,31 @@ def test_normalize_name_edge_cases():
     assert _normalize_name(r"\\.\DISPLAY1") == r"\\.\DISPLAY1"
     # 非标准名保持原样
     assert _normalize_name("WinDisc") == "WinDisc"
+
+
+def test_parser_auto():
+    p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "--auto"])
+    assert args.auto is True
+
+
+def test_parser_dry_run():
+    p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "--mode", "1920x1080", "--dry-run"])
+    assert args.dry_run is True
+    assert args.mode == "1920x1080"
+    assert args.output == "DISPLAY1"
+
+
+def test_parser_listproviders():
+    p = _build_parser()
+    args = p.parse_args(["--listproviders"])
+    assert args.listproviders is True
+
+
+def test_parser_auto_dry_run():
+    """--auto 与 --dry-run 同时使用。"""
+    p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "--auto", "--dry-run"])
+    assert args.auto is True
+    assert args.dry_run is True
