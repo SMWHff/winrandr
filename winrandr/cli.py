@@ -70,28 +70,24 @@ def _build_parser():
     parser.add_argument("--auto", action="store_true", help="启用显示器并使用首选分辨率")
     parser.add_argument("--mode", "-m", help="分辨率（如 1920x1080）")
     parser.add_argument("-s", "--size", help=argparse.SUPPRESS)
-    parser.add_argument(
-        "--orientation",
+    parser.add_argument("--orientation",
         choices=["normal", "inverted", "left", "right", "0", "1", "2", "3"],
-        help=argparse.SUPPRESS,
-    )
+        help=argparse.SUPPRESS)
     parser.add_argument("--rate", "-r", type=float, help="刷新率（Hz）")
-    parser.add_argument("--pos", "-p", help="桌面位置（如 0x0, +1920+0; 负数用 --pos=-1920x0）")
-    parser.add_argument(
-        "--rotate", choices=["normal", "left", "right", "inverted"],
-        help="旋转方向",
-    )
+    parser.add_argument("--pos", "-p", help="桌面位置（如 0x0）")
+    parser.add_argument("--rotate",
+        choices=["normal", "left", "right", "inverted"], help="旋转方向")
     parser.add_argument("--primary", action="store_true", help="设为主显示器")
     parser.add_argument("--preferred", action="store_true", help="设为注册表首选分辨率")
     parser.add_argument("--off", action="store_true", help="关闭显示器")
     parser.add_argument("--json", action="store_true", help="以 JSON 格式输出显示器信息")
     parser.add_argument(
-        "--brightness", type=float, metavar="VAL",
+        "--brightness", type=float,
         help="亮度值（0.1-2.0，1.0 为正常）",
     )
     parser.add_argument(
         "--reflect", choices=["normal", "x", "y", "xy"],
-        help="镜像翻转（仅 xy 支持，等同于旋转 180°）",
+        help="镜像翻转（仅 xy 支持，等同 180° 旋转）",
     )
     parser.add_argument("-x", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("-y", action="store_true", help=argparse.SUPPRESS)
