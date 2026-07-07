@@ -205,6 +205,18 @@ def test_parser_auto_dry_run():
     assert args.dry_run is True
 
 
+def test_parser_size():
+    p = _build_parser()
+    args = p.parse_args(["-s", "1920x1080", "-o", "DISPLAY1"])
+    assert args.size == "1920x1080"
+
+
+def test_parser_size_long():
+    p = _build_parser()
+    args = p.parse_args(["--size", "1920x1080", "-o", "DISPLAY1"])
+    assert args.size == "1920x1080"
+
+
 def test_parser_query():
     p = _build_parser()
     args = p.parse_args(["--query"])

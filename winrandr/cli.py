@@ -72,6 +72,7 @@ def _build_parser():
     parser.add_argument("--output", "-o", help="显示器名（如 DISPLAY1）")
     parser.add_argument("--auto", action="store_true", help="启用显示器并使用首选分辨率")
     parser.add_argument("--mode", "-m", help="分辨率（如 1920x1080）")
+    parser.add_argument("-s", "--size", help=argparse.SUPPRESS)
     parser.add_argument("--rate", "-r", type=float, help="刷新率（Hz）")
     parser.add_argument("--pos", "-p", help="桌面位置（如 0x0, +1920+0; 负数用 --pos=-1920x0）")
     parser.add_argument(
@@ -159,6 +160,10 @@ def main():
         parser.error("--output 为必填参数")
 
     device_name = _normalize_name(args.output)
+
+    # -s/--size 作为 --mode 的兼容别名（xrandr -s WxH）
+    if args.size and not args.mode:
+        args.mode = args.size
 
     if args.auto:
         if not args.dry_run:
