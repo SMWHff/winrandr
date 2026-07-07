@@ -65,6 +65,7 @@ def _build_parser():
     )
     parser.add_argument("--version", action="version", version=f"winrandr {__version__}")
     parser.add_argument("--listmodes", action="store_true", help="列出每个显示器所有可用分辨率")
+    parser.add_argument("-q", "--query", action="store_true", help="查询当前显示状态")
     parser.add_argument("--prop", action="store_true", help="显示显示器扩展属性（设备 ID、状态标志等）")
     parser.add_argument("--dry-run", action="store_true", help="模拟操作，不实际更改配置")
     parser.add_argument("--verbose", "-v", action="store_true", help="详细日志输出（调试用）")
@@ -151,7 +152,7 @@ def main():
             print(json.dumps([asdict(d) for d in displays],
                              indent=2, ensure_ascii=False))
         else:
-            print(format_displays(displays, list_modes=args.listmodes))
+            print(format_displays(displays))
         return
 
     if not args.output:

@@ -205,6 +205,18 @@ def test_parser_auto_dry_run():
     assert args.dry_run is True
 
 
+def test_parser_query():
+    p = _build_parser()
+    args = p.parse_args(["--query"])
+    assert args.query is True
+
+
+def test_parser_query_short():
+    p = _build_parser()
+    args = p.parse_args(["-q"])
+    assert args.query is True
+
+
 def test_parser_prop():
     p = _build_parser()
     args = p.parse_args(["--prop"])

@@ -42,6 +42,8 @@ Register-ArgumentCompleter -Native -CommandName winrandr, winrandr.exe, python -
     # 顶层参数补全
     $opts = @(
         [PSCustomObject]@{Option='--help';          Description='显示帮助'}
+        [PSCustomObject]@{Option='-q';               Description='查询显示状态（别名 --query）'}
+        [PSCustomObject]@{Option='--query';          Description='查询显示状态'}
         [PSCustomObject]@{Option='--version';        Description='显示版本号'}
         [PSCustomObject]@{Option='--listmodes';      Description='列出所有可用分辨率'}
         [PSCustomObject]@{Option='--prop';           Description='显示显示器扩展属性'}

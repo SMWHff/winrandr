@@ -7,8 +7,8 @@ def _short_name(name: str) -> str:
     return name.replace("\\\\.\\", "").strip()
 
 
-def format_displays(displays, list_modes: bool = False) -> str:
-    """以类 xrandr 风格输出显示器信息。"""
+def format_displays(displays) -> str:
+    """以标准 xrandr 风格输出显示器信息。"""
     lines = []
 
     if displays:
@@ -16,30 +16,32 @@ def format_displays(displays, list_modes: bool = False) -> str:
         if connected:
             max_x = max(d.position_x + d.width for d in connected)
             max_y = max(d.position_y + d.height for d in connected)
-            lines.append(f"Screen 0: current {max_x} x {max_y}")
+            lines.append(
+                f"Screen 0: minimum 320 x 200, current {max_x} x {max_y},"
+                f" maximum 32767 x 32767"
+            )
         else:
-            lines.append("Screen 0: current (no active displays)")
+            lines.append("Screen 0: minimum 320 x 200, current (no active displays),"
+                         " maximum 32767 x 32767")
         lines.append("")
 
     for d in displays:
         name = _short_name(d.name)
         status = "connected" if d.connected else "disconnected"
-        friendly = f" ({d.friendly_name})" if d.friendly_name else ""
 
         if d.connected:
-            rot_name = next(
-                (k for k, v in ROTATION_FROM_NAME.items() if v == d.rotation), "normal"
-            )
-            mm = f" {d.width_mm}mm x {d.height_mm}mm" if d.width_mm and d.height_mm else ""
             primary = "primary " if d.is_primary else ""
+            mm = ""
+            if d.width_mm and d.height_mm:
+                mm = f" {d.width_mm}mm x {d.height_mm}mm"
             lines.append(
-                f"{name} {status} {primary}{d.width}x{d.height}+{d.position_x}+{d.position_y}"
-                f" ({rot_name}){mm}{friendly}"
+                f"{name} {status} {primary}{d.width}x{d.height}"
+                f"+{d.position_x}+{d.position_y} (normal){mm}"
             )
             if d.modes:
                 _fmt_modes(lines, d.modes)
         else:
-            lines.append(f"{name} {status}{friendly}")
+            lines.append(f"{name} {status}")
 
         if d.properties:
             _fmt_props(lines, d.properties)
@@ -53,7 +55,7 @@ def _fmt_props(lines: list[str], props: dict) -> None:
     """格式化扩展属性。"""
     for key, val in props.items():
         label = key.replace("_", " ")
-        lines.append(f"    {label}: {val}")
+        lines.append(f"\t{label}: {val}")
 
 
 def _fmt_modes(lines: list[str], modes) -> None:
@@ -73,4 +75,5 @@ def _fmt_modes(lines: list[str], modes) -> None:
             if m.is_preferred:
                 tag += "+"
             rates.append(f"{m.refresh_rate:.2f}{tag}")
-        lines.append(f"   {w}x{h}  {' '.join(rates)}")
+        res_str = f"{w}x{h}"
+        lines.append(f"   {res_str:<13s} {' '.join(rates)}")
