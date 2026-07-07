@@ -9,22 +9,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 uv sync --dev
 
 # 运行（开发模式）
-uv run python -m winrandr
-uv run python -m winrandr --output DISPLAY1 --mode 1920x1080 --rate 60
+bash scripts/run.sh
+bash scripts/run.sh --output DISPLAY1 --mode 1920x1080 --rate 60
 
 # 运行测试
-uv run pytest tests/ -v
-uv run pytest tests/test_cli.py -v
+bash scripts/test.sh                    # 集成测试（导入检查 + pytest）
+uv run pytest tests/test_cli.py -v      # 单个测试文件
 uv run pytest tests/test_cli.py::test_parser_basic -v  # 单个测试
 
 # 构建单文件 exe（输出到 dist/winrandr.exe）
-uv run nuitka --standalone --onefile --output-dir=dist winrandr
+bash scripts/build.sh
 
 # 构建 exe（清除 Nuitka 缓存后重建，变更包结构时必须）
-uv run nuitka --clean-cache=all && rm -rf dist/* && uv run nuitka --standalone --onefile --output-dir=dist winrandr
-
-# 集成测试脚本
-bash scripts/test.sh
+uv run nuitka --clean-cache=all && rm -rf dist/* && bash scripts/build.sh
 ```
 
 **注意：** 变更包结构（新增/删除/移动 .py 文件）后，必须清除 Nuitka 缓存再构建，否则 exe 中可能包含旧代码。
@@ -57,9 +54,9 @@ tests/                    测试
 └── test_models.py        数据模型测试
 
 scripts/
-├── build.sh              构建 exe（引用 main.py，适用 Python<3.13 的 MinGW 路径）
+├── build.sh              构建 exe（Nuitka，入口 winrandr 包）
 ├── test.sh               集成测试脚本
-├── run.sh                uv run main.py 快捷脚本
+├── run.sh                uv run -m winrandr 快捷脚本
 └── completions.ps1       PowerShell Tab 补全
 ```
 
