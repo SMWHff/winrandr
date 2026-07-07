@@ -1,5 +1,7 @@
 """xrandr 风格的显示器信息格式化输出。"""
 
+from collections import defaultdict
+
 from winrandr.win32.constants import ROTATION_NAMES, ROTATION_DEGREES
 
 
@@ -97,8 +99,6 @@ def _fmt_props(lines: list[str], props: dict) -> None:
 
 def _fmt_modes(lines: list[str], modes) -> None:
     """格式化模式列表，类似 xrandr 的显示方式。"""
-    from collections import defaultdict
-
     grouped = defaultdict(list)
     for m in modes:
         grouped[(m.width, m.height)].append(m)

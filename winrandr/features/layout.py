@@ -12,11 +12,6 @@ from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO
 logger = logging.getLogger(__name__)
 
 
-def _short_name(name: str) -> str:
-    """提取短名称（去掉 \\\\.\\ 前缀）。"""
-    return name.split("\\")[-1]
-
-
 def set_position(device_name: str, x: int, y: int) -> bool:
     """设置显示器的桌面位置。"""
     if not set_display_config_available():
@@ -39,43 +34,6 @@ def set_position(device_name: str, x: int, y: int) -> bool:
     modes[mode_idx]._union.sourceMode.position.x = x
     modes[mode_idx]._union.sourceMode.position.y = y
     return apply_filtered(paths, path_count, modes, mode_count)
-
-
-def set_position_relative(device_name: str, reference_name: str, relation: str) -> bool:
-    """相对定位，类似 xrandr --left-of / --right-of / --above / --below / --same-as。"""
-    from winrandr.api import list_displays
-
-    displays = list_displays()
-
-    target = ref = None
-    for d in displays:
-        if not d.connected:
-            continue
-        sn = _short_name(d.name)
-        if sn == _short_name(device_name) or d.name == device_name:
-            target = d
-        if sn == _short_name(reference_name) or d.name == reference_name:
-            ref = d
-
-    if not target:
-        logger.error("未找到显示器: %s", device_name)
-        return False
-    if not ref:
-        logger.error("未找到参考显示器: %s", reference_name)
-        return False
-
-    pos_map = {
-        "right-of": (ref.position_x + ref.width, ref.position_y),
-        "left-of": (ref.position_x - target.width, ref.position_y),
-        "below": (ref.position_x, ref.position_y + ref.height),
-        "above": (ref.position_x, ref.position_y - target.height),
-        "same-as": (ref.position_x, ref.position_y),
-    }
-    x, y = pos_map.get(relation)
-    if x is None:
-        logger.error("无效相对位置关系: %s", relation)
-        return False
-    return set_position(device_name, x, y)
 
 
 def set_rotation(device_name: str, degrees: int) -> bool:

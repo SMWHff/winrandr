@@ -27,7 +27,7 @@ from winrandr.win32.bindings import (
 
 from winrandr.features.gamma import set_brightness, set_gamma  # noqa: F401
 from winrandr.features.layout import (  # noqa: F401
-    set_position, set_position_relative, set_rotation,
+    set_position, set_rotation,
     set_primary, set_off, set_reflect,
 )
 
@@ -45,7 +45,7 @@ def _enumerate_modes(gdi_name: str, cur_width: int, cur_height: int, cur_refresh
     # 通过 ENUM_REGISTRY_SETTINGS 获取默认模式，标记为首选
     reg_dm = DEVMODE()
     reg_dm.dmSize = sizeof(DEVMODE)
-    has_reg = _EnumDisplaySettings(gdi_name, 0xFFFFFFFE, byref(reg_dm))
+    has_reg = _EnumDisplaySettings(gdi_name, ENUM_REGISTRY_SETTINGS, byref(reg_dm))
 
     while True:
         dm = DEVMODE()
@@ -187,6 +187,45 @@ def set_preferred_resolution(device_name: str) -> bool:
 def set_auto(device_name: str) -> bool:
     """启用显示器并使用首选分辨率（等效于 xrandr --auto）。"""
     return set_preferred_resolution(device_name)
+
+
+def _short_name(name: str) -> str:
+    return name.split("\\")[-1]
+
+
+def set_position_relative(device_name: str, reference_name: str, relation: str) -> bool:
+    """相对定位，类似 xrandr --left-of / --right-of / --above / --below / --same-as。"""
+    displays = list_displays()
+
+    target = ref = None
+    for d in displays:
+        if not d.connected:
+            continue
+        sn = _short_name(d.name)
+        if sn == _short_name(device_name) or d.name == device_name:
+            target = d
+        if sn == _short_name(reference_name) or d.name == reference_name:
+            ref = d
+
+    if not target:
+        logger.error("未找到显示器: %s", device_name)
+        return False
+    if not ref:
+        logger.error("未找到参考显示器: %s", reference_name)
+        return False
+
+    pos_map = {
+        "right-of": (ref.position_x + ref.width, ref.position_y),
+        "left-of": (ref.position_x - target.width, ref.position_y),
+        "below": (ref.position_x, ref.position_y + ref.height),
+        "above": (ref.position_x, ref.position_y - target.height),
+        "same-as": (ref.position_x, ref.position_y),
+    }
+    x, y = pos_map.get(relation)
+    if x is None:
+        logger.error("无效相对位置关系: %s", relation)
+        return False
+    return set_position(device_name, x, y)
 
 
 def get_display_props(device_name: str) -> dict:
