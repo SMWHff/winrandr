@@ -8,8 +8,8 @@ import logging
 from winrandr import __version__
 from winrandr.api import (
     list_displays, set_resolution, set_position,
-    set_rotation, set_primary, set_off,
-    set_brightness, set_reflect,
+    set_position_relative, set_rotation, set_primary,
+    set_off, set_brightness, set_gamma, set_reflect,
 )
 from winrandr.constants import ROTATION_FROM_NAME
 
@@ -120,10 +120,17 @@ def _build_parser():
   winrandr --output DISPLAY1 --rotate normal
   winrandr --output DISPLAY1 --primary
   winrandr --output DISPLAY1 --off
+  winrandr --output DISPLAY1 --gamma 1.0:0.9:0.8
+  winrandr --output DISPLAY1 --left-of DISPLAY2
+  winrandr --output DISPLAY1 --right-of DISPLAY2
+  winrandr --output DISPLAY1 --above DISPLAY2
+  winrandr --output DISPLAY1 --below DISPLAY2
+  winrandr --output DISPLAY1 --same-as DISPLAY2
         """,
     )
     parser.add_argument("--version", action="version", version=f"winrandr {__version__}")
     parser.add_argument("--listmodes", action="store_true", help="列出每个显示器所有可用分辨率")
+    parser.add_argument("--verbose", "-v", action="store_true", help="详细日志输出（调试用）")
     parser.add_argument("--output", "-o", help="显示器名（如 DISPLAY1）")
     parser.add_argument("--mode", "-m", help="分辨率（如 1920x1080）")
     parser.add_argument("--rate", "-r", type=float, help="刷新率（Hz）")
@@ -143,17 +150,31 @@ def _build_parser():
         "--reflect", choices=["x", "y", "xy"],
         help="镜像翻转（仅 xy 支持，等同于旋转 180°）",
     )
+    parser.add_argument(
+        "--gamma", metavar="R:G:B",
+        help="伽马校正（如 1.0:0.9:0.8，三通道独立）",
+    )
+    # 相对定位（互斥）
+    rel_group = parser.add_mutually_exclusive_group()
+    rel_group.add_argument("--left-of", metavar="REF", help="放在参考显示器左侧")
+    rel_group.add_argument("--right-of", metavar="REF", help="放在参考显示器右侧")
+    rel_group.add_argument("--above", metavar="REF", help="放在参考显示器上方")
+    rel_group.add_argument("--below", metavar="REF", help="放在参考显示器下方")
+    rel_group.add_argument("--same-as", metavar="REF", help="与参考显示器同位置（镜像）")
     return parser
 
 
 def main():
-    _setup_logging()
-
     parser = _build_parser()
     args = parser.parse_args()
 
+    _setup_logging()
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
     mod_ops = [args.mode, args.pos, args.rotate, args.primary, args.off,
-               args.brightness, args.reflect]
+               args.brightness, args.reflect, args.gamma,
+               args.left_of, args.right_of, args.above, args.below, args.same_as]
 
     if not any(mod_ops):
         displays = list_displays()
@@ -227,6 +248,33 @@ def main():
             sys.exit(1)
         print(f"已将 {args.output} 设为 {args.reflect} 镜像翻转")
 
+    if args.gamma:
+        parts = args.gamma.split(":")
+        try:
+            vals = [float(x) for x in parts]
+        except ValueError:
+            parser.error("--gamma 格式错误，使用 R:G:B 或单一值")
+        if len(vals) == 1:
+            r = g = b = vals[0]
+        elif len(vals) == 3:
+            r, g, b = vals
+        else:
+            parser.error("--gamma 格式错误，使用 R:G:B 或单一值")
+        if not set_gamma(device_name, r, g, b):
+            sys.exit(1)
+        print(f"已将 {args.output} 伽马设为 {r}:{g}:{b}")
+
+    rel_map = {
+        "left_of": "left-of", "right_of": "right-of",
+        "above": "above", "below": "below", "same_as": "same-as",
+    }
+    for attr, relation in rel_map.items():
+        ref = getattr(args, attr, None)
+        if ref:
+            if not set_position_relative(device_name, ref, relation):
+                sys.exit(1)
+            print(f"已将 {args.output} 放在 {ref} 的 {relation}")
+            break
 
 if __name__ == "__main__":
     main()

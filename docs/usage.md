@@ -129,6 +129,36 @@ winrandr --output DISPLAY1 --reflect xy        # 等同旋转 180°
 
 注意：Windows 仅支持 `xy`（双向翻转），`x` 和 `y` 暂不支持。
 
+### 详细模式
+
+```bash
+winrandr --verbose
+winrandr -v --listmodes
+```
+
+开启 DEBUG 级别日志，输出到 stderr 和 `logs/winrandr.log`，便于调试问题。
+
+### 伽马校正
+
+```bash
+winrandr --output DISPLAY1 --gamma 1.0:0.9:0.8    # 红 1.0, 绿 0.9, 蓝 0.8
+winrandr --output DISPLAY1 --gamma 0.8             # 三通道统一 0.8
+```
+
+三通道独立伽马校正，与 xrandr `--gamma` 行为一致。接受 `R:G:B` 或单一值格式。
+
+### 相对定位
+
+```bash
+winrandr --output DISPLAY1 --left-of DISPLAY2      # DISPLAY1 放在 DISPLAY2 左侧
+winrandr --output DISPLAY1 --right-of DISPLAY2     # DISPLAY1 放在 DISPLAY2 右侧
+winrandr --output DISPLAY1 --above DISPLAY2        # DISPLAY1 放在 DISPLAY2 上方
+winrandr --output DISPLAY1 --below DISPLAY2        # DISPLAY1 放在 DISPLAY2 下方
+winrandr --output DISPLAY1 --same-as DISPLAY2      # DISPLAY1 与 DISPLAY2 同位置（镜像）
+```
+
+以上选项互斥，与 xrandr `--left-of` / `--right-of` / `--above` / `--below` / `--same-as` 行为一致。
+
 ## 显示器名称
 
 - 标准名称：`DISPLAY1`、`DISPLAY2`

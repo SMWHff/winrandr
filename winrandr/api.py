@@ -1,26 +1,28 @@
 """公开 API：显示器信息查询和配置修改。"""
 
-from typing import Optional
 import logging
+from ctypes import sizeof, byref
 
 from winrandr.models import DisplayMode, DisplayInfo
 from winrandr.constants import (
     DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
     DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
     DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
-    ROTATION_DEGREES, ROTATION_MAP,
+    ROTATION_DEGREES,
     CDS_UPDATEREGISTRY, DISP_CHANGE_SUCCESSFUL, ENUM_CURRENT_SETTINGS,
 )
-from ctypes import sizeof, byref, c_uint16
-
-from winrandr.structures import DEVMODE, DISPLAYCONFIG_PATH_INFO
+from winrandr.structures import DEVMODE
 from winrandr.bindings import (
-    query_active_config, query_all_config, get_gdi_name,
+    query_active_config, get_gdi_name,
     get_friendly_name_via_enum, get_screen_size_mm,
-    get_resolution_refresh_via_enum, apply_config, apply_filtered,
-    find_path_idx, set_display_config_available,
+    get_resolution_refresh_via_enum,
     _ChangeDisplaySettingsEx, _EnumDisplaySettings,
-    _CreateDCW, _DeleteDC, _GetDeviceGammaRamp, _SetDeviceGammaRamp,
+)
+
+from winrandr.features.gamma import set_brightness, set_gamma  # noqa: F401
+from winrandr.features.layout import (  # noqa: F401
+    set_position, set_position_relative, set_rotation,
+    set_primary, set_off, set_reflect,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,6 +32,12 @@ def _enumerate_modes(gdi_name: str, cur_width: int, cur_height: int, cur_refresh
     """枚举指定显示器的所有可用模式。"""
     modes = []
     i = 0
+
+    # 通过 ENUM_REGISTRY_SETTINGS 获取默认模式，标记为首选
+    reg_dm = DEVMODE()
+    reg_dm.dmSize = sizeof(DEVMODE)
+    has_reg = _EnumDisplaySettings(gdi_name, 0xFFFFFFFE, byref(reg_dm))
+
     while True:
         dm = DEVMODE()
         dm.dmSize = sizeof(DEVMODE)
@@ -40,7 +48,9 @@ def _enumerate_modes(gdi_name: str, cur_width: int, cur_height: int, cur_refresh
             rr = float(dm.dmDisplayFrequency)
             is_cur = (dm.dmPelsWidth == cur_width and dm.dmPelsHeight == cur_height
                       and abs(rr - cur_refresh) < 0.01)
-            is_pref = (dm.dmPelsWidth == 1920 and dm.dmPelsHeight == 1080) if i == 0 else False
+            is_pref = bool(has_reg
+                           and dm.dmPelsWidth == reg_dm.dmPelsWidth
+                           and dm.dmPelsHeight == reg_dm.dmPelsHeight)
             modes.append(DisplayMode(
                 width=dm.dmPelsWidth,
                 height=dm.dmPelsHeight,
@@ -151,143 +161,3 @@ def set_resolution(device_name: str, width: int, height: int, refresh_rate: floa
         logger.error("应用分辨率失败，错误码: %d", ret)
         return False
     return True
-
-
-def set_position(device_name: str, x: int, y: int) -> bool:
-    """设置显示器的桌面位置。"""
-    if not set_display_config_available():
-        return False
-    config = query_active_config()
-    if config is None:
-        return False
-    paths, modes, path_count, mode_count = config
-
-    idx = find_path_idx(paths, path_count, device_name)
-    if idx is None:
-        logger.error("未找到显示器: %s", device_name)
-        return False
-
-    mode_idx = paths[idx].sourceInfo.modeInfoIdx
-    if mode_idx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID or mode_idx >= mode_count:
-        logger.error("显示器 %s 模式索引无效", device_name)
-        return False
-
-    modes[mode_idx]._union.sourceMode.position.x = x
-    modes[mode_idx]._union.sourceMode.position.y = y
-    return apply_filtered(paths, path_count, modes, mode_count)
-
-
-def set_rotation(device_name: str, degrees: int) -> bool:
-    """设置显示器旋转角度（0、90、180、270）。"""
-    rot = ROTATION_MAP.get(degrees)
-    if rot is None:
-        logger.error("无效旋转角度: %d（必须为 0、90、180 或 270）", degrees)
-        return False
-
-    if not set_display_config_available():
-        return False
-    config = query_active_config()
-    if config is None:
-        return False
-    paths, modes, path_count, mode_count = config
-
-    idx = find_path_idx(paths, path_count, device_name)
-    if idx is None:
-        logger.error("未找到显示器: %s", device_name)
-        return False
-
-    paths[idx].targetInfo.rotation = rot
-    return apply_filtered(paths, path_count, modes, mode_count)
-
-
-def set_primary(device_name: str) -> bool:
-    """将指定显示器设为主显示器。"""
-    if not set_display_config_available():
-        return False
-    config = query_active_config()
-    if config is None:
-        return False
-    paths, modes, path_count, mode_count = config
-
-    found = False
-    for i in range(path_count):
-        gdi = get_gdi_name(paths[i])
-        if gdi == device_name:
-            paths[i].sourceInfo.statusFlags |= 0x01
-            found = True
-        else:
-            paths[i].sourceInfo.statusFlags &= ~0x01
-
-    if not found:
-        logger.error("未找到显示器: %s", device_name)
-        return False
-    return apply_filtered(paths, path_count, modes, mode_count)
-
-
-def set_off(device_name: str) -> bool:
-    """关闭（禁用）指定显示器。"""
-    if not set_display_config_available():
-        return False
-    config = query_active_config()
-    if config is None:
-        return False
-    paths, modes, path_count, mode_count = config
-
-    kept = []
-    for i in range(path_count):
-        gdi = get_gdi_name(paths[i])
-        if gdi != device_name:
-            kept.append(i)
-
-    if len(kept) == path_count:
-        logger.error("未找到显示器: %s", device_name)
-        return False
-
-    new_paths = (DISPLAYCONFIG_PATH_INFO * len(kept))()
-    for dest, src_idx in enumerate(kept):
-        new_paths[dest] = paths[src_idx]
-
-    return apply_config(new_paths, len(kept), modes, mode_count)
-
-
-def set_brightness(device_name: str, brightness: float) -> bool:
-    """通过伽马校正设置显示器亮度。
-
-    brightness: 0.1-2.0 范围，1.0 为正常。方式同 xrandr --brightness。
-    """
-    if brightness < 0:
-        logger.error("亮度值不能为负数: %g", brightness)
-        return False
-    try:
-        dc = _CreateDCW("DISPLAY", device_name, None, None)
-        if not dc:
-            logger.error("无法为 %s 创建设备上下文", device_name)
-            return False
-        try:
-            ramp = (c_uint16 * (3 * 256))()
-            if not _GetDeviceGammaRamp(dc, ramp):
-                logger.error("无法获取 %s 的伽马校正表", device_name)
-                return False
-            for i in range(3 * 256):
-                val = int(ramp[i] * brightness)
-                ramp[i] = max(0, min(65535, val))
-            if not _SetDeviceGammaRamp(dc, ramp):
-                logger.error("无法设置 %s 的伽马校正表", device_name)
-                return False
-            return True
-        finally:
-            _DeleteDC(dc)
-    except Exception as e:
-        logger.error("设置亮度失败: %s", e)
-        return False
-
-
-def set_reflect(device_name: str, axis: str) -> bool:
-    """设置显示器镜像翻转。
-
-    在 Windows 上仅支持 xy（等同于 180° 旋转）。
-    """
-    if axis == "xy":
-        return set_rotation(device_name, 180)
-    logger.error("不支持 --reflect %s（Windows 仅支持 xy = 旋转 180°）", axis)
-    return False

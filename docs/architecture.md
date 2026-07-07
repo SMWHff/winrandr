@@ -5,7 +5,10 @@
 ```
 main.py  ──→  winrandr/
               ├── cli.py          argparse + 输出格式化
-              ├── api.py          公开 API (8 函数)
+              ├── api.py          公开 API (10 函数，含子模块 re-export)
+              ├── features/
+              │   ├── gamma.py    伽马校正与亮度
+              │   └── layout.py   位置/旋转/主屏/关闭/相对定位
               ├── models.py       数据模型 (DisplayInfo, DisplayMode)
               ├── bindings.py     Win32 函数绑定 + 内部工具
               ├── structures.py   ctypes 结构体
@@ -23,9 +26,20 @@ main.py  ──→  winrandr/
 - 日志初始化
 
 ### winrandr/api.py
-- `DisplayInfo` / `DisplayMode` 数据模型
-- 6 个公开函数
+- `list_displays` / `set_resolution`（核心查询与分辨率）
+- 10 个公开函数（其中 8 个委托给 `features/` 子模块）
 - 模式枚举（`_enumerate_modes`）
+
+### winrandr/features/gamma.py
+- `set_brightness`：单值伽马倍增调亮度
+- `set_gamma`：三通道独立伽马校正
+
+### winrandr/features/layout.py
+- `set_position` / `set_position_relative`：绝对与相对定位
+- `set_rotation`：旋转（0/90/180/270）
+- `set_primary`：设为主显示器
+- `set_off`：关闭显示器
+- `set_reflect`：镜像翻转（仅 xy = 旋转 180°）
 
 ### winrandr/bindings.py
 - 所有 Win32 API 的 ctypes 函数绑定
@@ -51,6 +65,8 @@ main.py  ──→  winrandr/
 | `set_off(name)` | 设备名 | 禁用显示器 |
 | `set_brightness(name, val)` | 设备名、亮度值 | 伽马校正调亮度 |
 | `set_reflect(name, axis)` | 设备名、轴 (x/y/xy) | 镜像翻转（仅 xy） |
+| `set_gamma(name, r, g, b)` | 设备名、红/绿/蓝乘数 | 伽马校正（三通道独立） |
+| `set_position_relative(name, ref, rel)` | 设备名、参考名、关系 | 相对定位（left-of/right-of/above/below/same-as） |
 
 ## Win32 API 映射
 
@@ -91,6 +107,12 @@ QueryDisplayConfig(获取当前配置)
 | `xrandr --output eDP-1 --brightness 0.8` | `winrandr --output DISPLAY1 --brightness 0.8` | ✓ |
 | `xrandr --output eDP-1 --reflect xy` | `winrandr --output DISPLAY1 --reflect xy` | ✓ (xy 仅) |
 | `xrandr --output eDP-1 --reflect x` | 暂不支持 | - |
+| `xrandr --output eDP-1 --gamma 1.0:0.9:0.8` | `winrandr --output DISPLAY1 --gamma 1.0:0.9:0.8` | ✓ |
+| `xrandr --output eDP-1 --left-of HDMI-1` | `winrandr --output DISPLAY1 --left-of DISPLAY2` | ✓ |
+| `xrandr --output eDP-1 --right-of HDMI-1` | `winrandr --output DISPLAY1 --right-of DISPLAY2` | ✓ |
+| `xrandr --output eDP-1 --above HDMI-1` | `winrandr --output DISPLAY1 --above DISPLAY2` | ✓ |
+| `xrandr --output eDP-1 --below HDMI-1` | `winrandr --output DISPLAY1 --below DISPLAY2` | ✓ |
+| `xrandr --output eDP-1 --same-as HDMI-1` | `winrandr --output DISPLAY1 --same-as DISPLAY2` | ✓ |
 | `xrandr --output eDP-1 --scale` | 未实现 | - |
 | `xrandr --fb` | 未实现 | - |
 

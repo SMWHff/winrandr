@@ -7,10 +7,12 @@ from winrandr.api import (
     list_displays,
     set_resolution,
     set_position,
+    set_position_relative,
     set_rotation,
     set_primary,
     set_off,
     set_brightness,
+    set_gamma,
     set_reflect,
 )
 from winrandr.constants import ROTATION_NAMES, ROTATION_FROM_NAME

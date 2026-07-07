@@ -37,7 +37,9 @@ BugTracker = "https://github.com/example/winrandr/issues"
 winrandr = "winrandr.cli:main"
 
 [tool.uv]
-dev-dependencies = ["nuitka>=2.6"]
+
+[dependency-groups]
+dev = ["nuitka>=2.6"]
 
 [tool.nuitka]
 onefile = true
