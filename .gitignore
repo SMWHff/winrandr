@@ -1,0 +1,9 @@
+dist/
+*.build/
+*.dist/
+*.onefile-build/
+__pycache__/
+logs/
+.venv/
+nuitka-crash-report.xml
+*.egg-info/
