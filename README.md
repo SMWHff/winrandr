@@ -184,18 +184,23 @@ uv run pytest tests/ -v     # 单元测试（66 项）
 ## 项目结构
 
 ```
-winrandr/
-├── cli.py              命令行入口 + 主流程编排
-├── api.py              公开 API（查询、分辨率、扩展属性）
-├── formatter.py        xrandr 风格格式化输出
-├── models.py           数据模型 (DisplayInfo, DisplayMode)
+main.py                   简易入口，转发到 winrandr.cli（主要用 `python -m winrandr`）
+winrandr/                 核心包
+├── __init__.py           版本号 + 公开 API 重导出
+├── __main__.py           python -m winrandr 入口
+├── cli.py                CLI 层：argparse 解析 + 主流程编排
+├── api.py                公开 API：list_displays / set_resolution 等
+├── formatter.py          xrandr 风格格式化输出
+├── models.py             数据模型 (DisplayInfo, DisplayMode)
 ├── features/
-│   ├── gamma.py        亮度与伽马校正
-│   └── layout.py       布局管理（位置、旋转、主屏、关闭、相对定位）
-└── win32/              底层 Win32 绑定层
-    ├── constants.py    Win32 API 常量与旋转映射
-    ├── structures.py   ctypes 结构体定义
-    └── bindings.py     Win32 API 函数绑定 + 内部工具
+│   ├── __init__.py
+│   ├── gamma.py          伽马校正与亮度（SetDeviceGammaRamp）
+│   └── layout.py         位置/旋转/主屏/关闭/相对定位（SetDisplayConfig）
+└── win32/                底层 Win32 绑定层
+    ├── __init__.py       子包统一 re-export
+    ├── constants.py      Win32 API 常量 + 旋转映射表
+    ├── structures.py     ctypes 结构体定义（DISPLAYCONFIG_*、DEVMODE 等）
+    └── bindings.py       Win32 API 函数绑定 + 内部工具函数
 ```
 
 ## 已知限制
