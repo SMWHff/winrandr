@@ -119,6 +119,10 @@ def main():
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
+    # -s/--size 作为 --mode 的兼容别名（必须在 mod_ops 判断之前）
+    if args.size and not args.mode:
+        args.mode = args.size
+
     mod_ops = [args.mode, args.pos, args.rotate, args.primary, args.preferred,
                args.off, args.brightness, args.reflect, args.gamma,
                args.left_of, args.right_of, args.above, args.below, args.same_as,
@@ -160,10 +164,6 @@ def main():
         parser.error("--output 为必填参数")
 
     device_name = _normalize_name(args.output)
-
-    # -s/--size 作为 --mode 的兼容别名（xrandr -s WxH）
-    if args.size and not args.mode:
-        args.mode = args.size
 
     if args.auto:
         if not args.dry_run:
