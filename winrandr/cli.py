@@ -108,6 +108,7 @@ def _build_parser():
     rel_group.add_argument("--same-as", metavar="REF", help="与参考显示器同位置（镜像）")
     parser.add_argument("--listproviders", action="store_true", help="列出 GPU 适配器")
     parser.add_argument("--listmonitors", action="store_true", help="列出带编号的显示器列表")
+    parser.add_argument("--listactivemonitors", action="store_true", help=argparse.SUPPRESS)
     return parser
 
 def _fail(msg: str):
@@ -129,6 +130,8 @@ def main():
         args.rotate = args.orientation.replace("0", "normal").replace("1", "normal") \
             .replace("2", "inverted").replace("3", "left") \
             if args.orientation in ("0", "1", "2", "3") else args.orientation
+    if args.listactivemonitors:
+        args.listmonitors = True
     if args.reflect == "normal":
         args.reflect = None
     if args.x and args.y:
