@@ -28,6 +28,9 @@ from winrandr.features.layout import (  # noqa: F401
 logger = logging.getLogger(__name__)
 
 
+ENUM_REGISTRY_SETTINGS = 0xFFFFFFFE
+
+
 def _enumerate_modes(gdi_name: str, cur_width: int, cur_height: int, cur_refresh: float) -> list[DisplayMode]:
     """枚举指定显示器的所有可用模式。"""
     modes = []
@@ -62,12 +65,8 @@ def _enumerate_modes(gdi_name: str, cur_width: int, cur_height: int, cur_refresh
     return modes
 
 
-def list_displays(include_disconnected: bool = True) -> list[DisplayInfo]:
-    """列出显示器及其当前配置。
-
-    Args:
-        include_disconnected: 是否包含已断开的（虚拟）显示器。
-    """
+def list_displays() -> list[DisplayInfo]:
+    """列出活动显示器及其当前配置。"""
     config = query_active_config()
     if config is None:
         return []
@@ -161,3 +160,18 @@ def set_resolution(device_name: str, width: int, height: int, refresh_rate: floa
         logger.error("应用分辨率失败，错误码: %d", ret)
         return False
     return True
+
+
+def set_preferred_resolution(device_name: str) -> bool:
+    """设置为注册表中保存的首选分辨率。"""
+    dm = DEVMODE()
+    dm.dmSize = sizeof(DEVMODE)
+    if not _EnumDisplaySettings(device_name, ENUM_REGISTRY_SETTINGS, byref(dm)):
+        logger.error("无法获取 %s 的注册表设置", device_name)
+        return False
+    return set_resolution(
+        device_name,
+        dm.dmPelsWidth,
+        dm.dmPelsHeight,
+        float(dm.dmDisplayFrequency) if dm.dmDisplayFrequency > 0 else 0,
+    )

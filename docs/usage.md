@@ -96,6 +96,14 @@ winrandr --output DISPLAY1 --rotate right      # 270°
 winrandr --output DISPLAY1 --primary
 ```
 
+### 首选分辨率
+
+```bash
+winrandr --output DISPLAY1 --preferred
+```
+
+恢复到注册表中保存的默认分辨率和刷新率。
+
 ### 关闭显示器
 
 ```bash

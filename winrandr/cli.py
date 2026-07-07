@@ -7,9 +7,9 @@ import logging
 
 from winrandr import __version__
 from winrandr.api import (
-    list_displays, set_resolution, set_position,
-    set_position_relative, set_rotation, set_primary,
-    set_off, set_brightness, set_gamma, set_reflect,
+    list_displays, set_resolution, set_preferred_resolution,
+    set_position, set_position_relative, set_rotation,
+    set_primary, set_off, set_brightness, set_gamma, set_reflect,
 )
 from winrandr.constants import ROTATION_FROM_NAME
 
@@ -140,6 +140,7 @@ def _build_parser():
         help="旋转方向",
     )
     parser.add_argument("--primary", action="store_true", help="设为主显示器")
+    parser.add_argument("--preferred", action="store_true", help="设为注册表首选分辨率")
     parser.add_argument("--off", action="store_true", help="关闭显示器")
     parser.add_argument("--json", action="store_true", help="以 JSON 格式输出显示器信息")
     parser.add_argument(
@@ -177,8 +178,8 @@ def main():
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    mod_ops = [args.mode, args.pos, args.rotate, args.primary, args.off,
-               args.brightness, args.reflect, args.gamma,
+    mod_ops = [args.mode, args.pos, args.rotate, args.primary, args.preferred,
+               args.off, args.brightness, args.reflect, args.gamma,
                args.left_of, args.right_of, args.above, args.below, args.same_as]
 
     if not any(mod_ops):
@@ -237,6 +238,11 @@ def main():
         if not set_primary(device_name):
             _fail("设置主显示器失败（SDC 可能不可用）")
         print(f"已将 {args.output} 设为主显示器")
+
+    if args.preferred:
+        if not set_preferred_resolution(device_name):
+            _fail("设置首选分辨率失败")
+        print(f"已将 {args.output} 设为首选分辨率")
 
     if args.off:
         if not set_off(device_name):

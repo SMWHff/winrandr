@@ -6,6 +6,7 @@ from winrandr.models import DisplayInfo
 from winrandr.api import (
     list_displays,
     set_resolution,
+    set_preferred_resolution,
     set_position,
     set_position_relative,
     set_rotation,

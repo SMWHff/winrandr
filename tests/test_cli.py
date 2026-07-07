@@ -69,6 +69,12 @@ def test_parser_primary():
     assert args.primary is True
 
 
+def test_parser_preferred():
+    p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "--preferred"])
+    assert args.preferred is True
+
+
 def test_parser_off():
     p = _build_parser()
     args = p.parse_args(["-o", "DISPLAY1", "--off"])
