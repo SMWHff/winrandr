@@ -140,6 +140,20 @@ def test_parser_short_opts():
     assert args.pos == "0x0"
 
 
+def test_parser_position_negative():
+    """负坐标使用 = 语法（argparse 将 -1920x0 视为参数名）。"""
+    p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "--pos=-1920x0"])
+    assert args.pos == "-1920x0"
+
+
+def test_parser_position_negative_y():
+    """Y 为负 +1920x-1080。"""
+    p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "-p", "+1920x-1080"])
+    assert args.pos == "+1920x-1080"
+
+
 def test_fmt_modes_preferred_flag():
     """验证 + 标记始终在首选模式上，不受 has_cur 影响。"""
     from winrandr.models import DisplayMode

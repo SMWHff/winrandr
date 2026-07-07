@@ -133,7 +133,7 @@ def _build_parser():
     parser.add_argument("--output", "-o", help="显示器名（如 DISPLAY1）")
     parser.add_argument("--mode", "-m", help="分辨率（如 1920x1080）")
     parser.add_argument("--rate", "-r", type=float, help="刷新率（Hz）")
-    parser.add_argument("--pos", "-p", help="桌面位置（如 0x0 或 +1920+0）")
+    parser.add_argument("--pos", "-p", help="桌面位置（如 0x0, +1920+0; 负数用 --pos=-1920x0）")
     parser.add_argument(
         "--rotate", choices=["normal", "left", "right", "inverted"],
         help="旋转方向",
@@ -186,6 +186,11 @@ def main():
         if not displays:
             print("未检测到活动显示器。")
             sys.exit(1)
+        if args.output:
+            device_name = _normalize_name(args.output)
+            displays = [d for d in displays if d.name == device_name]
+            if not displays:
+                _fail(f"未找到显示器: {args.output}")
         if args.json:
             from dataclasses import asdict
             import json
@@ -215,12 +220,14 @@ def main():
               (f" @ {rate}Hz" if rate else ""))
 
     if args.pos:
-        p = args.pos.replace("+", " ").strip()
-        if "x" not in p:
+        p = args.pos.strip()
+        if "x" not in p.lower():
             parser.error("--pos 格式必须为 XxY（如 0x0 或 +1920+0）")
-        parts = p.split("x")
+        parts = p.lower().split("x")
+        if len(parts) != 2:
+            parser.error("--pos 格式错误")
         try:
-            x, y = int(parts[0].strip()), int(parts[1].strip())
+            x, y = int(parts[0].lstrip("+")), int(parts[1].lstrip("+"))
         except ValueError:
             parser.error("--pos 格式错误")
         if not set_position(device_name, x, y):
