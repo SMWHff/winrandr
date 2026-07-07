@@ -164,6 +164,11 @@ def _build_parser():
     return parser
 
 
+def _fail(msg: str):
+    print(f"错误: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
 def main():
     parser = _build_parser()
     args = parser.parse_args()
@@ -205,7 +210,7 @@ def main():
             parser.error("--mode 格式错误")
         rate = args.rate or 0
         if not set_resolution(device_name, width, height, rate):
-            sys.exit(1)
+            _fail("设置分辨率失败")
         print(f"已设置 {args.output} 为 {width}x{height}" +
               (f" @ {rate}Hz" if rate else ""))
 
@@ -219,33 +224,33 @@ def main():
         except ValueError:
             parser.error("--pos 格式错误")
         if not set_position(device_name, x, y):
-            sys.exit(1)
+            _fail("设置位置失败（SDC 可能不可用）")
         print(f"已将 {args.output} 移动到 ({x}, {y})")
 
     if args.rotate:
         deg = ROTATION_FROM_NAME[args.rotate]
         if not set_rotation(device_name, deg):
-            sys.exit(1)
+            _fail("设置旋转失败（SDC 可能不可用）")
         print(f"已将 {args.output} 旋转为 {args.rotate} ({deg}°)")
 
     if args.primary:
         if not set_primary(device_name):
-            sys.exit(1)
+            _fail("设置主显示器失败（SDC 可能不可用）")
         print(f"已将 {args.output} 设为主显示器")
 
     if args.off:
         if not set_off(device_name):
-            sys.exit(1)
+            _fail("关闭显示器失败（SDC 可能不可用）")
         print(f"已关闭 {args.output}")
 
     if args.brightness is not None:
         if not set_brightness(device_name, args.brightness):
-            sys.exit(1)
+            _fail("设置亮度失败（伽马表可能不可用）")
         print(f"已将 {args.output} 亮度设为 {args.brightness}")
 
     if args.reflect:
         if not set_reflect(device_name, args.reflect):
-            sys.exit(1)
+            _fail("设置镜像翻转失败")
         print(f"已将 {args.output} 设为 {args.reflect} 镜像翻转")
 
     if args.gamma:
@@ -261,7 +266,7 @@ def main():
         else:
             parser.error("--gamma 格式错误，使用 R:G:B 或单一值")
         if not set_gamma(device_name, r, g, b):
-            sys.exit(1)
+            _fail("设置伽马校正失败（伽马表可能不可用）")
         print(f"已将 {args.output} 伽马设为 {r}:{g}:{b}")
 
     rel_map = {
@@ -272,7 +277,7 @@ def main():
         ref = getattr(args, attr, None)
         if ref:
             if not set_position_relative(device_name, ref, relation):
-                sys.exit(1)
+                _fail("相对定位失败（SDC 可能不可用）")
             print(f"已将 {args.output} 放在 {ref} 的 {relation}")
             break
 
