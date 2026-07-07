@@ -7,7 +7,7 @@
 通过 Win32 API 管理显示器布局、分辨率、刷新率、旋转、亮度、伽马校正等
 
 [![Version](https://img.shields.io/github/v/release/SMWHff/winrandr?color=blue&label=version)](https://github.com/SMWHff/winrandr/releases)
-[![License](https://img.shields.io/github/license/SMWHff/winrandr?color=green&cacheSeconds=1)](LICENSE)
+[![License](https://img.shields.io/github/license/SMWHff/winrandr?color=green)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13-blue)](pyproject.toml)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)]()
 
@@ -57,6 +57,8 @@ uv run python -m winrandr --help
 | 命令 | 说明 |
 |------|------|
 | `winrandr` | 列出所有显示器（类 xrandr 风格） |
+| `winrandr -q` / `--query` | 查询当前显示状态（默认行为） |
+| `winrandr --current` | 查询当前显示状态 |
 | `winrandr --output DISPLAY1` | 查询指定显示器 |
 | `winrandr --listmodes` | 列出所有可用分辨率 |
 | `winrandr --prop` | 显示显示器扩展属性（设备 ID、状态标志等） |
@@ -90,6 +92,7 @@ DISPLAY2 disconnected
 | `--rotate DIR` | 旋转（normal/left/right/inverted） |
 | `--primary` | 设为主显示器 |
 | `--off` | 关闭显示器 |
+| `--auto` | 启用显示器并使用首选分辨率 |
 
 ### 相对定位
 
@@ -108,18 +111,20 @@ DISPLAY2 disconnected
 | `--brightness VAL` | 亮度（0.1–2.0，1.0 正常） |
 | `--gamma R:G:B` | 伽马校正（如 1.0:0.9:0.8） |
 | `--reflect xy` | 镜像翻转（等同旋转 180°） |
-| `--auto` | 启用显示器并使用首选分辨率 |
-| `--dry-run` | 模拟操作，不实际更改配置 |
 
 ### 其他
 
 | 命令 | 说明 |
 |------|------|
-| `--verbose, -v` | DEBUG 级别日志 |
+| `--verbose` / `-v` | DEBUG 级别日志 |
 | `--version` | 显示版本号 |
 | `--help` | 显示帮助 |
+| `--current` | 查询当前显示状态 |
+| `--prop` / `--properties` | 显示显示器扩展属性 |
+| `--dry-run` / `--dryrun` | 模拟操作，不实际更改配置 |
 | `--listproviders` | 列出 GPU 适配器 |
 | `--listmonitors` | 带编号的显示器列表 |
+| `--listactivemonitors` | 带编号的显示器列表（同 --listmonitors） |
 | `--json` | JSON 格式输出（脚本解析用） |
 
 ## 与 xrandr 对照
@@ -127,26 +132,52 @@ DISPLAY2 disconnected
 | xrandr | winrandr | 状态 |
 |--------|----------|------|
 | `xrandr` | `winrandr` | ✅ |
-| `--mode WxH` | `--mode WxH` | ✅ |
-| `--rate Hz` | `--rate Hz` | ✅ |
-| `--pos XxY` | `--pos XxY` | ✅ |
-| `--rotate` | `--rotate` | ✅ |
+| `-q` / `--query` | `-q` / `--query` | ✅ |
+| `--version` / `-v` | `--version` | ✅ |
+| `--verbose` | `--verbose, -v` | ✅ |
+| `--current` | `--current` | ✅ |
+| `--dryrun` | `--dry-run, --dryrun` | ✅ |
+| `--prop` / `--properties` | `--prop` | ✅ |
+| `--output NAME` | `--output, -o NAME` | ✅ |
+| `--auto` | `--auto` | ✅ |
+| `--mode WxH` | `--mode, -m, -s WxH` | ✅ |
+| `--preferred` | `--preferred` | ✅ |
+| `--pos XxY` | `--pos, -p XxY` | ✅ |
+| `--rate Hz` / `--refresh` | `--rate, -r Hz` | ✅ |
+| `--rotate normal\|inverted\|left\|right` | `--rotate normal\|inverted\|left\|right` | ✅ |
+| `--orientation` | `--orientation`（兼容参数） | ✅ |
+| `-s` / `--size` | `-s` / `--size`（同 `--mode`） | ✅ |
+| `--left-of` / `--right-of` | `--left-of` / `--right-of` | ✅ |
+| `--above` / `--below` | `--above` / `--below` | ✅ |
+| `--same-as` | `--same-as` | ✅ |
 | `--primary` | `--primary` | ✅ |
 | `--off` | `--off` | ✅ |
-| `--brightness` | `--brightness` | ✅ |
+| `--brightness VAL` | `--brightness VAL` | ✅ |
 | `--gamma r:g:b` | `--gamma R:G:B` | ✅ |
 | `--reflect xy` | `--reflect xy` | ✅ |
-| `--left-of / --right-of` | `--left-of / --right-of` | ✅ |
-| `--above / --below` | `--above / --below` | ✅ |
-| `--same-as` | `--same-as` | ✅ |
-| `--preferred` | `--preferred` | ✅ |
-| `--auto` | `--auto` | ✅ |
-| `--dry-run` | `--dry-run` | ✅ |
+| `--reflect normal` | `--reflect normal`（无操作） | ✅ |
+| `-x` / `-y` | `-x` / `-y`（兼容参数） | ⚠️ 同 `--reflect x\|y`，报错提示不支持 |
+| `--reflect x\|y` | — | ❌ 无标准 Win32 API |
 | `--listproviders` | `--listproviders` | ✅ |
 | `--listmonitors` | `--listmonitors` | ✅ |
-| `--reflect x\|y` | — | ❌ 无标准 Win32 API |
-| `--scale / --transform` | — | ❌ 无标准 Win32 API |
-| `--fb / --panning` | — | ❌ 无标准 Win32 API |
+| `--listactivemonitors` | `--listmonitors`（等效） | ⚠️ |
+| `--noprimary` | — | ❌ |
+| `--set <property> <value>` | — | ❌ 无标准 Win32 API |
+| `--scale WxH` | — | ❌ 无标准 Win32 API |
+| `--scale-from WxH` | — | ❌ 无标准 Win32 API |
+| `--transform a,b,c,d,e,f,g,h,i` | — | ❌ 无标准 Win32 API |
+| `--fb WxH` / `--fbmm WxH` | — | ❌ 无标准 Win32 API |
+| `--panning` | — | ❌ 无标准 Win32 API |
+| `--dpi DPI` | — | ❌ 无标准 Win32 API |
+| `--crtc CRTC` | — | ❌ 无标准 Win32 API |
+| `--screen SCREEN` | — | ❌ 无标准 Win32 API |
+| `--display DISPLAY` | — | ❌ 始终本地显示器 |
+| `--nograb` | — | ❌ Win32 无 X11 锁定机制 |
+| `--newmode` / `--rmmode` | — | ❌ 无标准 Win32 API |
+| `--addmode` / `--delmode` | — | ❌ 无标准 Win32 API |
+| `--setmonitor` / `--delmonitor` | — | ❌ 无标准 Win32 API |
+| `--setprovideroutputsource` | — | ❌ 无标准 Win32 API |
+| `--setprovideroffloadsink` | — | ❌ 无标准 Win32 API |
 
 ## 自动补全
 
