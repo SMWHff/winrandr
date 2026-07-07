@@ -7,7 +7,7 @@
 通过 Win32 API 管理显示器布局、分辨率、刷新率、旋转、亮度、伽马校正等
 
 [![Version](https://img.shields.io/github/v/release/SMWHff/winrandr?color=blue&label=version)](https://github.com/SMWHff/winrandr/releases)
-[![License](https://img.shields.io/github/license/SMWHff/winrandr?color=green)](LICENSE)
+[![License](https://img.shields.io/github/license/SMWHff/winrandr?color=green&cacheSeconds=1)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13-blue)](pyproject.toml)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)]()
 
