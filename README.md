@@ -10,7 +10,6 @@
 [![License](https://img.shields.io/github/license/SMWHff/winrandr?color=green)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13-blue)](pyproject.toml)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)]()
-[![CI](https://img.shields.io/github/actions/workflow/status/SMWHff/winrandr/test.yml?label=tests)](.github/workflows/test.yml)
 
 </div>
 
