@@ -67,18 +67,18 @@ uv run python -m winrandr --help
 输出示例：
 
 ```
-Screen 0: current 1920 x 1080
+Screen 0: minimum 320 x 200, current 1920 x 1080, maximum 32767 x 32767
 
- *DISPLAY1 connected 1920x1080+0+0 (normal) 527mm x 296mm (Generic PnP Monitor)
-   1920x1080  60.00*+
-   1680x1050  60.00
-   1280x1024  60.02
+DISPLAY1 connected primary 1920x1080+0+0 (normal left inverted right) 527mm x 296mm
+   1920x1080     60.00*+
+   1680x1050     60.00
+   1280x1024     60.02
    ...
 
-  DISPLAY2 disconnected
+DISPLAY2 disconnected
 ```
 
-标记说明：`*` = 当前模式，`+` = 首选模式
+标记说明：`*` = 当前模式，`+` = 首选模式，旋转列表 `(normal left inverted right)` 表示所有支持方向
 
 ### 显示器配置
 
@@ -121,6 +121,7 @@ Screen 0: current 1920 x 1080
 | `--version` | 显示版本号 |
 | `--help` | 显示帮助 |
 | `--listproviders` | 列出 GPU 适配器 |
+| `--listmonitors` | 带编号的显示器列表 |
 | `--json` | JSON 格式输出（脚本解析用） |
 
 ## 与 xrandr 对照
@@ -144,6 +145,7 @@ Screen 0: current 1920 x 1080
 | `--auto` | `--auto` | ✅ |
 | `--dry-run` | `--dry-run` | ✅ |
 | `--listproviders` | `--listproviders` | ✅ |
+| `--listmonitors` | `--listmonitors` | ✅ |
 | `--reflect x\|y` | — | ❌ 无标准 Win32 API |
 | `--scale / --transform` | — | ❌ 无标准 Win32 API |
 | `--fb / --panning` | — | ❌ 无标准 Win32 API |
@@ -171,7 +173,7 @@ bash scripts/build.sh
 
 ```bash
 bash scripts/test.sh        # 集成测试
-uv run pytest tests/ -v     # 单元测试（36 项）
+uv run pytest tests/ -v     # 单元测试（66 项）
 ```
 
 ## 技术栈
@@ -185,16 +187,17 @@ uv run pytest tests/ -v     # 单元测试（36 项）
 
 ```
 winrandr/
-├── cli.py              命令行入口 + xrandr 风格输出
-├── api.py              公开 API（查询、分辨率）
+├── cli.py              命令行入口 + 主流程编排
+├── api.py              公开 API（查询、分辨率、扩展属性）
+├── formatter.py        xrandr 风格格式化输出
+├── models.py           数据模型 (DisplayInfo, DisplayMode)
 ├── features/
 │   ├── gamma.py        亮度与伽马校正
 │   └── layout.py       布局管理（位置、旋转、主屏、关闭、相对定位）
-├── bindings.py         Win32 API 绑定
-├── structures.py       ctypes 结构体定义
-├── constants.py        Win32 常量与旋转映射
-├── models.py           数据模型
-└── py.typed            PEP 561 标记
+└── win32/              底层 Win32 绑定层
+    ├── constants.py    Win32 API 常量与旋转映射
+    ├── structures.py   ctypes 结构体定义
+    └── bindings.py     Win32 API 函数绑定 + 内部工具
 ```
 
 ## 已知限制

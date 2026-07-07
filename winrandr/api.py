@@ -4,19 +4,20 @@ import logging
 from ctypes import sizeof, byref
 
 from winrandr.models import DisplayMode, DisplayInfo
-from winrandr.constants import (
+from winrandr.win32.constants import (
     DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
     DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
     DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
     ROTATION_DEGREES,
-    CDS_UPDATEREGISTRY, DISP_CHANGE_SUCCESSFUL, ENUM_CURRENT_SETTINGS,
+    CDS_UPDATEREGISTRY, DISP_CHANGE_SUCCESSFUL, DISP_CHANGE_MESSAGES,
+    ENUM_CURRENT_SETTINGS,
     DISPLAY_DEVICE_ATTACHED_TO_DESKTOP, DISPLAY_DEVICE_PRIMARY_DEVICE,
     DISPLAY_DEVICE_MIRRORING_DRIVER, DISPLAY_DEVICE_VGA_COMPATIBLE,
     DISPLAY_DEVICE_REMOVABLE, DISPLAY_DEVICE_DISCONNECTED,
     DISPLAY_DEVICE_REMOTE, DISPLAY_DEVICE_MODESPRUNED,
 )
-from winrandr.structures import DEVMODE, DISPLAY_DEVICE
-from winrandr.bindings import (
+from winrandr.win32.structures import DEVMODE, DISPLAY_DEVICE
+from winrandr.win32.bindings import (
     query_active_config, query_all_config, get_gdi_name,
     get_friendly_name_via_enum, get_screen_size_mm,
     get_resolution_refresh_via_enum,
@@ -162,7 +163,8 @@ def set_resolution(device_name: str, width: int, height: int, refresh_rate: floa
 
     ret = _ChangeDisplaySettingsEx(device_name, byref(dm), None, CDS_UPDATEREGISTRY, None)
     if ret != DISP_CHANGE_SUCCESSFUL:
-        logger.error("应用分辨率失败，错误码: %d", ret)
+        msg = DISP_CHANGE_MESSAGES.get(ret, f"未知错误码 {ret}")
+        logger.error("应用分辨率失败: %s", msg)
         return False
     return True
 

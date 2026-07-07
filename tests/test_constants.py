@@ -1,6 +1,6 @@
 """测试常量与旋转映射的完整性。"""
 
-from winrandr.constants import (
+from winrandr.win32.constants import (
     ROTATION_MAP, ROTATION_NAMES, ROTATION_FROM_NAME, ROTATION_DEGREES,
     DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
     CDS_UPDATEREGISTRY, DISP_CHANGE_SUCCESSFUL, ENUM_CURRENT_SETTINGS,

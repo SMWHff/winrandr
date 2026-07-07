@@ -6,7 +6,7 @@ from ctypes import wintypes, byref, sizeof, POINTER
 
 logger = logging.getLogger(__name__)
 
-from winrandr.constants import (
+from winrandr.win32.constants import (
     QDC_ONLY_ACTIVE_PATHS, QDC_ALL_PATHS,
     SDC_APPLY, SDC_USE_SUPPLIED_DISPLAY_CONFIG,
     SDC_SAVE_TO_DATABASE, SDC_ALLOW_CHANGES,
@@ -16,7 +16,7 @@ from winrandr.constants import (
     DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
     ENUM_CURRENT_SETTINGS,
 )
-from winrandr.structures import (
+from winrandr.win32.structures import (
     DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO,
     DISPLAYCONFIG_SOURCE_DEVICE_NAME, DISPLAYCONFIG_TARGET_DEVICE_NAME,
     DISPLAYCONFIG_ADAPTER_NAME,
@@ -256,7 +256,7 @@ def find_path_idx(paths, count, device_name):
 
 def filter_valid_paths(paths, path_count, modes, mode_count):
     """过滤出有效路径：mode 索引需指向对应类型的 mode 条目。"""
-    from winrandr.constants import (
+    from winrandr.win32.constants import (
         DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
         DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
     )

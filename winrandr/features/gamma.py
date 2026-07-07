@@ -3,7 +3,7 @@
 import logging
 from ctypes import c_uint16
 
-from winrandr.bindings import _CreateDCW, _DeleteDC, _GetDeviceGammaRamp, _SetDeviceGammaRamp
+from winrandr.win32.bindings import _CreateDCW, _DeleteDC, _GetDeviceGammaRamp, _SetDeviceGammaRamp
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,4 @@
 """CLI 入口：argparse 解析 + xrandr 风格输出格式化。"""
-
 import argparse
 import sys
 import os
@@ -12,9 +11,8 @@ from winrandr.api import (
     set_primary, set_off, set_brightness, set_gamma, set_reflect,
     set_auto, list_providers, get_display_props,
 )
-from winrandr.constants import ROTATION_FROM_NAME
-from winrandr.formatter import format_displays, _short_name
-
+from winrandr.win32.constants import ROTATION_FROM_NAME
+from winrandr.formatter import format_displays, format_monitor_list, _short_name
 
 def _setup_logging():
     log_dir = os.path.normpath(
@@ -30,7 +28,6 @@ def _setup_logging():
         ],
     )
 
-
 def _normalize_name(name: str) -> str:
     n = name.strip().upper()
     prefix = "\\\\.\\"
@@ -39,7 +36,6 @@ def _normalize_name(name: str) -> str:
     if n.startswith("DISPLAY"):
         return prefix + n
     return prefix + "DISPLAY" + n if n.isdigit() else name
-
 
 def _build_parser():
     parser = argparse.ArgumentParser(
@@ -111,13 +107,12 @@ def _build_parser():
     rel_group.add_argument("--below", metavar="REF", help="放在参考显示器下方")
     rel_group.add_argument("--same-as", metavar="REF", help="与参考显示器同位置（镜像）")
     parser.add_argument("--listproviders", action="store_true", help="列出 GPU 适配器")
+    parser.add_argument("--listmonitors", action="store_true", help="列出带编号的显示器列表")
     return parser
-
 
 def _fail(msg: str):
     print(f"错误: {msg}", file=sys.stderr)
     sys.exit(1)
-
 
 def main():
     parser = _build_parser()
@@ -156,6 +151,14 @@ def main():
             print("Providers:")
             for i, p in enumerate(providers):
                 print(f"  Provider {i}: {p['string']} ({p['name']})")
+        return
+
+    if args.listmonitors:
+        displays = list_displays()
+        if not displays:
+            print("未检测到显示器。")
+        else:
+            print(format_monitor_list(displays))
         return
 
     if not any(mod_ops):
@@ -248,6 +251,8 @@ def main():
         print(f"已关闭 {args.output}")
 
     if args.brightness is not None:
+        if args.brightness < 0.1 or args.brightness > 2.0:
+            print(f"警告: 亮度值 {args.brightness} 超出建议范围 0.1-2.0", file=sys.stderr)
         if not args.dry_run:
             if not set_brightness(device_name, args.brightness):
                 _fail("设置亮度失败（伽马表可能不可用）")
@@ -292,4 +297,5 @@ def main():
             break
 
 if __name__ == "__main__":
+    main()
     main()

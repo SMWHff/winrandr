@@ -2,12 +2,12 @@
 
 import logging
 
-from winrandr.bindings import (
+from winrandr.win32.bindings import (
     set_display_config_available, query_active_config, get_gdi_name,
     find_path_idx, apply_filtered, apply_config,
 )
-from winrandr.constants import ROTATION_MAP, DISPLAYCONFIG_PATH_MODE_IDX_INVALID
-from winrandr.structures import DISPLAYCONFIG_PATH_INFO
+from winrandr.win32.constants import ROTATION_MAP, DISPLAYCONFIG_PATH_MODE_IDX_INVALID
+from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO
 
 logger = logging.getLogger(__name__)
 

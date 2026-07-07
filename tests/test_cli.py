@@ -289,3 +289,16 @@ def test_parser_prop_with_output():
     args = p.parse_args(["-o", "DISPLAY1", "--prop"])
     assert args.prop is True
     assert args.output == "DISPLAY1"
+
+
+def test_parser_listmonitors():
+    p = _build_parser()
+    args = p.parse_args(["--listmonitors"])
+    assert args.listmonitors is True
+
+
+def test_parser_brightness_warn_low():
+    """--brightness 低于 0.1 时应有警告，但仍可被解析。"""
+    p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "--brightness", "0.05"])
+    assert args.brightness == 0.05

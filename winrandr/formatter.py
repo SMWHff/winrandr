@@ -1,10 +1,40 @@
 """xrandr 风格的显示器信息格式化输出。"""
 
-from winrandr.constants import ROTATION_FROM_NAME
+from winrandr.win32.constants import ROTATION_NAMES, ROTATION_DEGREES
+
+
+# 角度 → SDK 常量 ID 反向映射
+_DEG_TO_ID = {v: k for k, v in ROTATION_DEGREES.items()}
+
+_ALL_ROTATIONS = "normal left inverted right"
 
 
 def _short_name(name: str) -> str:
     return name.replace("\\\\.\\", "").strip()
+
+
+def format_monitor_list(displays) -> str:
+    """--listmonitors 格式：带编号的显示器列表。"""
+    connected = [d for d in displays if d.connected]
+    lines = [f"Monitors: {len(connected)}"]
+    for i, d in enumerate(connected):
+        name = _short_name(d.name)
+        pri = "*" if d.is_primary else " "
+        mm_w = d.width_mm or 0
+        mm_h = d.height_mm or 0
+        lines.append(
+            f" {i}: +{pri}{name} {d.width}/{mm_w}"
+            f"x{d.height}/{mm_h}+{d.position_x}+{d.position_y}  {name}"
+        )
+    return "\n".join(lines)
+
+
+def _rotation_part(degrees: int) -> str:
+    """构建 xrandr 风格的旋转信息片段。"""
+    if degrees == 0:
+        return f"({_ALL_ROTATIONS})"
+    name = ROTATION_NAMES.get(_DEG_TO_ID.get(degrees, 1), "normal")
+    return f"{name} ({_ALL_ROTATIONS})"
 
 
 def format_displays(displays) -> str:
@@ -34,9 +64,16 @@ def format_displays(displays) -> str:
             mm = ""
             if d.width_mm and d.height_mm:
                 mm = f" {d.width_mm}mm x {d.height_mm}mm"
+
+            # 旋转时交换宽高显示
+            if d.rotation in (90, 270):
+                disp_w, disp_h = d.height, d.width
+            else:
+                disp_w, disp_h = d.width, d.height
+
             lines.append(
-                f"{name} {status} {primary}{d.width}x{d.height}"
-                f"+{d.position_x}+{d.position_y} (normal){mm}"
+                f"{name} {status} {primary}{disp_w}x{disp_h}"
+                f"+{d.position_x}+{d.position_y} {_rotation_part(d.rotation)}{mm}"
             )
             if d.modes:
                 _fmt_modes(lines, d.modes)

@@ -1,6 +1,6 @@
 """winrandr — Windows xrandr-like display configuration tool."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from winrandr.models import DisplayInfo
 from winrandr.api import (
@@ -19,4 +19,4 @@ from winrandr.api import (
     list_providers,
     get_display_props,
 )
-from winrandr.constants import ROTATION_NAMES, ROTATION_FROM_NAME
+from winrandr.win32.constants import ROTATION_NAMES, ROTATION_FROM_NAME

@@ -6,7 +6,7 @@ from ctypes import (
     c_uint32, c_uint64,
 )
 
-from winrandr.constants import CCHDEVICENAME
+from winrandr.win32.constants import CCHDEVICENAME
 
 
 class LUID(Structure):

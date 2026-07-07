@@ -38,7 +38,25 @@ ROTATION_DEGREES = {1: 0, 2: 90, 3: 180, 4: 270}
 # ChangeDisplaySettingsEx
 CDS_UPDATEREGISTRY = 0x00000001
 DISP_CHANGE_SUCCESSFUL = 0
+DISP_CHANGE_RESTART = 1
+DISP_CHANGE_FAILED = -1
+DISP_CHANGE_BADMODE = -2
+DISP_CHANGE_NOTUPDATED = -3
+DISP_CHANGE_BADFLAGS = -4
+DISP_CHANGE_BADPARAM = -5
+DISP_CHANGE_BADDUALVIEW = -6
 ENUM_CURRENT_SETTINGS = 0xFFFFFFFF
+
+DISP_CHANGE_MESSAGES = {
+    0: "操作成功",
+    1: "需要重启系统才能生效",
+    -1: "变更失败",
+    -2: "不支持该显示模式（分辨率/刷新率组合无效）",
+    -3: "无法写入注册表",
+    -4: "参数标志无效",
+    -5: "参数格式错误",
+    -6: "不支持双显配置",
+}
 
 # Device name buffer size
 CCHDEVICENAME = 32

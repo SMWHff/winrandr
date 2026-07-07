@@ -72,6 +72,7 @@ Register-ArgumentCompleter -Native -CommandName winrandr, winrandr.exe, python -
         [PSCustomObject]@{Option='--auto';           Description='启用显示器（首选分辨率）'}
         [PSCustomObject]@{Option='--dry-run';        Description='模拟操作，不实际更改'}
         [PSCustomObject]@{Option='--listproviders';  Description='列出 GPU 适配器'}
+        [PSCustomObject]@{Option='--listmonitors';  Description='列出带编号的显示器'}
     )
 
     # 过滤：只返回尚未使用的参数 + 匹配当前输入
