@@ -25,4 +25,10 @@ echo "CLI 参数正常"
 echo ""
 echo "==> 列出显示器..."
 uv run python -m winrandr 2>/dev/null || echo "(查询失败——可能在无显示器环境)"
+
+echo ""
+echo "==> 运行 pytest..."
+uv run pytest tests/ -v
+
+echo ""
 echo "测试完成！"

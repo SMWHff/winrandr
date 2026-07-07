@@ -39,7 +39,12 @@ winrandr = "winrandr.cli:main"
 [tool.uv]
 
 [dependency-groups]
-dev = ["nuitka>=2.6"]
+dev = ["nuitka>=2.6", "pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.nuitka]
 onefile = true
