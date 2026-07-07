@@ -38,11 +38,9 @@ winrandr --output DISPLAY1 --brightness 0.8 --gamma 1.0:0.9:0.8
 
 从 [Releases](https://github.com/SMWHff/winrandr/releases) 下载 `winrandr.exe`，放入 PATH 目录即可使用。
 
-### pip 安装
+### pip 安装（暂不支持）
 
-```bash
-pip install winrandr
-```
+`winrandr` 尚未发布到 PyPI，pip 安装暂不可用。请使用 exe 或源码方式运行。
 
 ### 源码运行
 

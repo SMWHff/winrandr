@@ -32,7 +32,7 @@ bash scripts/test.sh
 ## 架构分层
 
 ```
-main.py                   入口委托（转发到 winrandr.cli），已弃用
+main.py                   简易入口，转发到 winrandr.cli（主要用 `python -m winrandr`）
 winrandr/                 核心包
 ├── __init__.py           版本号 + 公开 API 重导出
 ├── __main__.py           python -m winrandr 入口
@@ -51,13 +51,13 @@ winrandr/                 核心包
     └── bindings.py       Win32 API 函数绑定 + 内部工具函数
 
 tests/                    测试
-├── test_cli.py           CLI 参数解析测试（42+ 项）
+├── test_cli.py           CLI 参数解析测试（44+ 项）
 ├── test_formatter.py     格式化输出测试
 ├── test_constants.py     常量与旋转映射一致性测试
 └── test_models.py        数据模型测试
 
 scripts/
-├── build.sh              构建 exe（旧版入口，引用了 main.py）
+├── build.sh              构建 exe（引用 main.py，适用 Python<3.13 的 MinGW 路径）
 ├── test.sh               集成测试脚本
 ├── run.sh                uv run main.py 快捷脚本
 └── completions.ps1       PowerShell Tab 补全
