@@ -30,3 +30,4 @@ class DisplayInfo:
     width_mm: int = 0
     height_mm: int = 0
     modes: list[DisplayMode] = field(default_factory=list)
+    properties: dict | None = None

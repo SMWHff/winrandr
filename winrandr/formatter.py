@@ -53,9 +53,19 @@ def format_displays(displays, list_modes: bool = False) -> str:
             if rr_str:
                 lines.append(f"   {rr_str}")
 
+        if d.properties:
+            _fmt_props(lines, d.properties)
+
         lines.append("")
 
     return "\n".join(lines)
+
+
+def _fmt_props(lines: list[str], props: dict) -> None:
+    """格式化扩展属性。"""
+    for key, val in props.items():
+        label = key.replace("_", " ")
+        lines.append(f"    {label}: {val}")
 
 
 def _fmt_modes(lines: list[str], modes) -> None:

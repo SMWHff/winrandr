@@ -152,11 +152,30 @@ Add-Content $PROFILE "`n. 'C:\path\to\winrandr\scripts\completions.ps1'"
 
 支持参数名、显示器名（从 `winrandr --json` 动态获取）的 Tab 补全。
 
+### 扩展属性
+
+```bash
+winrandr --prop
+```
+
+输出包含显示器设备 ID、状态标志、适配器路径等扩展信息：
+
+```
+Screen 0: current 1924 x 1080, dpi 93x93
+
+ *DISPLAY1 connected 1920x1080+4+0 (normal) 527mm x 296mm (Generic PnP Monitor)
+     60.0 Hz
+    device id: MONITOR\AOC2411\{...}
+    state flags: attached
+    adapter: PCI\VEN_8086&DEV_5912\...
+```
+
 ### JSON 输出
 
 ```bash
 winrandr --json
 winrandr --listmodes --json
+winrandr --prop --json         # 包含扩展属性
 ```
 
 适用于脚本解析，输出所有显示器信息及可用模式的完整 JSON。

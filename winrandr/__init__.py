@@ -17,5 +17,6 @@ from winrandr.api import (
     set_gamma,
     set_reflect,
     list_providers,
+    get_display_props,
 )
 from winrandr.constants import ROTATION_NAMES, ROTATION_FROM_NAME

@@ -203,3 +203,16 @@ def test_parser_auto_dry_run():
     args = p.parse_args(["-o", "DISPLAY1", "--auto", "--dry-run"])
     assert args.auto is True
     assert args.dry_run is True
+
+
+def test_parser_prop():
+    p = _build_parser()
+    args = p.parse_args(["--prop"])
+    assert args.prop is True
+
+
+def test_parser_prop_with_output():
+    p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "--prop"])
+    assert args.prop is True
+    assert args.output == "DISPLAY1"

@@ -119,12 +119,19 @@ class DISPLAYCONFIG_TARGET_DEVICE_NAME(Structure):
         ("header", DISPLAYCONFIG_DEVICE_INFO_HEADER),
         ("monitorFriendlyDeviceName", wintypes.WCHAR * 64),
         ("monitorDevicePath", wintypes.WCHAR * 128),
-        ("_pad", wintypes.BYTE * 200),
+        ("targetFlags", c_uint32),
     ]
 
     @property
     def friendly_name(self) -> str:
         return self.monitorFriendlyDeviceName
+
+
+class DISPLAYCONFIG_ADAPTER_NAME(Structure):
+    _fields_ = [
+        ("header", DISPLAYCONFIG_DEVICE_INFO_HEADER),
+        ("adapterDevicePath", wintypes.WCHAR * 128),
+    ]
 
 
 class DISPLAY_DEVICE(Structure):

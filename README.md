@@ -61,6 +61,7 @@ uv run python -m winrandr --help
 | `winrandr` | 列出所有显示器（类 xrandr 风格） |
 | `winrandr --output DISPLAY1` | 查询指定显示器 |
 | `winrandr --listmodes` | 列出所有可用分辨率 |
+| `winrandr --prop` | 显示显示器扩展属性（设备 ID、状态标志等） |
 | `winrandr --json` | JSON 格式输出（脚本解析用） |
 
 输出示例：

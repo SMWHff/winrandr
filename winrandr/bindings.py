@@ -11,12 +11,15 @@ from winrandr.constants import (
     SDC_APPLY, SDC_USE_SUPPLIED_DISPLAY_CONFIG,
     SDC_SAVE_TO_DATABASE, SDC_ALLOW_CHANGES,
     DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME,
+    DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME,
+    DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME,
     DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
     ENUM_CURRENT_SETTINGS,
 )
 from winrandr.structures import (
     DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO,
     DISPLAYCONFIG_SOURCE_DEVICE_NAME, DISPLAYCONFIG_TARGET_DEVICE_NAME,
+    DISPLAYCONFIG_ADAPTER_NAME,
     DISPLAYCONFIG_DEVICE_INFO_HEADER,
     DISPLAY_DEVICE, DEVMODE, LUID, c_uint32,
 )
@@ -102,6 +105,28 @@ def get_gdi_name(path) -> str:
     name.header.id = path.sourceInfo.id
     ret = _DisplayConfigGetDeviceInfo(byref(name.header))
     return name.viewGdiDeviceName if ret == 0 else ""
+
+
+def get_adapter_name(path) -> str:
+    """获取路径对应的 GPU 适配器名称。"""
+    name = DISPLAYCONFIG_ADAPTER_NAME()
+    name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME
+    name.header.size = sizeof(DISPLAYCONFIG_ADAPTER_NAME)
+    name.header.adapterId = path.sourceInfo.adapterId
+    name.header.id = path.sourceInfo.id
+    ret = _DisplayConfigGetDeviceInfo(byref(name.header))
+    return name.adapterDevicePath if ret == 0 else ""
+
+
+def get_monitor_device_path(path) -> str:
+    """获取路径对应的显示器设备路径。"""
+    tname = DISPLAYCONFIG_TARGET_DEVICE_NAME()
+    tname.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME
+    tname.header.size = sizeof(DISPLAYCONFIG_TARGET_DEVICE_NAME)
+    tname.header.adapterId = path.targetInfo.adapterId
+    tname.header.id = path.targetInfo.id
+    ret = _DisplayConfigGetDeviceInfo(byref(tname.header))
+    return tname.monitorDevicePath if ret == 0 else ""
 
 
 def query_active_config():

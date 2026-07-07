@@ -10,7 +10,7 @@ from winrandr.api import (
     list_displays, set_resolution, set_preferred_resolution,
     set_position, set_position_relative, set_rotation,
     set_primary, set_off, set_brightness, set_gamma, set_reflect,
-    set_auto, list_providers,
+    set_auto, list_providers, get_display_props,
 )
 from winrandr.constants import ROTATION_FROM_NAME
 from winrandr.formatter import format_displays, _short_name
@@ -65,6 +65,7 @@ def _build_parser():
     )
     parser.add_argument("--version", action="version", version=f"winrandr {__version__}")
     parser.add_argument("--listmodes", action="store_true", help="列出每个显示器所有可用分辨率")
+    parser.add_argument("--prop", action="store_true", help="显示显示器扩展属性（设备 ID、状态标志等）")
     parser.add_argument("--dry-run", action="store_true", help="模拟操作，不实际更改配置")
     parser.add_argument("--verbose", "-v", action="store_true", help="详细日志输出（调试用）")
     parser.add_argument("--output", "-o", help="显示器名（如 DISPLAY1）")
@@ -141,6 +142,9 @@ def main():
             displays = [d for d in displays if d.name == device_name]
             if not displays:
                 _fail(f"未找到显示器: {args.output}")
+        if args.prop:
+            for d in displays:
+                d.properties = get_display_props(d.name)
         if args.json:
             from dataclasses import asdict
             import json

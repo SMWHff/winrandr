@@ -41,3 +41,25 @@ def test_format_displays_disconnected():
     out = format_displays(displays)
     assert "DISPLAY1" in out
     assert "disconnected" in out
+
+
+def test_format_displays_with_props():
+    displays = [
+        DisplayInfo(
+            name=r"\\.\DISPLAY1", friendly_name="Test Monitor",
+            width=1920, height=1080, refresh_rate=60.0,
+            position_x=0, position_y=0,
+            is_primary=True, rotation=0,
+            width_mm=527, height_mm=296, connected=True,
+            modes=[],
+            properties={
+                "device_id": "MONITOR\\TEST123",
+                "state_flags": "attached, primary",
+                "adapter": "PCI\\VEN_1234",
+            },
+        ),
+    ]
+    out = format_displays(displays, list_modes=False)
+    assert "device id: MONITOR\\TEST123" in out
+    assert "state flags: attached, primary" in out
+    assert "adapter: PCI\\VEN_1234" in out

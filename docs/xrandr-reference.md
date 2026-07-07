@@ -197,6 +197,7 @@ HDMI-1 disconnected
 | `--gamma r:g:b` | `--gamma` | ✅ |
 | `--preferred` | `--preferred` | ✅ |
 | `--verbose` | `--verbose, -v` | ✅ |
+| `--prop` | `--prop` | ✅ （显示设备 ID、状态标志） |
 | `--auto` | `--auto` | ✅ |
 | `--dry-run` | `--dry-run` | ✅ |
 | `--listproviders` | `--listproviders` | ✅ |

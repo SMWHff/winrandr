@@ -44,6 +44,7 @@ Register-ArgumentCompleter -Native -CommandName winrandr, winrandr.exe, python -
         [PSCustomObject]@{Option='--help';          Description='显示帮助'}
         [PSCustomObject]@{Option='--version';        Description='显示版本号'}
         [PSCustomObject]@{Option='--listmodes';      Description='列出所有可用分辨率'}
+        [PSCustomObject]@{Option='--prop';           Description='显示显示器扩展属性'}
         [PSCustomObject]@{Option='--output';         Description='选择显示器'; NeedsArg=$true}
         [PSCustomObject]@{Option='--mode';           Description='设置分辨率'; NeedsArg=$true}
         [PSCustomObject]@{Option='--rate';           Description='设置刷新率'; NeedsArg=$true}

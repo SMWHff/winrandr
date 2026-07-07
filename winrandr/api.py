@@ -10,12 +10,17 @@ from winrandr.constants import (
     DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
     ROTATION_DEGREES,
     CDS_UPDATEREGISTRY, DISP_CHANGE_SUCCESSFUL, ENUM_CURRENT_SETTINGS,
+    DISPLAY_DEVICE_ATTACHED_TO_DESKTOP, DISPLAY_DEVICE_PRIMARY_DEVICE,
+    DISPLAY_DEVICE_MIRRORING_DRIVER, DISPLAY_DEVICE_VGA_COMPATIBLE,
+    DISPLAY_DEVICE_REMOVABLE, DISPLAY_DEVICE_DISCONNECTED,
+    DISPLAY_DEVICE_REMOTE, DISPLAY_DEVICE_MODESPRUNED,
 )
 from winrandr.structures import DEVMODE, DISPLAY_DEVICE
 from winrandr.bindings import (
-    query_active_config, get_gdi_name,
+    query_active_config, query_all_config, get_gdi_name,
     get_friendly_name_via_enum, get_screen_size_mm,
     get_resolution_refresh_via_enum,
+    get_adapter_name, get_monitor_device_path,
     _ChangeDisplaySettingsEx, _EnumDisplaySettings, _EnumDisplayDevices,
 )
 
@@ -180,6 +185,55 @@ def set_preferred_resolution(device_name: str) -> bool:
 def set_auto(device_name: str) -> bool:
     """启用显示器并使用首选分辨率（等效于 xrandr --auto）。"""
     return set_preferred_resolution(device_name)
+
+
+def get_display_props(device_name: str) -> dict:
+    """获取指定显示器的扩展属性（用于 --prop）。"""
+    props = {}
+
+    # 通过 EnumDisplayDevices 获取 DeviceID 和状态标志
+    dd = DISPLAY_DEVICE()
+    dd.cb = sizeof(DISPLAY_DEVICE)
+    if _EnumDisplayDevices(device_name, 0, byref(dd), 0):
+        if dd.DeviceID:
+            props["device_id"] = dd.DeviceID
+        # 解码 StateFlags
+        flags = []
+        if dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP:
+            flags.append("attached")
+        if dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE:
+            flags.append("primary")
+        if dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER:
+            flags.append("mirroring")
+        if dd.StateFlags & DISPLAY_DEVICE_REMOVABLE:
+            flags.append("removable")
+        if dd.StateFlags & DISPLAY_DEVICE_DISCONNECTED:
+            flags.append("disconnected")
+        if dd.StateFlags & DISPLAY_DEVICE_REMOTE:
+            flags.append("remote")
+        if dd.StateFlags & DISPLAY_DEVICE_VGA_COMPATIBLE:
+            flags.append("vga")
+        if dd.StateFlags & DISPLAY_DEVICE_MODESPRUNED:
+            flags.append("modes_pruned")
+        if flags:
+            props["state_flags"] = ", ".join(flags)
+
+    # 通过 QDC 获取适配器名称和显示器设备路径
+    config = query_all_config()
+    if config:
+        paths, modes, path_count, mode_count = config
+        for i in range(path_count):
+            gdi_name = get_gdi_name(paths[i])
+            if gdi_name == device_name:
+                adapter = get_adapter_name(paths[i])
+                if adapter:
+                    props["adapter"] = adapter
+                mon_path = get_monitor_device_path(paths[i])
+                if mon_path:
+                    props["monitor_path"] = mon_path
+                break
+
+    return props
 
 
 def list_providers() -> list[dict]:
