@@ -110,6 +110,16 @@ winrandr --output DISPLAY1 --preferred
 winrandr --output DISPLAY1 --off
 ```
 
+### Shell 自动补全（PowerShell）
+
+```powershell
+. ./scripts/completions.ps1
+# 或永久生效：
+Add-Content $PROFILE "`n. 'C:\path\to\winrandr\scripts\completions.ps1'"
+```
+
+支持参数名、显示器名（从 `winrandr --json` 动态获取）的 Tab 补全。
+
 ### JSON 输出
 
 ```bash

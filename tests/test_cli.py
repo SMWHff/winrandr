@@ -140,6 +140,21 @@ def test_parser_short_opts():
     assert args.pos == "0x0"
 
 
+def test_fmt_modes_preferred_flag():
+    """验证 + 标记始终在首选模式上，不受 has_cur 影响。"""
+    from winrandr.models import DisplayMode
+    from winrandr.cli import _fmt_modes
+    modes = [
+        DisplayMode(1920, 1080, 60.0, is_current=True, is_preferred=False),
+        DisplayMode(1920, 1080, 59.94, is_current=False, is_preferred=True),
+    ]
+    lines = []
+    _fmt_modes(lines, modes)
+    out = "\n".join(lines)
+    assert "60.00*" in out, "当前模式应有 *"
+    assert "59.94+" in out, "首选模式应有 +（即使非当前）"
+
+
 def test_normalize_name_edge_cases():
     assert _normalize_name("DISPLAY1") == r"\\.\DISPLAY1"
     assert _normalize_name(r"\\.\DISPLAY1") == r"\\.\DISPLAY1"

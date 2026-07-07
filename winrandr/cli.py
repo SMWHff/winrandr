@@ -95,13 +95,12 @@ def _fmt_modes(lines, modes):
 
     for (w, h), mlist in sorted(grouped.items()):
         rates = []
-        has_cur = any(m.is_current for m in mlist)
         for m in sorted(mlist, key=lambda x: -x.refresh_rate):
             tag = ""
             if m.is_current:
                 tag += "*"
-            if has_cur:
-                tag += "+" if m.is_preferred else ""
+            if m.is_preferred:
+                tag += "+"
             rates.append(f"{m.refresh_rate:.2f}{tag}")
         lines.append(f"   {w}x{h}  {' '.join(rates)}")
 
