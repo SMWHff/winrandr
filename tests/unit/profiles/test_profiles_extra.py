@@ -71,7 +71,8 @@ def test_profile_json_roundtrip(temp_profiles):
     with patch("winrandr.profiles.list_displays", return_value=[d1]):
         save_profile("roundtrip")
 
-    raw = json.load(open(temp_profiles, encoding="utf-8"))
+    with open(temp_profiles, encoding="utf-8") as f:
+        raw = json.load(f)
     assert "roundtrip" in raw
     entry = raw["roundtrip"]
     assert entry["displays"][0]["width"] == 1920
