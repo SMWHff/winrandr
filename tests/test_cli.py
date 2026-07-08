@@ -154,3 +154,74 @@ def test_mod_op_attrs_consistency():
     ns = _ns()
     for attr in _MOD_OP_ATTRS:
         assert not getattr(ns, attr, None), f"{attr} 应默认为空"
+
+
+# --- main() 集成测试（mock Win32 API）---
+
+from unittest.mock import patch
+from winrandr.models import DisplayInfo, DisplayMode
+from winrandr.cli import main as cli_main
+
+
+def _fake_display(name="DISPLAY1", connected=True, **kw):
+    """创建假 DisplayInfo 用于测试。"""
+    defaults = dict(name=rf"\\.\{name}", friendly_name="Fake Monitor",
+                    connected=connected, width=1920, height=1080,
+                    refresh_rate=60.0, position_x=0, position_y=0,
+                    is_primary=True, rotation=0, width_mm=527, height_mm=296,
+                    modes=[DisplayMode(1920, 1080, 60.0, True, True)])
+    defaults.update(kw)
+    return DisplayInfo(**defaults)
+
+
+def test_main_query_show_displays():
+    """main() 查询模式应打印显示器信息。"""
+    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
+        with patch("sys.argv", ["winrandr"]):
+            cli_main()  # 不应抛出异常
+
+
+def test_main_dry_run_set_resolution():
+    """dry-run 模式不实际修改 set_resolution 不被调用。"""
+    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
+        with patch("winrandr.cli.set_resolution", return_value=True) as mock_set:
+            with patch("sys.argv", ["winrandr", "--output", "DISPLAY1", "--mode", "1920x1080", "--dry-run"]):
+                cli_main()
+            assert mock_set.called is False
+
+
+def test_main_dry_run_set_position():
+    """dry-run 模式设置位置不应调用 set_position。"""
+    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
+        with patch("winrandr.cli.set_position", return_value=True) as mock_set:
+            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "-p", "1920x0", "--dry-run"]):
+                cli_main()
+            assert mock_set.called is False
+
+
+def test_main_invalid_output():
+    """无效 --output 应报错退出。"""
+    with patch("winrandr.cli.list_displays", return_value=[_fake_display("DISPLAY1")]):
+        with patch("winrandr.cli.list_providers", return_value=[]):
+            with pytest.raises(SystemExit):
+                with patch("sys.argv", ["winrandr", "--output", "DISPLAY99", "--mode", "1920x1080"]):
+                    cli_main()
+
+
+def test_main_noprimary_standalone():
+    """--noprimary 单独使用 dry-run 不调用 set_noprimary。"""
+    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
+        with patch("winrandr.cli.set_noprimary", return_value=True) as mock_set:
+            with patch("sys.argv", ["winrandr", "--noprimary", "--dry-run"]):
+                cli_main()
+            assert mock_set.called is False
+
+
+def test_main_noprimary_with_mode():
+    """--noprimary 与 --mode 一起使用时继续执行 mode 操作。"""
+    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
+        with patch("winrandr.cli.set_noprimary", return_value=True):
+            with patch("winrandr.cli.set_resolution", return_value=True) as mock_set:
+                with patch("sys.argv", ["winrandr", "--noprimary", "-o", "DISPLAY1", "-m", "1920x1080", "--dry-run"]):
+                    cli_main()
+                assert mock_set.called is False
