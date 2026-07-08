@@ -193,7 +193,7 @@ def get_display_props(device_name: str) -> dict[str, str]:
 
     config = query_all_config()
     if config:
-        paths, modes, path_count, mode_count = config
+        paths, _modes, path_count, _mode_count = config
         for i in range(path_count):
             gdi_name = get_gdi_name(paths[i])
             if gdi_name == device_name:

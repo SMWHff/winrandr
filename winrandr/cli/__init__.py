@@ -225,10 +225,10 @@ def main() -> None:  # noqa: C901  # 调度型函数，分支复杂度本质
         return
 
     # 全局操作：亮度/伽马可不带 --output，应用到所有已连接显示器
-    _GLOBAL_ONLY_ATTRS = frozenset({"brightness", "gamma"})
+    _global_only_attrs = frozenset({"brightness", "gamma"})
     if not args.output:
         mod_attrs = {a for a in _MOD_OP_ATTRS if getattr(args, a, None)}
-        if mod_attrs and mod_attrs.issubset(_GLOBAL_ONLY_ATTRS):
+        if mod_attrs and mod_attrs.issubset(_global_only_attrs):
             _handle_global_ops(args)
             return
         parser.error("--output 为必填参数")

@@ -112,7 +112,8 @@ def test_rel_position_below():
 
 def test_rel_position_above():
     with patch("winrandr.api.set_position", return_value=True) as mock_sp:
-        with patch("winrandr.api.list_displays", return_value=[_disp("DISPLAY1", h=1080), _disp("DISPLAY2", x=0, y=1080)]):
+        displays = [_disp("DISPLAY1", h=1080), _disp("DISPLAY2", x=0, y=1080)]
+        with patch("winrandr.api.list_displays", return_value=displays):
             assert set_position_relative(r"\\.\DISPLAY1", r"\\.\DISPLAY2", "above") is True
             mock_sp.assert_called_once_with(r"\\.\DISPLAY1", 0, 1080 - 1080)
 

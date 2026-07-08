@@ -8,10 +8,14 @@ import pytest
 
 from winrandr.models import DisplayInfo, DisplayMode
 from winrandr.profiles import (
-    _load_all, _save_all,
-    diff_profile, get_profile_names,
-    list_profiles, load_profile,
-    preview_save, save_profile,
+    _load_all,
+    _save_all,
+    diff_profile,
+    get_profile_names,
+    list_profiles,
+    load_profile,
+    preview_save,
+    save_profile,
 )
 
 

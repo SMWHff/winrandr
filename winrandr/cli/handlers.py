@@ -33,7 +33,11 @@ def _setup_logging() -> None:
     os.makedirs(log_dir, exist_ok=True)
     root.setLevel(logging.WARNING)
     fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-    for h in (logging.FileHandler(os.path.join(log_dir, "winrandr.log"), encoding="utf-8", delay=True), logging.StreamHandler(sys.stderr)):
+    handlers = [
+        logging.FileHandler(os.path.join(log_dir, "winrandr.log"), encoding="utf-8", delay=True),
+        logging.StreamHandler(sys.stderr),
+    ]
+    for h in handlers:
         h.setFormatter(fmt)
         root.addHandler(h)
 
@@ -89,7 +93,8 @@ def _apply_aliases(args: Namespace) -> None:
     if args.size and not args.mode:
         args.mode = args.size
     if args.orientation and not args.rotate:
-        args.rotate = {"0": "normal", "1": "normal", "2": "inverted", "3": "left"}.get(args.orientation, args.orientation)
+        _ori = {"0": "normal", "1": "normal", "2": "inverted", "3": "left"}
+        args.rotate = _ori.get(args.orientation, args.orientation)
     if args.listactivemonitors:
         args.listmonitors = True
     if args.reflect == "normal":
@@ -123,7 +128,11 @@ def _handle_mode(args: Namespace, dn: str) -> None:
         _fail("--mode 格式错误", ["正确格式: WIDTHxHEIGHT（如 1920x1080）"])
     rate = args.rate or 0
     if not args.dry_run and not set_resolution(dn, w, h, rate):
-        _fail("设置分辨率失败", ["请确认显示器支持该分辨率", "运行 'winrandr --listmodes' 查看可用模式", "使用 --verbose 查看详细日志"])
+        _fail("设置分辨率失败", [
+            "请确认显示器支持该分辨率",
+            "运行 'winrandr --listmodes' 查看可用模式",
+            "使用 --verbose 查看详细日志",
+        ])
     _msg(args, f"已设置 {args.output} 为 {w}x{h}{' @ ' + str(rate) + 'Hz' if rate else ''}")
 
 
@@ -150,7 +159,11 @@ def _handle_pos(args: Namespace, dn: str) -> None:
 def _handle_rotate(args: Namespace, dn: str) -> None:
     deg = ROTATION_FROM_NAME[args.rotate]
     if not args.dry_run and not set_rotation(dn, deg):
-        _fail("设置旋转失败", ["某些虚拟显示器驱动（如向日葵）可能干扰此功能", "请确认显示器支持旋转", "使用 --verbose 查看详细日志"])
+        _fail("设置旋转失败", [
+            "某些虚拟显示器驱动（如向日葵）可能干扰此功能",
+            "请确认显示器支持旋转",
+            "使用 --verbose 查看详细日志",
+        ])
     _msg(args, f"已将 {args.output} 旋转为 {args.rotate} ({deg}°)")
 
 
@@ -162,13 +175,21 @@ def _handle_primary(args: Namespace, dn: str) -> None:
 
 def _handle_preferred(args: Namespace, dn: str) -> None:
     if not args.dry_run and not set_preferred_resolution(dn):
-        _fail("设置首选分辨率失败", ["该显示器可能未注册首选分辨率", "使用 --mode 手动指定分辨率", "使用 --verbose 查看详细日志"])
+        _fail("设置首选分辨率失败", [
+            "该显示器可能未注册首选分辨率",
+            "使用 --mode 手动指定分辨率",
+            "使用 --verbose 查看详细日志",
+        ])
     _msg(args, f"已将 {args.output} 设为首选分辨率")
 
 
 def _handle_off(args: Namespace, dn: str) -> None:
     if not args.dry_run and not set_off(dn):
-        _fail("关闭显示器失败", ["某些虚拟显示器驱动（如向日葵）可能干扰此功能", "请确认指定了正确的显示器名称", "使用 --verbose 查看详细日志"])
+        _fail("关闭显示器失败", [
+            "某些虚拟显示器驱动（如向日葵）可能干扰此功能",
+            "请确认指定了正确的显示器名称",
+            "使用 --verbose 查看详细日志",
+        ])
     _msg(args, f"已关闭 {args.output}")
 
 
@@ -237,10 +258,17 @@ def _handle_identify(args: Namespace, dn: str) -> None:
 
 
 def _handle_relative(args: Namespace, dn: str) -> None:
-    for attr, rel in (("left_of", "left-of"), ("right_of", "right-of"), ("above", "above"), ("below", "below"), ("same_as", "same-as")):
+    _relations = (("left_of", "left-of"), ("right_of", "right-of"),
+                   ("above", "above"), ("below", "below"),
+                   ("same_as", "same-as"))
+    for attr, rel in _relations:
         ref = getattr(args, attr, None)
         if ref:
             if not args.dry_run and not set_position_relative(dn, ref, rel):
-                _fail("相对定位失败", ["检查显示器名称是否正确", "某些虚拟显示器驱动（如向日葵）可能干扰此功能", "使用 --verbose 查看详细日志"])
+                _fail("相对定位失败", [
+                    "检查显示器名称是否正确",
+                    "某些虚拟显示器驱动（如向日葵）可能干扰此功能",
+                    "使用 --verbose 查看详细日志",
+                ])
             _msg(args, f"已将 {args.output} 放在 {ref} 的 {rel}")
             return

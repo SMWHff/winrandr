@@ -146,14 +146,14 @@ def get_screen_size_mm(gdi_name: str) -> tuple[int, int]:
     """获取显示器物理尺寸（mm），通过 GDI CreateDCW + GetDeviceCaps。"""
     if not gdi_name:
         return 0, 0
-    HORZSIZE = 4
-    VERTSIZE = 6
+    horzsize = 4
+    vertsize = 6
     dc = None
     try:
         dc = _CreateDCW("DISPLAY", gdi_name, None, None)
         if not dc:
             return 0, 0
-        return _GetDeviceCaps(dc, HORZSIZE), _GetDeviceCaps(dc, VERTSIZE)
+        return _GetDeviceCaps(dc, horzsize), _GetDeviceCaps(dc, vertsize)
     except OSError:
         return 0, 0
     finally:
@@ -192,7 +192,9 @@ SDC_ERROR_MESSAGES = {
     1610: "显示配置无效（虚拟显示器驱动可能干扰）",
 }
 
-def apply_config(paths: DISPLAYCONFIG_PATH_INFO, path_count: int, modes: DISPLAYCONFIG_MODE_INFO, mode_count: int, flags: int | None = None) -> bool:
+def apply_config(paths: DISPLAYCONFIG_PATH_INFO, path_count: int,
+                 modes: DISPLAYCONFIG_MODE_INFO, mode_count: int,
+                 flags: int | None = None) -> bool:
     """应用显示配置，成功后自动失效 QDC 缓存。"""
     if flags is None:
         flags = (
@@ -234,7 +236,8 @@ def find_path_idx(paths: DISPLAYCONFIG_PATH_INFO, count: int, device_name: str) 
     return None
 
 
-def filter_valid_paths(paths: DISPLAYCONFIG_PATH_INFO, path_count: int, modes: DISPLAYCONFIG_MODE_INFO, mode_count: int) -> list[int]:
+def filter_valid_paths(paths: DISPLAYCONFIG_PATH_INFO, path_count: int,
+                       modes: DISPLAYCONFIG_MODE_INFO, mode_count: int) -> list[int]:
     """过滤出有效路径：mode 索引需指向对应类型的 mode 条目。"""
     valid = []
     for i in range(path_count):
@@ -256,7 +259,9 @@ def filter_valid_paths(paths: DISPLAYCONFIG_PATH_INFO, path_count: int, modes: D
     return valid
 
 
-def apply_filtered(paths: DISPLAYCONFIG_PATH_INFO, path_count: int, modes: DISPLAYCONFIG_MODE_INFO, mode_count: int, flags: int | None = None) -> bool:
+def apply_filtered(paths: DISPLAYCONFIG_PATH_INFO, path_count: int,
+                   modes: DISPLAYCONFIG_MODE_INFO, mode_count: int,
+                   flags: int | None = None) -> bool:
     """过滤出有效路径后应用配置（避免虚拟显示器幽灵路径导致 SDC 失败）。"""
     valid_idxs = filter_valid_paths(paths, path_count, modes, mode_count)
     if not valid_idxs:

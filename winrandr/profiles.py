@@ -23,7 +23,7 @@ def _load_all() -> dict:
     if not os.path.exists(_PROFILES_FILE):
         return {}
     try:
-        with open(_PROFILES_FILE, "r", encoding="utf-8") as f:
+        with open(_PROFILES_FILE, encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         logger.exception("读取配置文件失败")
@@ -35,10 +35,11 @@ def _save_all(data: dict) -> bool:
     try:
         with open(_PROFILES_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-        return True
     except OSError:
         logger.exception("写入配置文件失败")
         return False
+    else:
+        return True
 
 
 def preview_save() -> list[str]:
