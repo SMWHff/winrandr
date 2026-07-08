@@ -37,7 +37,8 @@ winrandr/                 核心包
 ├── __init__.py           版本号 + 公开 API 重导出
 ├── __main__.py           python -m winrandr 入口
 ├── cli/                   CLI 子包（argparse + 操作处理函数）
-│   ├── __init__.py        argparse 解析 + 主流程编排（≤300 行）
+│   ├── __init__.py        主流程编排 main()
+│   ├── parser.py          argparse 参数解析器
 │   └── handlers.py        CLI 操作处理函数 + 通用工具 + 类型注解
 ├── api.py                公开 API：list_displays / set_resolution 等
 ├── edid.py               EDID 读取与解析（注册表 + 二进制解析）
@@ -58,19 +59,34 @@ winrandr/                 核心包
 
 tests/                    测试（395 项，100% 覆盖率）
 ├── unit/                 单元测试
+│   ├── __init__.py
 │   ├── test_cli.py           CLI 工具函数测试
-│   ├── test_cli_handlers.py  CLI 操作处理函数测试
+│   ├── test_cli_handlers.py  CLI 操作处理函数测试（核心）
 │   ├── test_formatter.py     格式化输出测试
 │   ├── test_parser.py        CLI 参数解析测试
-│   └── test_win32_utils.py   Win32 工具函数测试
+│   ├── test_profiles.py      配置存档核心测试
+│   ├── test_win32_utils.py   Win32 工具函数测试
+│   ├── cli/
+│   │   ├── __init__.py
+│   │   └── test_cli_handlers_misc.py listmodes + identify 测试
+│   ├── profiles/
+│   │   ├── __init__.py
+│   │   └── test_profiles_extra.py 配置存档额外覆盖测试
+│   └── win32/
+│       ├── __init__.py
+│       └── test_filter_valid_paths.py filter_valid_paths 测试
 ├── features/             功能模块测试
 │   ├── test_gamma.py         gamma 校正/亮度
 │   ├── test_layout.py        位置/旋转/主屏/关闭/相对定位
 │   └── test_resolution.py    分辨率/刷新率设置
 └── integration/          集成测试
     ├── test_api.py           API 函数
-    ├── test_cli_main.py      main() 入口
-    └── test_models.py        数据模型 + EDID + 常量
+    ├── test_cli_main.py      main() 入口（核心）
+    ├── test_cli_main_global.py  全局亮度/伽马测试
+    ├── test_cli_main_misc.py    版本/入口守卫/提供者/监视器测试
+    ├── test_cli_main_profiles.py 配置存档 CLI 测试
+    ├── test_edid.py          EDID 解析测试
+    └── test_models.py        数据模型 + 常量
 
 scripts/
 ├── build.sh              构建 exe（Nuitka，入口 winrandr 包）
