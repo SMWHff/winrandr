@@ -1,6 +1,3 @@
-"""Win32 底层显示 API：常量、结构体、函数绑定。"""
+"""Win32 底层显示 API：常量、结构体、函数绑定、工具函数。"""
 
-from winrandr.win32.constants import *
-from winrandr.win32.structures import *
-from winrandr.win32.bindings import *
-from winrandr.win32.utils import *
+# 各子模块独立导入，不在此处 re-export
