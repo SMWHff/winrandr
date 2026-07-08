@@ -30,7 +30,7 @@ def _fake_display(name="DISPLAY1", connected=True, **kw):
 
 def test_main_list_profiles_empty():
     """--list-profiles 无存档时应输出提示。"""
-    with patch("winrandr.profiles.list_profiles", return_value=[]):
+    with patch("winrandr.cli.list_profiles", return_value=[]):
         with patch("sys.argv", ["winrandr", "--list-profiles"]):
             cli_main()
 
@@ -46,21 +46,21 @@ def test_main_list_profiles_with_data():
             "version": "0.3.6",
         }
     ]
-    with patch("winrandr.profiles.list_profiles", return_value=profiles_data):
+    with patch("winrandr.cli.list_profiles", return_value=profiles_data):
         with patch("sys.argv", ["winrandr", "--list-profiles"]):
             cli_main()
 
 
 def test_main_list_profiles_json():
     """--list-profiles --json 应正常输出。"""
-    with patch("winrandr.profiles.list_profiles", return_value=[]):
+    with patch("winrandr.cli.list_profiles", return_value=[]):
         with patch("sys.argv", ["winrandr", "--list-profiles", "--json"]):
             cli_main()
 
 
 def test_main_save_profile():
     """--save-profile 应调用 save_profile。"""
-    with patch("winrandr.profiles.save_profile", return_value=True) as mock_fn:
+    with patch("winrandr.cli.save_profile", return_value=True) as mock_fn:
         with patch("sys.argv", ["winrandr", "--save-profile", "docked"]):
             cli_main()
         assert mock_fn.called is True
@@ -68,7 +68,7 @@ def test_main_save_profile():
 
 def test_main_save_profile_failure():
     """--save-profile 失败时应退出。"""
-    with patch("winrandr.profiles.save_profile", return_value=False):
+    with patch("winrandr.cli.save_profile", return_value=False):
         with pytest.raises(SystemExit):
             with patch("sys.argv", ["winrandr", "--save-profile", "docked"]):
                 cli_main()
@@ -76,7 +76,7 @@ def test_main_save_profile_failure():
 
 def test_main_load_profile():
     """--load-profile 应调用 load_profile。"""
-    with patch("winrandr.profiles.load_profile", return_value=True) as mock_fn:
+    with patch("winrandr.cli.load_profile", return_value=True) as mock_fn:
         with patch("sys.argv", ["winrandr", "--load-profile", "docked"]):
             cli_main()
         assert mock_fn.called is True
@@ -84,7 +84,7 @@ def test_main_load_profile():
 
 def test_main_load_profile_dry_run():
     """--load-profile --dry-run 应调用 diff_profile。"""
-    with patch("winrandr.profiles.diff_profile", return_value=["预览行1"]) as mock_fn:
+    with patch("winrandr.cli.diff_profile", return_value=["预览行1"]) as mock_fn:
         with patch("sys.argv", ["winrandr", "--load-profile", "docked", "--dry-run"]):
             cli_main()
         assert mock_fn.called is True
@@ -92,7 +92,7 @@ def test_main_load_profile_dry_run():
 
 def test_main_delete_profile():
     """--delete-profile 应调用 delete_profile。"""
-    with patch("winrandr.profiles.delete_profile", return_value=True) as mock_fn:
+    with patch("winrandr.cli.delete_profile", return_value=True) as mock_fn:
         with patch("sys.argv", ["winrandr", "--delete-profile", "docked"]):
             cli_main()
         assert mock_fn.called is True
@@ -100,7 +100,7 @@ def test_main_delete_profile():
 
 def test_main_delete_profile_failure():
     """--delete-profile 失败时应退出。"""
-    with patch("winrandr.profiles.delete_profile", return_value=False):
+    with patch("winrandr.cli.delete_profile", return_value=False):
         with pytest.raises(SystemExit):
             with patch("sys.argv", ["winrandr", "--delete-profile", "docked"]):
                 cli_main()
@@ -129,7 +129,7 @@ def test_main_delete_profile_empty_name():
 
 def test_main_load_profile_failure():
     """--load-profile 失败时应退出。"""
-    with patch("winrandr.profiles.load_profile", return_value=False):
+    with patch("winrandr.cli.load_profile", return_value=False):
         with pytest.raises(SystemExit):
             with patch("sys.argv", ["winrandr", "--load-profile", "docked"]):
                 cli_main()
@@ -155,6 +155,6 @@ def test_main_list_profiles_no_display_names():
             "version": "0.3.6",
         }
     ]
-    with patch("winrandr.profiles.list_profiles", return_value=profiles_data):
+    with patch("winrandr.cli.list_profiles", return_value=profiles_data):
         with patch("sys.argv", ["winrandr", "--list-profiles"]):
             cli_main()

@@ -103,11 +103,11 @@ def test_load_profile_success(temp_profiles):
     _save_all(config)
 
     with patch("winrandr.profiles.list_displays", return_value=[_make_display()]):
-        with patch("winrandr.api.set_auto", return_value=True) as sa:
-            with patch("winrandr.api.set_position", return_value=True):
-                with patch("winrandr.api.set_rotation", return_value=True):
-                    with patch("winrandr.api.set_resolution", return_value=True):
-                        with patch("winrandr.api.set_primary", return_value=True) as sp:
+        with patch("winrandr.profiles.set_auto", return_value=True) as sa:
+            with patch("winrandr.profiles.set_position", return_value=True):
+                with patch("winrandr.profiles.set_rotation", return_value=True):
+                    with patch("winrandr.profiles.set_resolution", return_value=True):
+                        with patch("winrandr.profiles.set_primary", return_value=True) as sp:
                             assert load_profile("myprofile") is True
                             sa.assert_called_once_with(r"\\.\DISPLAY1")
                             sp.assert_called_once_with(r"\\.\DISPLAY1")
@@ -135,7 +135,7 @@ def test_load_profile_display_not_connected(temp_profiles):
     _save_all(config)
 
     with patch("winrandr.profiles.list_displays", return_value=[_make_display("DISPLAY1")]):
-        with patch("winrandr.api.set_auto") as sa:
+        with patch("winrandr.profiles.set_auto") as sa:
             assert load_profile("p") is True  # skips DISPLAY3, no error
             sa.assert_not_called()
 
@@ -162,8 +162,8 @@ def test_load_profile_set_auto_fails(temp_profiles):
     _save_all(config)
 
     with patch("winrandr.profiles.list_displays", return_value=[_make_display()]):
-        with patch("winrandr.api.set_auto", return_value=False):
-            with patch("winrandr.api.set_position") as sp:
+        with patch("winrandr.profiles.set_auto", return_value=False):
+            with patch("winrandr.profiles.set_position") as sp:
                 assert load_profile("p") is False
                 sp.assert_not_called()
 

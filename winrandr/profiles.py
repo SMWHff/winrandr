@@ -7,7 +7,14 @@ import sys
 from datetime import datetime
 
 from winrandr import __version__
-from winrandr.api import list_displays
+from winrandr.api import (
+    list_displays,
+    set_auto,
+    set_position,
+    set_primary,
+    set_resolution,
+    set_rotation,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -139,14 +146,6 @@ def load_profile(name: str) -> bool:  # noqa: C901  # 循环中含多条 API 调
         logger.error("未找到存档: %s", name)
         print(f"错误: 未找到存档「{name}」", file=sys.stderr)
         return False
-
-    from winrandr.api import (
-        set_auto,
-        set_position,
-        set_primary,
-        set_resolution,
-        set_rotation,
-    )
 
     configs = profile["displays"]
     current = {d.name for d in list_displays()}

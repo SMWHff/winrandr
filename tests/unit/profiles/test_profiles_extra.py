@@ -151,10 +151,10 @@ def test_load_profile_set_position_fails(temp_profiles):
     }
     _save_all(config)
     with patch("winrandr.profiles.list_displays", return_value=[_make_display()]):
-        with patch("winrandr.api.set_auto", return_value=True):
-            with patch("winrandr.api.set_position", return_value=False):
-                with patch("winrandr.api.set_rotation", return_value=True):
-                    with patch("winrandr.api.set_resolution", return_value=True):
+        with patch("winrandr.profiles.set_auto", return_value=True):
+            with patch("winrandr.profiles.set_position", return_value=False):
+                with patch("winrandr.profiles.set_rotation", return_value=True):
+                    with patch("winrandr.profiles.set_resolution", return_value=True):
                         assert load_profile("p") is False
 
 
@@ -180,10 +180,10 @@ def test_load_profile_set_rotation_fails(temp_profiles):
     }
     _save_all(config)
     with patch("winrandr.profiles.list_displays", return_value=[_make_display()]):
-        with patch("winrandr.api.set_auto", return_value=True):
-            with patch("winrandr.api.set_position", return_value=True):
-                with patch("winrandr.api.set_rotation", return_value=False):
-                    with patch("winrandr.api.set_resolution", return_value=True):
+        with patch("winrandr.profiles.set_auto", return_value=True):
+            with patch("winrandr.profiles.set_position", return_value=True):
+                with patch("winrandr.profiles.set_rotation", return_value=False):
+                    with patch("winrandr.profiles.set_resolution", return_value=True):
                         assert load_profile("p") is False
 
 
@@ -209,10 +209,10 @@ def test_load_profile_set_resolution_fails(temp_profiles):
     }
     _save_all(config)
     with patch("winrandr.profiles.list_displays", return_value=[_make_display()]):
-        with patch("winrandr.api.set_auto", return_value=True):
-            with patch("winrandr.api.set_position", return_value=True):
-                with patch("winrandr.api.set_rotation", return_value=True):
-                    with patch("winrandr.api.set_resolution", return_value=False):
+        with patch("winrandr.profiles.set_auto", return_value=True):
+            with patch("winrandr.profiles.set_position", return_value=True):
+                with patch("winrandr.profiles.set_rotation", return_value=True):
+                    with patch("winrandr.profiles.set_resolution", return_value=False):
                         assert load_profile("p") is False
 
 
@@ -238,11 +238,11 @@ def test_load_profile_set_primary_fails(temp_profiles):
     }
     _save_all(config)
     with patch("winrandr.profiles.list_displays", return_value=[_make_display()]):
-        with patch("winrandr.api.set_auto", return_value=True):
-            with patch("winrandr.api.set_position", return_value=True):
-                with patch("winrandr.api.set_rotation", return_value=True):
-                    with patch("winrandr.api.set_resolution", return_value=True):
-                        with patch("winrandr.api.set_primary", return_value=False):
+        with patch("winrandr.profiles.set_auto", return_value=True):
+            with patch("winrandr.profiles.set_position", return_value=True):
+                with patch("winrandr.profiles.set_rotation", return_value=True):
+                    with patch("winrandr.profiles.set_resolution", return_value=True):
+                        with patch("winrandr.profiles.set_primary", return_value=False):
                             assert load_profile("p") is False
 
 
