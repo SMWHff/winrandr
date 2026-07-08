@@ -76,3 +76,22 @@ def test_identify_api_failure():
     with patch("winrandr.cli.handlers.identify_display", return_value=False):
         with pytest.raises(SystemExit):
             _handle_identify(_ns(identify=True, dry_run=False), DN)
+
+
+# --- _setup_logging ---
+
+def test_setup_logging_first_call():
+    """首次调用 _setup_logging 应创建文件和控制台两个处理器。"""
+    import logging as _logging
+    from winrandr.cli.handlers import _setup_logging
+    root = _logging.getLogger()
+    old_handlers = root.handlers[:]
+    root.handlers.clear()
+    try:
+        _setup_logging()
+        assert len(root.handlers) == 2
+    finally:
+        for h in root.handlers:
+            h.close()
+        root.handlers.clear()
+        root.handlers.extend(old_handlers)

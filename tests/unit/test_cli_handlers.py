@@ -18,7 +18,6 @@ from winrandr.cli.handlers import (
     _handle_relative,
     _handle_rotate,
     _msg,
-    _setup_logging,
 )
 
 DN = r"\\.\DISPLAY1"
@@ -284,19 +283,3 @@ def test_auto_api_failure():
     with patch("winrandr.cli.handlers.set_auto", return_value=False):
         with pytest.raises(SystemExit):
             _handle_auto(_ns(auto=True, dry_run=False), DN)
-
-
-def test_setup_logging_first_call():
-    """首次调用 _setup_logging 应创建文件和控制台两个处理器。"""
-    import logging as _logging
-    root = _logging.getLogger()
-    old_handlers = root.handlers[:]
-    root.handlers.clear()
-    try:
-        _setup_logging()
-        assert len(root.handlers) == 2
-    finally:
-        for h in root.handlers:
-            h.close()
-        root.handlers.clear()
-        root.handlers.extend(old_handlers)

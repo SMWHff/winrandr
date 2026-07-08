@@ -8,15 +8,10 @@ import pytest
 
 from winrandr.models import DisplayInfo, DisplayMode
 from winrandr.profiles import (
-    _load_all,
-    _save_all,
-    delete_profile,
-    diff_profile,
-    get_profile_names,
-    list_profiles,
-    load_profile,
-    preview_save,
-    save_profile,
+    _load_all, _save_all,
+    diff_profile, get_profile_names,
+    list_profiles, load_profile,
+    preview_save, save_profile,
 )
 
 
@@ -39,24 +34,6 @@ def temp_profiles(monkeypatch):
     pf = os.path.join(tmp, "profiles.json")
     monkeypatch.setattr("winrandr.profiles._PROFILES_FILE", pf)
     return pf
-
-
-# ---- _load_all / _save_all ----
-
-def test_load_all_missing(temp_profiles):
-    assert _load_all() == {}
-
-
-def test_load_all_corrupt(temp_profiles):
-    with open(temp_profiles, "w") as f:
-        f.write("not json")
-    assert _load_all() == {}
-
-
-def test_save_and_load(temp_profiles):
-    data = {"test": {"displays": [], "created": "now", "version": "0.3.5"}}
-    assert _save_all(data) is True
-    assert _load_all() == data
 
 
 # ---- save_profile ----
@@ -198,18 +175,6 @@ def test_list_profiles_with_resolution(temp_profiles):
 def test_get_profile_names(temp_profiles):
     _save_all({"x": {}, "y": {}})
     assert get_profile_names() == ["x", "y"]
-
-
-# ---- delete_profile ----
-
-def test_delete_profile_not_found(temp_profiles):
-    assert delete_profile("nonexistent") is False
-
-
-def test_delete_profile_success(temp_profiles):
-    _save_all({"delme": {"displays": []}})
-    assert delete_profile("delme") is True
-    assert _load_all() == {}
 
 
 # ---- diff_profile ----

@@ -10,11 +10,9 @@ import pytest
 
 from winrandr.models import DisplayInfo, DisplayMode
 from winrandr.profiles import (
-    _save_all,
-    delete_profile,
-    diff_profile,
-    load_profile,
-    save_profile,
+    _load_all, _save_all,
+    delete_profile, diff_profile,
+    load_profile, save_profile,
 )
 
 
@@ -173,3 +171,33 @@ def test_load_profile_set_primary_fails(temp_profiles):
                     with patch("winrandr.api.set_resolution", return_value=True):
                         with patch("winrandr.api.set_primary", return_value=False):
                             assert load_profile("p") is False
+
+
+# ---- _load_all / _save_all ----
+
+def test_load_all_missing(temp_profiles):
+    assert _load_all() == {}
+
+
+def test_load_all_corrupt(temp_profiles):
+    with open(temp_profiles, "w") as f:
+        f.write("not json")
+    assert _load_all() == {}
+
+
+def test_save_and_load(temp_profiles):
+    data = {"test": {"displays": [], "created": "now", "version": "0.3.5"}}
+    assert _save_all(data) is True
+    assert _load_all() == data
+
+
+# ---- delete_profile ----
+
+def test_delete_profile_not_found(temp_profiles):
+    assert delete_profile("nonexistent") is False
+
+
+def test_delete_profile_success(temp_profiles):
+    _save_all({"delme": {"displays": []}})
+    assert delete_profile("delme") is True
+    assert _load_all() == {}
