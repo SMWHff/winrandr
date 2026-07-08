@@ -6,7 +6,7 @@
     将本文件放入 PowerShell 模块路径或手动 dot-source：
         PS> . ./scripts/completions/completions.ps1
     或永久生效：
-        PS> Add-Content $PROFILE "`n. 'C:\path\to\winrandr\scripts\completions.ps1'"
+        PS> Add-Content $PROFILE "`n. 'C:\path\to\winrandr\scripts\completions\completions.ps1'"
 #>
 
 Register-ArgumentCompleter -Native -CommandName winrandr, winrandr.exe -ScriptBlock {

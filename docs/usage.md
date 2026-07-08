@@ -148,7 +148,7 @@ winrandr --output DISPLAY1 --off
 ```powershell
 . ./scripts/completions/completions.ps1
 # 或永久生效：
-Add-Content $PROFILE "`n. 'C:\path\to\winrandr\scripts\completions.ps1'"
+Add-Content $PROFILE "`n. 'C:\path\to\winrandr\scripts\completions\completions.ps1'"
 ```
 
 **Bash / Zsh（WSL / Cygwin / Git Bash）：**

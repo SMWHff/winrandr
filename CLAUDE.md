@@ -100,7 +100,7 @@ scripts/
 │   └── clean.sh          清理构建缓存和 __pycache__
 └── completions/
     ├── completions.ps1   PowerShell Tab 补全
-    └── completions.bash  Bash/Zsh Tab 补全（WSL/Cygwin）
+    └── completions.bash  Bash/Zsh Tab 补全
 
 .github/
 ├── workflows/

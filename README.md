@@ -202,7 +202,7 @@ DISPLAY2 disconnected
 # PowerShell 临时加载
 . ./scripts/completions/completions.ps1
 # 永久生效
-Add-Content $PROFILE "`n. 'C:\path\to\winrandr\scripts\completions.ps1'"
+Add-Content $PROFILE "`n. 'C:\path\to\winrandr\scripts\completions\completions.ps1'"
 ```
 
 ```bash
