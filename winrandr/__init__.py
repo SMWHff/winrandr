@@ -1,6 +1,6 @@
 """winrandr — Windows xrandr-like display configuration tool."""
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 from winrandr.models import DisplayInfo
 from winrandr.api import (
