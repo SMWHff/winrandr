@@ -123,7 +123,7 @@ def test_setup_logging_first_call():
     """首次调用 _setup_logging 应创建文件和控制台两个处理器。"""
     import logging as _logging
 
-    from winrandr.cli.handlers import _setup_logging
+    from winrandr.cli.common import _setup_logging
 
     root = _logging.getLogger()
     old_handlers = root.handlers[:]

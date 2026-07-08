@@ -39,7 +39,8 @@ winrandr/                 核心包
 ├── cli/                   CLI 子包（argparse + 操作处理函数）
 │   ├── __init__.py        主流程编排 main()
 │   ├── parser.py          argparse 参数解析器
-│   └── handlers.py        CLI 操作处理函数 + 通用工具 + 类型注解
+│   ├── common.py          CLI 通用工具函数（日志/参数校验/辅助）
+│   └── handlers.py        CLI 操作处理函数（模式/位置/旋转/亮度等）
 ├── api.py                公开 API：list_displays / set_resolution 等
 ├── edid.py               EDID 读取与解析（注册表 + 二进制解析）
 ├── formatter.py          xrandr 风格格式化输出

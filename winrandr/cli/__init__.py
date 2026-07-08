@@ -5,11 +5,18 @@ import sys
 from argparse import Namespace
 
 from winrandr.api import get_display_props, list_displays, list_providers, set_noprimary
-from winrandr.cli.handlers import (
+from winrandr.cli.common import (
     _MOD_OP_ATTRS,
     _apply_aliases,
     _check_relative_mutex,
     _fail,
+    _is_mod_op,
+    _list_available_displays,
+    _msg,
+    _normalize_name,
+    _setup_logging,
+)
+from winrandr.cli.handlers import (
     _handle_auto,
     _handle_brightness,
     _handle_gamma,
@@ -23,11 +30,6 @@ from winrandr.cli.handlers import (
     _handle_reflect,
     _handle_relative,
     _handle_rotate,
-    _is_mod_op,
-    _list_available_displays,
-    _msg,
-    _normalize_name,
-    _setup_logging,
 )
 from winrandr.cli.parser import build_parser
 from winrandr.formatter import format_displays, format_monitor_list
