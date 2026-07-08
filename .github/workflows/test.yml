@@ -5,10 +5,38 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python 3.13
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Lint with ruff
+        run: uv run ruff check winrandr/ tests/
+
+      - name: Verify formatting
+        run: uv run ruff format --check winrandr/ tests/
+
+      - name: Verify shell completions (bash)
+        run: bash -n scripts/completions/completions.bash
+
+      - name: Import check
+        run: uv run python -c "import winrandr; print('winrandr', winrandr.__version__)"
+
   test:
     runs-on: windows-latest
+    needs: lint
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
@@ -31,20 +59,11 @@ jobs:
       - name: Install dependencies
         run: uv sync --dev
 
-      - name: Lint with ruff
-        run: uv run ruff check winrandr/ tests/
-
       - name: Run tests with coverage
         run: uv run pytest tests/ -q --cov --cov-report=term-missing --cov-fail-under=95
 
       - name: Verify CLI
         run: uv run python -m winrandr --version
-
-      - name: Verify shell completions (bash)
-        shell: bash
-        run: |
-          bash -n scripts/completions/completions.bash
-          echo "Bash completion syntax OK"
 
       - name: Verify shell completions (PowerShell)
         shell: pwsh
