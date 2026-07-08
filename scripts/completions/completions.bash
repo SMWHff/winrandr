@@ -1,5 +1,5 @@
 # winrandr Bash 自动补全
-# 安装: source scripts/completions.bash
+# 安装: source scripts/completions/completions.bash
 # 或放入 /etc/bash_completion.d/winrandr
 
 _winrandr_completions() {
