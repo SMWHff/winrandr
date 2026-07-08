@@ -79,7 +79,7 @@ def test_cli_entry_guard():
     import runpy
     from pathlib import Path
 
-    cli_path = Path(__file__).parent.parent.parent / "winrandr" / "cli" / "__init__.py"
+    cli_path = Path(__file__).parent.parent.parent.parent / "winrandr" / "cli" / "__init__.py"
     with patch("sys.argv", ["winrandr", "--version"]):
         with pytest.raises(SystemExit):
             runpy.run_path(str(cli_path), run_name="__main__")
