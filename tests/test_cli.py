@@ -225,3 +225,49 @@ def test_main_noprimary_with_mode():
                 with patch("sys.argv", ["winrandr", "--noprimary", "-o", "DISPLAY1", "-m", "1920x1080", "--dry-run"]):
                     cli_main()
                 assert mock_set.called is False
+
+
+def test_main_listproviders():
+    """--listproviders 输出 GPU 信息。"""
+    providers = [{"name": "DISPLAY1", "string": "NVIDIA GeForce", "flags": 0}]
+    with patch("winrandr.cli.list_providers", return_value=providers):
+        with patch("sys.argv", ["winrandr", "--listproviders"]):
+            cli_main()
+
+
+def test_main_listproviders_json():
+    """--listproviders --json 输出 GPU 信息 JSON。"""
+    providers = [{"name": "DISPLAY1", "string": "NVIDIA GeForce", "flags": 0}]
+    with patch("winrandr.cli.list_providers", return_value=providers):
+        with patch("sys.argv", ["winrandr", "--listproviders", "--json"]):
+            cli_main()
+
+
+def test_main_listmonitors():
+    """--listmonitors 输出显示器编号列表。"""
+    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
+        with patch("sys.argv", ["winrandr", "--listmonitors"]):
+            cli_main()
+
+
+def test_main_query_with_output():
+    """查询模式 --output DISPLAY1 筛选。"""
+    d2 = _fake_display("DISPLAY2", position_x=1920)
+    with patch("winrandr.cli.list_displays", return_value=[_fake_display(), d2]):
+        with patch("sys.argv", ["winrandr", "--output", "DISPLAY2"]):
+            cli_main()
+
+
+def test_main_query_json():
+    """查询模式 --json 输出。"""
+    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
+        with patch("sys.argv", ["winrandr", "--json"]):
+            cli_main()
+
+
+def test_main_query_prop():
+    """查询模式 --prop 输出属性。"""
+    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
+        with patch("winrandr.cli.get_display_props", return_value={"device_id": "TEST"}):
+            with patch("sys.argv", ["winrandr", "--prop"]):
+                cli_main()
