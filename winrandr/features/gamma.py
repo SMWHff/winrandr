@@ -60,6 +60,7 @@ def set_brightness(device_name: str, brightness: float) -> bool:
 
 def set_gamma(device_name: str, red: float, green: float, blue: float) -> bool:
     """设置伽马校正（三通道独立，与 xrandr --gamma 一致）。"""
+
     def _modify(ramp: c_uint16) -> None:
         for i in range(256):
             ramp[i] = max(0, min(65535, int(ramp[i] * red)))

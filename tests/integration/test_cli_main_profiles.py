@@ -9,11 +9,21 @@ from winrandr.models import DisplayInfo, DisplayMode
 
 
 def _fake_display(name="DISPLAY1", connected=True, **kw):
-    defaults = dict(name=rf"\\.\{name}", friendly_name="Fake Monitor",
-                    connected=connected, width=1920, height=1080,
-                    refresh_rate=60.0, position_x=0, position_y=0,
-                    is_primary=True, rotation=0, width_mm=527, height_mm=296,
-                    modes=[DisplayMode(1920, 1080, 60.0, True, True)])
+    defaults = dict(
+        name=rf"\\.\{name}",
+        friendly_name="Fake Monitor",
+        connected=connected,
+        width=1920,
+        height=1080,
+        refresh_rate=60.0,
+        position_x=0,
+        position_y=0,
+        is_primary=True,
+        rotation=0,
+        width_mm=527,
+        height_mm=296,
+        modes=[DisplayMode(1920, 1080, 60.0, True, True)],
+    )
     defaults.update(kw)
     return DisplayInfo(**defaults)
 
@@ -27,11 +37,15 @@ def test_main_list_profiles_empty():
 
 def test_main_list_profiles_with_data():
     """--list-profiles 有存档时应正常输出。"""
-    profiles_data = [{
-        "name": "docked", "display_count": 2,
-        "displays": ["DISPLAY1(1920x1080)", "DISPLAY2(1440x900)"],
-        "created": "2026-07-08T00:00:00", "version": "0.3.6",
-    }]
+    profiles_data = [
+        {
+            "name": "docked",
+            "display_count": 2,
+            "displays": ["DISPLAY1(1920x1080)", "DISPLAY2(1440x900)"],
+            "created": "2026-07-08T00:00:00",
+            "version": "0.3.6",
+        }
+    ]
     with patch("winrandr.profiles.list_profiles", return_value=profiles_data):
         with patch("sys.argv", ["winrandr", "--list-profiles"]):
             cli_main()
@@ -132,11 +146,15 @@ def test_main_identify():
 
 def test_main_list_profiles_no_display_names():
     """profile 记录中 displays 为空列表时不应加 [...] 后缀。"""
-    profiles_data = [{
-        "name": "empty", "display_count": 1,
-        "displays": [],
-        "created": "2026-07-08T00:00:00", "version": "0.3.6",
-    }]
+    profiles_data = [
+        {
+            "name": "empty",
+            "display_count": 1,
+            "displays": [],
+            "created": "2026-07-08T00:00:00",
+            "version": "0.3.6",
+        }
+    ]
     with patch("winrandr.profiles.list_profiles", return_value=profiles_data):
         with patch("sys.argv", ["winrandr", "--list-profiles"]):
             cli_main()

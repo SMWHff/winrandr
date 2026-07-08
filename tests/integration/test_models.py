@@ -45,9 +45,14 @@ def test_display_info_with_modes():
         DisplayMode(1280, 720, 30.0),
     ]
     d = DisplayInfo(
-        name="DISPLAY1", friendly_name="Test",
-        connected=True, width=1920, height=1080,
-        position_x=0, position_y=0, is_primary=True,
+        name="DISPLAY1",
+        friendly_name="Test",
+        connected=True,
+        width=1920,
+        height=1080,
+        position_x=0,
+        position_y=0,
+        is_primary=True,
         modes=modes,
     )
     assert d.is_primary
@@ -69,14 +74,18 @@ def test_display_info_rotation():
 
 def test_display_info_disconnected():
     d = DisplayInfo(
-        name="DISPLAY2", friendly_name="", connected=False,
-        width=0, height=0,
+        name="DISPLAY2",
+        friendly_name="",
+        connected=False,
+        width=0,
+        height=0,
     )
     assert not d.connected
     assert d.width == 0
 
 
 # --- 常量与旋转映射一致性 ---
+
 
 def test_rotation_maps_consistent():
     for deg, rot_id in ROTATION_MAP.items():

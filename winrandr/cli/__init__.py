@@ -1,4 +1,5 @@
 """CLI 入口：argparse 解析 + 主流程编排。"""
+
 import logging
 import sys
 from argparse import Namespace
@@ -36,6 +37,7 @@ def _handle_providers(args: Namespace) -> None:
     providers = list_providers()
     if args.json:
         import json
+
         print(json.dumps(providers, indent=2, ensure_ascii=False))
     elif not providers:
         print("未检测到 GPU 适配器。")
@@ -50,6 +52,7 @@ def _handle_monitors(args: Namespace) -> None:
     if args.json:
         import json
         from dataclasses import asdict
+
         print(json.dumps([asdict(d) for d in displays if d.connected], indent=2, ensure_ascii=False))
     elif not displays:
         print("未检测到显示器。")
@@ -59,9 +62,11 @@ def _handle_monitors(args: Namespace) -> None:
 
 def _handle_list_profiles(args: Namespace) -> None:
     from winrandr.profiles import list_profiles
+
     profiles = list_profiles()
     if args.json:
         import json
+
         print(json.dumps(profiles, indent=2, ensure_ascii=False))
     elif not profiles:
         print("暂无存档。")
@@ -81,10 +86,12 @@ def _handle_save_profile(args: Namespace) -> None:
         _fail("存档名不能为空")
     if args.dry_run:
         from winrandr.profiles import preview_save
+
         for line in preview_save():
             print(line)
     else:
         from winrandr.profiles import save_profile
+
         if not save_profile(args.save_profile):
             _fail(f"保存存档失败: {args.save_profile}")
         print(f"已保存配置为「{args.save_profile}」")
@@ -94,6 +101,7 @@ def _handle_load_profile(args: Namespace) -> None:
     if not args.load_profile:
         _fail("存档名不能为空")
     from winrandr.profiles import diff_profile, load_profile
+
     if args.dry_run:
         for line in diff_profile(args.load_profile):
             print(line)
@@ -107,6 +115,7 @@ def _handle_delete_profile(args: Namespace) -> None:
     if not args.delete_profile:
         _fail("存档名不能为空")
     from winrandr.profiles import delete_profile
+
     if not delete_profile(args.delete_profile):
         _fail(f"删除存档失败: {args.delete_profile}")
     print(f"已删除存档「{args.delete_profile}」")
@@ -128,6 +137,7 @@ def _handle_query(args: Namespace) -> None:
     if args.json:
         import json
         from dataclasses import asdict
+
         print(json.dumps([asdict(d) for d in displays], indent=2, ensure_ascii=False))
     else:
         print(format_displays(displays))

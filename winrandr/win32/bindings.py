@@ -1,4 +1,5 @@
 """Win32 API 函数绑定（ctypes 声明）。"""
+
 import ctypes
 from ctypes import POINTER, wintypes
 
@@ -18,21 +19,30 @@ _gdi32 = ctypes.windll.gdi32
 
 _GetDisplayConfigBufferSizes = _user32.GetDisplayConfigBufferSizes
 _GetDisplayConfigBufferSizes.argtypes = [
-    c_uint32, POINTER(c_uint32), POINTER(c_uint32),
+    c_uint32,
+    POINTER(c_uint32),
+    POINTER(c_uint32),
 ]
 _GetDisplayConfigBufferSizes.restype = wintypes.LONG
 
 _QueryDisplayConfig = _user32.QueryDisplayConfig
 _QueryDisplayConfig.argtypes = [
-    c_uint32, POINTER(c_uint32), POINTER(DISPLAYCONFIG_PATH_INFO),
-    POINTER(c_uint32), POINTER(DISPLAYCONFIG_MODE_INFO), wintypes.LPVOID,
+    c_uint32,
+    POINTER(c_uint32),
+    POINTER(DISPLAYCONFIG_PATH_INFO),
+    POINTER(c_uint32),
+    POINTER(DISPLAYCONFIG_MODE_INFO),
+    wintypes.LPVOID,
 ]
 _QueryDisplayConfig.restype = wintypes.LONG
 
 _SetDisplayConfig = _user32.SetDisplayConfig
 _SetDisplayConfig.argtypes = [
-    c_uint32, POINTER(DISPLAYCONFIG_PATH_INFO),
-    c_uint32, POINTER(DISPLAYCONFIG_MODE_INFO), c_uint32,
+    c_uint32,
+    POINTER(DISPLAYCONFIG_PATH_INFO),
+    c_uint32,
+    POINTER(DISPLAYCONFIG_MODE_INFO),
+    c_uint32,
 ]
 _SetDisplayConfig.restype = wintypes.LONG
 
@@ -42,19 +52,28 @@ _DisplayConfigGetDeviceInfo.restype = wintypes.LONG
 
 _ChangeDisplaySettingsEx = _user32.ChangeDisplaySettingsExW
 _ChangeDisplaySettingsEx.argtypes = [
-    wintypes.LPCWSTR, POINTER(DEVMODE), wintypes.HWND, wintypes.DWORD, wintypes.LPVOID,
+    wintypes.LPCWSTR,
+    POINTER(DEVMODE),
+    wintypes.HWND,
+    wintypes.DWORD,
+    wintypes.LPVOID,
 ]
 _ChangeDisplaySettingsEx.restype = wintypes.LONG
 
 _EnumDisplaySettings = _user32.EnumDisplaySettingsW
 _EnumDisplaySettings.argtypes = [
-    wintypes.LPCWSTR, wintypes.DWORD, POINTER(DEVMODE),
+    wintypes.LPCWSTR,
+    wintypes.DWORD,
+    POINTER(DEVMODE),
 ]
 _EnumDisplaySettings.restype = wintypes.BOOL
 
 _EnumDisplayDevices = _user32.EnumDisplayDevicesW
 _EnumDisplayDevices.argtypes = [
-    wintypes.LPCWSTR, wintypes.DWORD, POINTER(DISPLAY_DEVICE), wintypes.DWORD,
+    wintypes.LPCWSTR,
+    wintypes.DWORD,
+    POINTER(DISPLAY_DEVICE),
+    wintypes.DWORD,
 ]
 _EnumDisplayDevices.restype = wintypes.BOOL
 

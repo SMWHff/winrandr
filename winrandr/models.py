@@ -8,6 +8,7 @@ __all__ = ["DisplayInfo", "DisplayMode"]
 @dataclass
 class DisplayMode:
     """单个显示模式（分辨率 + 刷新率 + 标记）。"""
+
     width: int
     height: int
     refresh_rate: float
@@ -18,6 +19,7 @@ class DisplayMode:
 @dataclass
 class DisplayInfo:
     """显示器信息。"""
+
     name: str
     friendly_name: str
     connected: bool = True

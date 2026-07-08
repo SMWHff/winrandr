@@ -11,27 +11,53 @@ DN = r"\\.\DISPLAY1"
 
 
 def _ns(**kwargs) -> Namespace:
-    defaults = dict(dry_run=True, output="DISPLAY1",
-                    mode=None, pos=None, rate=None, rotate=None,
-                    primary=None, preferred=None, off=None,
-                    brightness=None, reflect=None, gamma=None,
-                    identify=False,
-                    left_of=None, right_of=None, above=None, below=None, same_as=None)
+    defaults = dict(
+        dry_run=True,
+        output="DISPLAY1",
+        mode=None,
+        pos=None,
+        rate=None,
+        rotate=None,
+        primary=None,
+        preferred=None,
+        off=None,
+        brightness=None,
+        reflect=None,
+        gamma=None,
+        identify=False,
+        left_of=None,
+        right_of=None,
+        above=None,
+        below=None,
+        same_as=None,
+    )
     defaults.update(kwargs)
     return Namespace(**defaults)
 
 
 # --- _handle_listmodes ---
 
+
 def test_handle_listmodes_basic():
     """基本 listmodes 输出。"""
     from winrandr.models import DisplayInfo, DisplayMode
+
     dm = DisplayMode(1920, 1080, 60.0, True, True)
-    disp = DisplayInfo(name=r"\\.\DISPLAY1", friendly_name="Fake",
-                       connected=True, width=1920, height=1080,
-                       refresh_rate=60.0, position_x=0, position_y=0,
-                       is_primary=True, rotation=0, width_mm=527, height_mm=296,
-                       modes=[dm])
+    disp = DisplayInfo(
+        name=r"\\.\DISPLAY1",
+        friendly_name="Fake",
+        connected=True,
+        width=1920,
+        height=1080,
+        refresh_rate=60.0,
+        position_x=0,
+        position_y=0,
+        is_primary=True,
+        rotation=0,
+        width_mm=527,
+        height_mm=296,
+        modes=[dm],
+    )
     with patch("winrandr.cli.handlers.list_displays", return_value=[disp]):
         _handle_listmodes(_ns(), as_json=False)
 
@@ -39,12 +65,23 @@ def test_handle_listmodes_basic():
 def test_handle_listmodes_json():
     """listmodes --json 输出。"""
     from winrandr.models import DisplayInfo, DisplayMode
+
     dm = DisplayMode(1920, 1080, 60.0, True, True)
-    disp = DisplayInfo(name=r"\\.\DISPLAY1", friendly_name="Fake",
-                       connected=True, width=1920, height=1080,
-                       refresh_rate=60.0, position_x=0, position_y=0,
-                       is_primary=True, rotation=0, width_mm=527, height_mm=296,
-                       modes=[dm])
+    disp = DisplayInfo(
+        name=r"\\.\DISPLAY1",
+        friendly_name="Fake",
+        connected=True,
+        width=1920,
+        height=1080,
+        refresh_rate=60.0,
+        position_x=0,
+        position_y=0,
+        is_primary=True,
+        rotation=0,
+        width_mm=527,
+        height_mm=296,
+        modes=[dm],
+    )
     with patch("winrandr.cli.handlers.list_displays", return_value=[disp]):
         _handle_listmodes(_ns(), as_json=True)
 
@@ -56,6 +93,7 @@ def test_handle_listmodes_no_displays():
 
 
 # --- _handle_identify ---
+
 
 def test_identify_dry_run():
     """dry-run 下只输出消息，不调用 API。"""
@@ -80,11 +118,13 @@ def test_identify_api_failure():
 
 # --- _setup_logging ---
 
+
 def test_setup_logging_first_call():
     """首次调用 _setup_logging 应创建文件和控制台两个处理器。"""
     import logging as _logging
 
     from winrandr.cli.handlers import _setup_logging
+
     root = _logging.getLogger()
     old_handlers = root.handlers[:]
     root.handlers.clear()

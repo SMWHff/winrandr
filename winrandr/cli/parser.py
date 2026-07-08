@@ -28,8 +28,9 @@ def build_parser() -> argparse.ArgumentParser:
     g_query.add_argument("--listmodes", action="store_true", help="列出每个显示器所有可用分辨率")
     g_query.add_argument("-q", "--query", action="store_true", help="查询当前显示状态")
     g_query.add_argument("--current", action="store_true", help=argparse.SUPPRESS)
-    g_query.add_argument("--prop", "--properties", action="store_true",
-                         help="显示显示器扩展属性（设备 ID、状态标志等）")
+    g_query.add_argument(
+        "--prop", "--properties", action="store_true", help="显示显示器扩展属性（设备 ID、状态标志等）"
+    )
     g_query.add_argument("--json", action="store_true", help="以 JSON 格式输出显示器信息")
     g_query.add_argument("--listproviders", action="store_true", help="列出 GPU 适配器")
     g_query.add_argument("--list-providers", action="store_true", dest="listproviders", help=argparse.SUPPRESS)
@@ -49,9 +50,9 @@ def build_parser() -> argparse.ArgumentParser:
     g_cfg.add_argument("--primary", action="store_true", help="设为主显示器")
     g_cfg.add_argument("--off", action="store_true", help="关闭显示器")
     g_cfg.add_argument("--noprimary", action="store_true", help="清除所有显示器的主显示器标记")
-    g_cfg.add_argument("--orientation",
-                       choices=["normal", "inverted", "left", "right", "0", "1", "2", "3"],
-                       help=argparse.SUPPRESS)
+    g_cfg.add_argument(
+        "--orientation", choices=["normal", "inverted", "left", "right", "0", "1", "2", "3"], help=argparse.SUPPRESS
+    )
 
     g_rel = p.add_argument_group("相对定位（互斥）")
     g_rel.add_argument("--left-of", metavar="REF", help="放在参考显示器左侧")

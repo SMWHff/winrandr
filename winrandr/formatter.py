@@ -22,8 +22,7 @@ def format_monitor_list(displays: list[DisplayInfo]) -> str:
         mm_w = d.width_mm or 0
         mm_h = d.height_mm or 0
         lines.append(
-            f" {i}: +{pri}{name} {d.width}/{mm_w}"
-            f"x{d.height}/{mm_h}+{d.position_x}+{d.position_y}  {name}",
+            f" {i}: +{pri}{name} {d.width}/{mm_w}x{d.height}/{mm_h}+{d.position_x}+{d.position_y}  {name}",
         )
     return "\n".join(lines)
 
@@ -46,12 +45,10 @@ def format_displays(displays: list[DisplayInfo]) -> str:
             max_x = max(d.position_x + d.width for d in connected)
             max_y = max(d.position_y + d.height for d in connected)
             lines.append(
-                f"Screen 0: minimum 320 x 200, current {max_x} x {max_y},"
-                f" maximum 32767 x 32767",
+                f"Screen 0: minimum 320 x 200, current {max_x} x {max_y}, maximum 32767 x 32767",
             )
         else:
-            lines.append("Screen 0: minimum 320 x 200, current (no active displays),"
-                         " maximum 32767 x 32767")
+            lines.append("Screen 0: minimum 320 x 200, current (no active displays), maximum 32767 x 32767")
         lines.append("")
 
     for d in displays:

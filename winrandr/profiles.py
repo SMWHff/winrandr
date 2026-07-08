@@ -12,8 +12,7 @@ from winrandr.api import list_displays
 logger = logging.getLogger(__name__)
 
 _CONFIG_DIR = os.path.join(
-    os.environ.get("APPDATA",
-        os.path.join(os.path.expanduser("~"), ".config")),
+    os.environ.get("APPDATA", os.path.join(os.path.expanduser("~"), ".config")),
     "winrandr",
 )
 _PROFILES_FILE = os.path.join(_CONFIG_DIR, "profiles.json")
@@ -53,8 +52,7 @@ def preview_save() -> list[str]:
         primary = " (主)" if d.is_primary else ""
         rot = f" {d.rotation}°" if d.rotation else ""
         lines.append(
-            f"  {sn}: {d.width}x{d.height} @ {d.refresh_rate}Hz"
-            f" 位置({d.position_x},{d.position_y}){rot}{primary}",
+            f"  {sn}: {d.width}x{d.height} @ {d.refresh_rate}Hz 位置({d.position_x},{d.position_y}){rot}{primary}",
         )
     return lines
 
@@ -69,16 +67,18 @@ def save_profile(name: str) -> bool:
 
     configs = []
     for d in displays:
-        configs.append({
-            "name": d.name,
-            "x": d.position_x,
-            "y": d.position_y,
-            "width": d.width,
-            "height": d.height,
-            "refresh_rate": d.refresh_rate,
-            "rotation": d.rotation,
-            "is_primary": d.is_primary,
-        })
+        configs.append(
+            {
+                "name": d.name,
+                "x": d.position_x,
+                "y": d.position_y,
+                "width": d.width,
+                "height": d.height,
+                "refresh_rate": d.refresh_rate,
+                "rotation": d.rotation,
+                "is_primary": d.is_primary,
+            }
+        )
 
     data = _load_all()
     data[name] = {
@@ -209,13 +209,15 @@ def list_profiles() -> list[dict[str, str | int | list[str]]]:
                 display_summary.append(f"{sn}({d['width']}x{d['height']})")
             else:
                 display_summary.append(sn)
-        result.append({
-            "name": name,
-            "display_count": len(displays_raw),
-            "displays": display_summary,
-            "created": info.get("created", ""),
-            "version": info.get("version", ""),
-        })
+        result.append(
+            {
+                "name": name,
+                "display_count": len(displays_raw),
+                "displays": display_summary,
+                "created": info.get("created", ""),
+                "version": info.get("version", ""),
+            }
+        )
     return sorted(result, key=lambda x: x["name"])
 
 

@@ -51,16 +51,43 @@ def test_fail_with_suggestions():
 
 def _ns(**kwargs) -> argparse.Namespace:
     """Helper: 创建带默认值的 Namespace。"""
-    defaults = dict(mode=None, size=None, rotate=None, orientation=None,
-                    primary=False, preferred=False, off=False, auto=False,
-                    brightness=None, reflect=None, gamma=None, noprimary=False,
-                    pos=None, left_of=None, right_of=None, above=None,
-                    below=None, same_as=None,
-                    listmodes=False, listproviders=False, listmonitors=False,
-                    listactivemonitors=False, x=False, y=False,
-                    query=False, current=False, prop=False, identify=False, dry_run=False,
-                    verbose=False, json=False, screen=None, nograb=False,
-                    output=None, rate=None)
+    defaults = dict(
+        mode=None,
+        size=None,
+        rotate=None,
+        orientation=None,
+        primary=False,
+        preferred=False,
+        off=False,
+        auto=False,
+        brightness=None,
+        reflect=None,
+        gamma=None,
+        noprimary=False,
+        pos=None,
+        left_of=None,
+        right_of=None,
+        above=None,
+        below=None,
+        same_as=None,
+        listmodes=False,
+        listproviders=False,
+        listmonitors=False,
+        listactivemonitors=False,
+        x=False,
+        y=False,
+        query=False,
+        current=False,
+        prop=False,
+        identify=False,
+        dry_run=False,
+        verbose=False,
+        json=False,
+        screen=None,
+        nograb=False,
+        output=None,
+        rate=None,
+    )
     defaults.update(kwargs)
     return argparse.Namespace(**defaults)
 
@@ -74,9 +101,16 @@ def test_apply_aliases_size_to_mode():
 
 def test_apply_aliases_orientation_to_rotate():
     """--orientation 应转换为 --rotate（含 "1" → normal）。"""
-    cases = {"0": "normal", "1": "normal", "normal": "normal", "2": "inverted",
-             "inverted": "inverted", "3": "left", "left": "left",
-             "right": "right"}
+    cases = {
+        "0": "normal",
+        "1": "normal",
+        "normal": "normal",
+        "2": "inverted",
+        "inverted": "inverted",
+        "3": "left",
+        "left": "left",
+        "right": "right",
+    }
     for inp, expected in cases.items():
         ns = _ns(orientation=inp)
         _apply_aliases(ns)
@@ -151,10 +185,16 @@ def test_check_relative_mutex_none():
     _check_relative_mutex(ns)  # should not raise
 
 
-@pytest.mark.parametrize("attr,val", [
-    ("left_of", "DISPLAY2"), ("right_of", "DISPLAY2"),
-    ("above", "DISPLAY2"), ("below", "DISPLAY2"), ("same_as", "DISPLAY2"),
-])
+@pytest.mark.parametrize(
+    "attr,val",
+    [
+        ("left_of", "DISPLAY2"),
+        ("right_of", "DISPLAY2"),
+        ("above", "DISPLAY2"),
+        ("below", "DISPLAY2"),
+        ("same_as", "DISPLAY2"),
+    ],
+)
 def test_check_relative_mutex_each(attr, val):
     """每个单相对定位参数单独使用不报错。"""
     _check_relative_mutex(_ns(**{attr: val}))
@@ -170,12 +210,23 @@ def test_mod_op_attrs_consistency():
 def test_list_available_displays_basic():
     """_list_available_displays 返回显示器列表。"""
     from winrandr.models import DisplayInfo, DisplayMode
+
     dm = DisplayMode(1920, 1080, 60.0, True, True)
-    d = DisplayInfo(name=r"\\.\DISPLAY1", friendly_name="Fake",
-                    connected=True, width=1920, height=1080,
-                    refresh_rate=60.0, position_x=0, position_y=0,
-                    is_primary=True, rotation=0, width_mm=527, height_mm=296,
-                    modes=[dm])
+    d = DisplayInfo(
+        name=r"\\.\DISPLAY1",
+        friendly_name="Fake",
+        connected=True,
+        width=1920,
+        height=1080,
+        refresh_rate=60.0,
+        position_x=0,
+        position_y=0,
+        is_primary=True,
+        rotation=0,
+        width_mm=527,
+        height_mm=296,
+        modes=[dm],
+    )
     with patch("winrandr.cli.handlers.list_displays", return_value=[d]):
         with patch("winrandr.cli.handlers.list_providers", return_value=[]):
             result = _list_available_displays()
@@ -193,11 +244,22 @@ def test_list_available_displays_empty():
 def test_list_available_displays_with_providers():
     """提供者中有非 DISPLAY 名称时也能正常列出（覆盖 58->56 分支）。"""
     from winrandr.models import DisplayInfo
-    d = DisplayInfo(name=r"\\.\DISPLAY1", friendly_name="Fake",
-                    connected=True, width=1920, height=1080,
-                    refresh_rate=60.0, position_x=0, position_y=0,
-                    is_primary=True, rotation=0, width_mm=527, height_mm=296,
-                    modes=[])
+
+    d = DisplayInfo(
+        name=r"\\.\DISPLAY1",
+        friendly_name="Fake",
+        connected=True,
+        width=1920,
+        height=1080,
+        refresh_rate=60.0,
+        position_x=0,
+        position_y=0,
+        is_primary=True,
+        rotation=0,
+        width_mm=527,
+        height_mm=296,
+        modes=[],
+    )
     providers = [
         {"name": "WinDisc", "string": "Virtual Display", "flags": 0},
         {"name": r"\\.\DISPLAY2", "string": "Provider2", "flags": 0},
@@ -213,6 +275,7 @@ def test_list_available_displays_with_providers():
 def test_invalidate_qdc_cache_both():
     """_invalidate_qdc_cache 应同时清除 active 和 all 两个缓存。"""
     from winrandr.win32 import utils as win32_utils
+
     win32_utils._invalidate_qdc_cache()
     assert win32_utils._QDC_CACHE is None
     assert win32_utils._QDC_ALL_CACHE is None
@@ -220,6 +283,3 @@ def test_invalidate_qdc_cache_both():
         with patch("winrandr.cli.handlers.list_providers", return_value=[]):
             result = _list_available_displays()
             assert result == "未检测到显示器"
-
-
-

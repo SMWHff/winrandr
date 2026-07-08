@@ -11,13 +11,41 @@ from winrandr.win32.structures import DISPLAY_DEVICE
 logger = logging.getLogger(__name__)
 
 _EDID_MFG_CODES = {
-    0x05E: "AOC", 0x06E: "AMI", 0x08D: "CAN", 0x09D: "CIN", 0x0AC: "DBL",
-    0x10D: "CPL", 0x1B0: "GLM", 0x20C: "CIT", 0x22D: "LEN", 0x223: "LPL",
-    0x224: "LPK", 0x258: "MAG", 0x259: "MAX", 0x25E: "MEL", 0x264: "MIR",
-    0x26D: "NEC", 0x2A3: "OPT", 0x2A9: "ORN", 0x2B8: "PNA", 0x2D2: "FUS",
-    0x2D3: "PTR", 0x2E5: "QDS", 0x30E: "SAM", 0x33C: "SMI", 0x34A: "SNY",
-    0x366: "STD", 0x369: "STN", 0x38B: "TRL", 0x3A2: "UNE", 0x3A3: "UNY",
-    0x3AA: "VSC", 0x3B0: "WTC", 0x3C7: "XMI", 0x3CE: "YOK", 0x400: "ZCM",
+    0x05E: "AOC",
+    0x06E: "AMI",
+    0x08D: "CAN",
+    0x09D: "CIN",
+    0x0AC: "DBL",
+    0x10D: "CPL",
+    0x1B0: "GLM",
+    0x20C: "CIT",
+    0x22D: "LEN",
+    0x223: "LPL",
+    0x224: "LPK",
+    0x258: "MAG",
+    0x259: "MAX",
+    0x25E: "MEL",
+    0x264: "MIR",
+    0x26D: "NEC",
+    0x2A3: "OPT",
+    0x2A9: "ORN",
+    0x2B8: "PNA",
+    0x2D2: "FUS",
+    0x2D3: "PTR",
+    0x2E5: "QDS",
+    0x30E: "SAM",
+    0x33C: "SMI",
+    0x34A: "SNY",
+    0x366: "STD",
+    0x369: "STN",
+    0x38B: "TRL",
+    0x3A2: "UNE",
+    0x3A3: "UNY",
+    0x3AA: "VSC",
+    0x3B0: "WTC",
+    0x3C7: "XMI",
+    0x3CE: "YOK",
+    0x400: "ZCM",
 }
 
 
@@ -25,9 +53,9 @@ def _find_edid_desc(data: bytes, tag: int) -> str | None:
     """从 EDID 描述符块（54-126，步长 18）查找指定 tag 的字符串。"""
     for offset in range(54, 126, 18):
         if data[offset] == 0x00 and data[offset + 1] == 0x00 and data[offset + 3] == tag:
-            raw = data[offset + 5:offset + 18]
+            raw = data[offset + 5 : offset + 18]
             try:
-                return raw.split(b'\x0a')[0].decode('ascii').strip()
+                return raw.split(b"\x0a")[0].decode("ascii").strip()
             except ValueError:
                 return None
     return None
@@ -43,12 +71,12 @@ def _find_edid_serial(data: bytes) -> str | None:
 
 def _parse_edid(data: bytes) -> dict[str, str]:
     """解析 EDID 二进制数据，返回可读的显示器信息。"""
-    if len(data) < 128 or data[0:8] != b'\x00\xff\xff\xff\xff\xff\xff\x00':
+    if len(data) < 128 or data[0:8] != b"\x00\xff\xff\xff\xff\xff\xff\x00":
         return {"edid_raw": data[:128].hex().upper()[:64] + "..." if data else "unavailable"}
 
     info = {}
     mfg_id = (data[8] << 8) | data[9]
-    mfg = "".join(chr(ord('A') + ((mfg_id >> (10 - i * 5)) & 0x1F) - 1) for i in range(3))
+    mfg = "".join(chr(ord("A") + ((mfg_id >> (10 - i * 5)) & 0x1F) - 1) for i in range(3))
     info["edid_mfg"] = _EDID_MFG_CODES.get(mfg_id, mfg)
     name = _find_edid_name(data)
     info["edid_product"] = f"{(data[10] | (data[11] << 8)):04X}"

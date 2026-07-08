@@ -84,9 +84,11 @@ def list_displays() -> list[DisplayInfo]:
 
         width = height = pos_x = pos_y = 0
         mode_idx = path.sourceInfo.modeInfoIdx
-        if (mode_idx != DISPLAYCONFIG_PATH_MODE_IDX_INVALID
-                and mode_idx < mode_count
-                and modes[mode_idx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE):
+        if (
+            mode_idx != DISPLAYCONFIG_PATH_MODE_IDX_INVALID
+            and mode_idx < mode_count
+            and modes[mode_idx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE
+        ):
             sm = modes[mode_idx]._union.sourceMode
             width, height = sm.width, sm.height
             pos_x, pos_y = sm.position.x, sm.position.y
@@ -96,9 +98,11 @@ def list_displays() -> list[DisplayInfo]:
 
         refresh = 0.0
         tmi = path.targetInfo.modeInfoIdx
-        if (tmi != DISPLAYCONFIG_PATH_MODE_IDX_INVALID
-                and tmi < mode_count
-                and modes[tmi].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET):
+        if (
+            tmi != DISPLAYCONFIG_PATH_MODE_IDX_INVALID
+            and tmi < mode_count
+            and modes[tmi].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET
+        ):
             vs = modes[tmi]._union.targetMode.targetVideoSignalInfo.vSyncFreq
             if vs.Denominator:
                 refresh = vs.Numerator / vs.Denominator
@@ -113,21 +117,23 @@ def list_displays() -> list[DisplayInfo]:
 
         all_modes = enumerate_modes(gdi_name, width, height, refresh) if active else []
 
-        displays.append(DisplayInfo(
-            name=gdi_name,
-            friendly_name=friendly,
-            connected=active,
-            width=width,
-            height=height,
-            refresh_rate=round(refresh, 2),
-            position_x=pos_x,
-            position_y=pos_y,
-            is_primary=is_primary,
-            rotation=rotation,
-            width_mm=w_mm,
-            height_mm=h_mm,
-            modes=all_modes,
-        ))
+        displays.append(
+            DisplayInfo(
+                name=gdi_name,
+                friendly_name=friendly,
+                connected=active,
+                width=width,
+                height=height,
+                refresh_rate=round(refresh, 2),
+                position_x=pos_x,
+                position_y=pos_y,
+                is_primary=is_primary,
+                rotation=rotation,
+                width_mm=w_mm,
+                height_mm=h_mm,
+                modes=all_modes,
+            )
+        )
 
     return displays
 
@@ -219,11 +225,13 @@ def list_providers() -> list[dict[str, str | int]]:
     dd.cb = sizeof(DISPLAY_DEVICE)
     i = 0
     while _EnumDisplayDevices(None, i, byref(dd), 0):
-        providers.append({
-            "name": dd.DeviceName,
-            "string": dd.DeviceString,
-            "flags": dd.StateFlags,
-        })
+        providers.append(
+            {
+                "name": dd.DeviceName,
+                "string": dd.DeviceString,
+                "flags": dd.StateFlags,
+            }
+        )
         dd = DISPLAY_DEVICE()
         dd.cb = sizeof(DISPLAY_DEVICE)
         i += 1

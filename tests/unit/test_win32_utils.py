@@ -1,4 +1,5 @@
 """Tests for win32/utils.py utility functions."""
+
 from unittest.mock import patch
 
 from winrandr.win32 import utils as win32_utils
@@ -13,6 +14,7 @@ def _clear_caches():
 
 # --- get_adapter_name ---
 
+
 def test_get_adapter_name_failure():
     """_DisplayConfigGetDeviceInfo 失败时返回空字符串。"""
     _clear_caches()
@@ -24,6 +26,7 @@ def test_get_adapter_name_failure():
 
 # --- get_monitor_device_path ---
 
+
 def test_get_monitor_device_path_failure():
     """_DisplayConfigGetDeviceInfo 失败时返回空字符串。"""
     _clear_caches()
@@ -34,6 +37,7 @@ def test_get_monitor_device_path_failure():
 
 
 # --- query_active_config ---
+
 
 def test_query_active_config_buffersizes_fails():
     """GetDisplayConfigBufferSizes 失败时返回 None。"""
@@ -62,6 +66,7 @@ def test_query_active_config_cache():
 
 # --- query_all_config ---
 
+
 def test_query_all_config_cache():
     """query_all_config 缓存命中时直接返回。"""
     _clear_caches()
@@ -89,6 +94,7 @@ def test_query_all_config_query_fails():
 
 # --- get_screen_size_mm ---
 
+
 def test_get_screen_size_mm_empty_name():
     """空名称时返回 0, 0。"""
     assert win32_utils.get_screen_size_mm("") == (0, 0)
@@ -110,6 +116,7 @@ def test_get_screen_size_mm_exception():
 
 # --- get_friendly_name_via_enum ---
 
+
 def test_get_friendly_name_via_enum_second_fails():
     """第二个 EnumDisplayDevices 失败时回退到第一个设备。"""
     with patch("winrandr.win32.utils._EnumDisplayDevices") as mock_ed:
@@ -117,12 +124,14 @@ def test_get_friendly_name_via_enum_second_fails():
         result = win32_utils.get_friendly_name_via_enum(r"\\.\DISPLAY1")
         assert isinstance(result, str)
 
+
 def test_get_friendly_name_via_enum_both_success():
     """两个 EnumDisplayDevices 都成功时返回第二个设备名。"""
     with patch("winrandr.win32.utils._EnumDisplayDevices") as mock_ed:
         mock_ed.side_effect = [True, True]
         result = win32_utils.get_friendly_name_via_enum(r"\\.\DISPLAY1")
         assert isinstance(result, str)
+
 
 def test_get_friendly_name_via_enum_first_fails():
     """第一个 EnumDisplayDevices 失败时返回空字符串。"""
@@ -138,6 +147,7 @@ def test_query_all_config_success():
         DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
         DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
     )
+
     path_count_val = 1
     mode_count_val = 2
 
@@ -179,6 +189,7 @@ def test_set_display_config_available_returns_true():
 
 # --- apply_config ---
 
+
 def test_apply_config_uses_default_flags():
     """flags=None 时使用默认组合标志。"""
     _clear_caches()
@@ -214,6 +225,7 @@ def test_apply_config_unknown_error():
 
 # --- set_display_config_available ---
 
+
 def test_set_display_config_available_cache():
     """_SDC_AVAILABLE 缓存命中时直接返回。"""
     _clear_caches()
@@ -230,6 +242,7 @@ def test_set_display_config_available_exception():
 
 
 # --- find_path_idx ---
+
 
 def test_find_path_idx_not_found():
     """找不到匹配的 GDI 名时返回 None。"""
@@ -250,6 +263,7 @@ def test_find_path_idx_found():
 
 
 # --- apply_filtered ---
+
 
 def test_apply_filtered_empty_paths():
     """所有路径均被过滤时返回 False。"""
@@ -272,6 +286,7 @@ def test_apply_filtered_success():
         DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
         DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
     )
+
     paths[0].sourceInfo.modeInfoIdx = 0
     paths[0].targetInfo.modeInfoIdx = 1
     modes[0].infoType = DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE
@@ -288,6 +303,7 @@ def test_apply_filtered_success():
 
 
 # --- _invalidate_qdc_cache ---
+
 
 def test_invalidate_qdc_cache():
     """手动失效 QDC 缓存。"""

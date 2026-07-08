@@ -6,25 +6,28 @@ from winrandr.cli import _check_relative_mutex
 from winrandr.cli.parser import build_parser
 
 
-@pytest.mark.parametrize("args,attr", [
-    (["--primary"], "primary"),
-    (["--preferred"], "preferred"),
-    (["--off"], "off"),
-    (["--auto"], "auto"),
-    (["--listmodes"], "listmodes"),
-    (["--listproviders"], "listproviders"),
-    (["--listmonitors"], "listmonitors"),
-    (["--noprimary"], "noprimary"),
-    (["--query"], "query"),
-    (["-q"], "query"),
-    (["--current"], "current"),
-    (["--dryrun"], "dry_run"),
-    (["--verbose"], "verbose"),
-    (["--json"], "json"),
-    (["--prop"], "prop"),
-    (["--properties"], "prop"),
-    (["--dry-run"], "dry_run"),
-])
+@pytest.mark.parametrize(
+    "args,attr",
+    [
+        (["--primary"], "primary"),
+        (["--preferred"], "preferred"),
+        (["--off"], "off"),
+        (["--auto"], "auto"),
+        (["--listmodes"], "listmodes"),
+        (["--listproviders"], "listproviders"),
+        (["--listmonitors"], "listmonitors"),
+        (["--noprimary"], "noprimary"),
+        (["--query"], "query"),
+        (["-q"], "query"),
+        (["--current"], "current"),
+        (["--dryrun"], "dry_run"),
+        (["--verbose"], "verbose"),
+        (["--json"], "json"),
+        (["--prop"], "prop"),
+        (["--properties"], "prop"),
+        (["--dry-run"], "dry_run"),
+    ],
+)
 def test_parser_bool_flag(args, attr):
     p = build_parser()
     assert getattr(p.parse_args(args), attr) is True
@@ -223,7 +226,17 @@ def test_parser_help_output(capsys):
     with pytest.raises(SystemExit):
         p.parse_args(["--help"])
     out, _ = capsys.readouterr()
-    for key in ("--mode", "--output", "--rotate", "--primary", "--off",
-                "--brightness", "--gamma", "--reflect", "--json",
-                "--listmodes", "--dry-run"):
+    for key in (
+        "--mode",
+        "--output",
+        "--rotate",
+        "--primary",
+        "--off",
+        "--brightness",
+        "--gamma",
+        "--reflect",
+        "--json",
+        "--listmodes",
+        "--dry-run",
+    ):
         assert key in out

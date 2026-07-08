@@ -117,6 +117,7 @@ class DISPLAYCONFIG_SOURCE_DEVICE_NAME(Structure):
 
 class DISPLAYCONFIG_TARGET_DEVICE_NAME(Structure):
     """官方 Windows SDK 结构。"""
+
     _fields_ = [
         ("header", DISPLAYCONFIG_DEVICE_INFO_HEADER),
         ("monitorFriendlyDeviceName", wintypes.WCHAR * 64),

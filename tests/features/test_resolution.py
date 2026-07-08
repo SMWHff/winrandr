@@ -6,6 +6,7 @@ from unittest.mock import patch
 def test_enumerate_modes_empty():
     """EnumDisplaySettings 返回 False 时返回空列表。"""
     from winrandr.features.resolution import enumerate_modes
+
     with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=0):
         modes = enumerate_modes("DISPLAY1", 1920, 1080, 60.0)
         assert modes == []
@@ -41,6 +42,7 @@ def test_enumerate_modes_skips_invalid():
 
 def test_set_resolution_success():
     from winrandr.features.resolution import set_resolution
+
     with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=1):
         with patch("winrandr.features.resolution._ChangeDisplaySettingsEx", return_value=0):
             assert set_resolution(r"\\.\DISPLAY1", 1920, 1080, 60.0) is True
@@ -48,6 +50,7 @@ def test_set_resolution_success():
 
 def test_set_resolution_failure():
     from winrandr.features.resolution import set_resolution
+
     with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=1):
         with patch("winrandr.features.resolution._ChangeDisplaySettingsEx", return_value=-2):
             assert set_resolution(r"\\.\DISPLAY1", 1920, 1080) is False
@@ -55,12 +58,14 @@ def test_set_resolution_failure():
 
 def test_set_resolution_enum_fails():
     from winrandr.features.resolution import set_resolution
+
     with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=0):
         assert set_resolution(r"\\.\DISPLAY1", 1920, 1080) is False
 
 
 def test_set_preferred_resolution_success():
     from winrandr.features.resolution import set_preferred_resolution
+
     with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=1):
         with patch("winrandr.features.resolution._ChangeDisplaySettingsEx", return_value=0):
             assert set_preferred_resolution(r"\\.\DISPLAY1") is True
@@ -68,12 +73,14 @@ def test_set_preferred_resolution_success():
 
 def test_set_preferred_resolution_no_registry():
     from winrandr.features.resolution import set_preferred_resolution
+
     with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=0):
         assert set_preferred_resolution(r"\\.\DISPLAY1") is False
 
 
 def test_set_auto_delegates():
     from winrandr.features.resolution import set_auto
+
     with patch("winrandr.features.resolution.set_preferred_resolution", return_value=True) as mock_fn:
         assert set_auto(r"\\.\DISPLAY1") is True
         mock_fn.assert_called_once_with(r"\\.\DISPLAY1")

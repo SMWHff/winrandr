@@ -18,7 +18,7 @@ def _build_edid(
     serial_str: str | None = None,
 ) -> bytes:
     data = bytearray(128)
-    data[0:8] = b'\x00\xff\xff\xff\xff\xff\xff\x00'
+    data[0:8] = b"\x00\xff\xff\xff\xff\xff\xff\x00"
     data[8] = (mfg_id >> 8) & 0xFF
     data[9] = mfg_id & 0xFF
     data[10] = product & 0xFF
@@ -35,14 +35,14 @@ def _build_edid(
     data[21] = width_cm
     data[22] = height_cm
     if name:
-        data[54:59] = b'\x00\x00\x00\xFC\x00'
-        raw_name = name.encode('ascii')
-        data[59:59 + len(raw_name)] = raw_name
+        data[54:59] = b"\x00\x00\x00\xfc\x00"
+        raw_name = name.encode("ascii")
+        data[59 : 59 + len(raw_name)] = raw_name
         data[59 + len(raw_name)] = 0x0A
     if serial_str:
-        data[72:76] = b'\x00\x00\x00\xFF\x00'
-        raw = serial_str.encode('ascii')[:13]
-        data[77:77 + len(raw)] = raw
+        data[72:76] = b"\x00\x00\x00\xff\x00"
+        raw = serial_str.encode("ascii")[:13]
+        data[77 : 77 + len(raw)] = raw
         if len(raw) < 13:
             data[77 + len(raw)] = 0x0A
     return bytes(data)
@@ -87,18 +87,18 @@ def test_parse_edid_no_name():
 
 
 def test_parse_edid_too_short():
-    result = _parse_edid(b'\x00' * 64)
+    result = _parse_edid(b"\x00" * 64)
     assert "edid_raw" in result
     assert result["edid_raw"].startswith("00")
 
 
 def test_parse_edid_invalid_header():
-    result = _parse_edid(b'\xff' * 128)
+    result = _parse_edid(b"\xff" * 128)
     assert "edid_raw" in result
 
 
 def test_parse_edid_empty():
-    result = _parse_edid(b'')
+    result = _parse_edid(b"")
     assert result["edid_raw"] == "unavailable"
 
 
@@ -167,12 +167,13 @@ def test_find_edid_serial_missing():
 def test_find_edid_name_decode_error():
     """非 ASCII 字节导致 decode 失败时返回 None。"""
     from winrandr.edid import _find_edid_desc
+
     data = bytearray(128)
-    data[0:8] = b'\x00\xff\xff\xff\xff\xff\xff\x00'
+    data[0:8] = b"\x00\xff\xff\xff\xff\xff\xff\x00"
     data[8] = 0x05
     data[9] = 0xE3
-    data[54:59] = b'\x00\x00\x00\xFC\x00'
-    data[59:72] = b'\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x0a'
+    data[54:59] = b"\x00\x00\x00\xfc\x00"
+    data[59:72] = b"\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x0a"
     result = _find_edid_desc(bytes(data), 0xFC)
     assert result is None
 
@@ -184,6 +185,7 @@ def _make_edid_bytes(name: str = "TestMon") -> bytes:
 def test_get_edid_enum_fails():
     """_EnumDisplayDevices 失败时返回空 dict。"""
     from winrandr.edid import get_edid
+
     with patch("winrandr.edid._EnumDisplayDevices", return_value=False):
         assert get_edid(r"\\.\DISPLAY1") == {}
 
@@ -191,9 +193,11 @@ def test_get_edid_enum_fails():
 def test_get_edid_no_device_id():
     """DeviceID 为空时返回空 dict。"""
     from winrandr.edid import get_edid
+
     def fake_enum(_, __, dd_ptr, ___):
         dd_ptr._obj.cb = 1
         return True
+
     with patch("winrandr.edid._EnumDisplayDevices", side_effect=fake_enum):
         assert get_edid(r"\\.\DISPLAY1") == {}
 
@@ -201,9 +205,11 @@ def test_get_edid_no_device_id():
 def test_get_edid_short_device_id():
     """DeviceID 格式异常（段数 < 2）时返回空 dict。"""
     from winrandr.edid import get_edid
+
     def fake_enum(_, __, dd_ptr, ___):
         dd_ptr._obj.DeviceID = "NODELIMITERS"
         return True
+
     with patch("winrandr.edid._EnumDisplayDevices", side_effect=fake_enum):
         assert get_edid(r"\\.\DISPLAY1") == {}
 
@@ -211,9 +217,11 @@ def test_get_edid_short_device_id():
 def test_get_edid_registry_open_fails():
     """winreg.OpenKey 失败时返回空 dict。"""
     from winrandr.edid import get_edid
+
     def fake_enum(_, __, dd_ptr, ___):
         dd_ptr._obj.DeviceID = r"MONITOR\ABC123"
         return True
+
     with patch("winrandr.edid._EnumDisplayDevices", side_effect=fake_enum):
         with patch("winrandr.edid.winreg.OpenKey", side_effect=OSError):
             assert get_edid(r"\\.\DISPLAY1") == {}
@@ -222,7 +230,9 @@ def test_get_edid_registry_open_fails():
 def test_get_edid_success():
     """完整成功的 get_edid 路径。"""
     from winrandr.edid import get_edid
+
     edid_bytes = _make_edid_bytes("ProDisplay")
+
     def fake_enum(_, __, dd_ptr, ___):
         dd_ptr._obj.DeviceID = r"MONITOR\ABC123"
         return True
@@ -245,6 +255,7 @@ def test_get_edid_success():
 def test_get_edid_all_instances_fail():
     """所有实例均失败后返回空 dict（覆盖 inner/outer except 路径）。"""
     from winrandr.edid import get_edid
+
     def fake_enum(_, __, dd_ptr, ___):
         dd_ptr._obj.DeviceID = r"MONITOR\ABC123"
         return True
@@ -264,6 +275,7 @@ def test_get_edid_all_instances_fail():
 def test_target_device_name_friendly_name():
     """DISPLAYCONFIG_TARGET_DEVICE_NAME.friendly_name 返回 monitorFriendlyDeviceName。"""
     from winrandr.win32.structures import DISPLAYCONFIG_TARGET_DEVICE_NAME
+
     sdn = DISPLAYCONFIG_TARGET_DEVICE_NAME()
     sdn.monitorFriendlyDeviceName = "Test Monitor"
     assert sdn.friendly_name == "Test Monitor"
