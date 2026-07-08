@@ -16,7 +16,7 @@ from winrandr.win32.utils import (
 logger = logging.getLogger(__name__)
 
 
-def _require_active_config():
+def _require_active_config() -> tuple | None:
     """获取活动 QDC 配置，SDC 不可用时返回 None。"""
     if not set_display_config_available():
         return None

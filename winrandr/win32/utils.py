@@ -52,7 +52,7 @@ def _invalidate_qdc_cache() -> None:
     _QDC_ALL_CACHE = None
 
 
-def get_gdi_name(path) -> str:
+def get_gdi_name(path: DISPLAYCONFIG_PATH_INFO) -> str:
     """获取路径对应的 GDI 设备名。"""
     name = DISPLAYCONFIG_SOURCE_DEVICE_NAME()
     name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME
@@ -63,7 +63,7 @@ def get_gdi_name(path) -> str:
     return name.viewGdiDeviceName if ret == 0 else ""
 
 
-def get_adapter_name(path) -> str:
+def get_adapter_name(path: DISPLAYCONFIG_PATH_INFO) -> str:
     """获取路径对应的 GPU 适配器名称。"""
     name = DISPLAYCONFIG_ADAPTER_NAME()
     name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME
@@ -74,7 +74,7 @@ def get_adapter_name(path) -> str:
     return name.adapterDevicePath if ret == 0 else ""
 
 
-def get_monitor_device_path(path) -> str:
+def get_monitor_device_path(path: DISPLAYCONFIG_PATH_INFO) -> str:
     """获取路径对应的显示器设备路径。"""
     tname = DISPLAYCONFIG_TARGET_DEVICE_NAME()
     tname.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME
@@ -192,7 +192,7 @@ SDC_ERROR_MESSAGES = {
     1610: "显示配置无效（虚拟显示器驱动可能干扰）",
 }
 
-def apply_config(paths, path_count: int, modes, mode_count: int, flags: int | None = None) -> bool:
+def apply_config(paths: DISPLAYCONFIG_PATH_INFO, path_count: int, modes: DISPLAYCONFIG_MODE_INFO, mode_count: int, flags: int | None = None) -> bool:
     """应用显示配置，成功后自动失效 QDC 缓存。"""
     if flags is None:
         flags = (
@@ -225,7 +225,7 @@ def set_display_config_available() -> bool:
     return _SDC_AVAILABLE
 
 
-def find_path_idx(paths, count: int, device_name: str) -> int | None:
+def find_path_idx(paths: DISPLAYCONFIG_PATH_INFO, count: int, device_name: str) -> int | None:
     """通过 GDI 设备名查找路径在数组中的索引。"""
     for i in range(count):
         gdi_name = get_gdi_name(paths[i])
@@ -234,7 +234,7 @@ def find_path_idx(paths, count: int, device_name: str) -> int | None:
     return None
 
 
-def filter_valid_paths(paths, path_count: int, modes, mode_count: int) -> list[int]:
+def filter_valid_paths(paths: DISPLAYCONFIG_PATH_INFO, path_count: int, modes: DISPLAYCONFIG_MODE_INFO, mode_count: int) -> list[int]:
     """过滤出有效路径：mode 索引需指向对应类型的 mode 条目。"""
     valid = []
     for i in range(path_count):
@@ -256,7 +256,7 @@ def filter_valid_paths(paths, path_count: int, modes, mode_count: int) -> list[i
     return valid
 
 
-def apply_filtered(paths, path_count: int, modes, mode_count: int, flags: int | None = None) -> bool:
+def apply_filtered(paths: DISPLAYCONFIG_PATH_INFO, path_count: int, modes: DISPLAYCONFIG_MODE_INFO, mode_count: int, flags: int | None = None) -> bool:
     """过滤出有效路径后应用配置（避免虚拟显示器幽灵路径导致 SDC 失败）。"""
     valid_idxs = filter_valid_paths(paths, path_count, modes, mode_count)
     if not valid_idxs:

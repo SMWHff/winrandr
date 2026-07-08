@@ -1,6 +1,7 @@
 """CLI 入口：argparse 解析 + 主流程编排。"""
 import logging
 import sys
+from argparse import Namespace
 
 from winrandr.api import get_display_props, list_displays, list_providers, set_noprimary
 from winrandr.cli.handlers import (
@@ -31,7 +32,7 @@ from winrandr.cli.parser import build_parser
 from winrandr.formatter import format_displays, format_monitor_list
 
 
-def _handle_providers(args) -> None:
+def _handle_providers(args: Namespace) -> None:
     providers = list_providers()
     if args.json:
         import json
@@ -44,7 +45,7 @@ def _handle_providers(args) -> None:
             print(f"  Provider {i}: {p['string']} ({p['name']})")
 
 
-def _handle_monitors(args) -> None:
+def _handle_monitors(args: Namespace) -> None:
     displays = list_displays()
     if args.json:
         import json
@@ -56,7 +57,7 @@ def _handle_monitors(args) -> None:
         print(format_monitor_list(displays))
 
 
-def _handle_list_profiles(args) -> None:
+def _handle_list_profiles(args: Namespace) -> None:
     from winrandr.profiles import list_profiles
     profiles = list_profiles()
     if args.json:
@@ -75,7 +76,7 @@ def _handle_list_profiles(args) -> None:
             print(line)
 
 
-def _handle_save_profile(args) -> None:
+def _handle_save_profile(args: Namespace) -> None:
     if not args.save_profile:
         _fail("存档名不能为空")
     if args.dry_run:
@@ -89,7 +90,7 @@ def _handle_save_profile(args) -> None:
         print(f"已保存配置为「{args.save_profile}」")
 
 
-def _handle_load_profile(args) -> None:
+def _handle_load_profile(args: Namespace) -> None:
     if not args.load_profile:
         _fail("存档名不能为空")
     from winrandr.profiles import diff_profile, load_profile
@@ -102,7 +103,7 @@ def _handle_load_profile(args) -> None:
         print(f"已加载配置「{args.load_profile}」")
 
 
-def _handle_delete_profile(args) -> None:
+def _handle_delete_profile(args: Namespace) -> None:
     if not args.delete_profile:
         _fail("存档名不能为空")
     from winrandr.profiles import delete_profile
@@ -111,7 +112,7 @@ def _handle_delete_profile(args) -> None:
     print(f"已删除存档「{args.delete_profile}」")
 
 
-def _handle_query(args) -> None:
+def _handle_query(args: Namespace) -> None:
     displays = list_displays()
     if not displays:
         print("未检测到活动显示器。")
@@ -132,7 +133,7 @@ def _handle_query(args) -> None:
         print(format_displays(displays))
 
 
-def _handle_noprimary_only(args) -> bool:
+def _handle_noprimary_only(args: Namespace) -> bool:
     """处理 --noprimary，返回 True 表示已处理完毕。"""
     if not args.dry_run and not set_noprimary():
         _fail("清除主显示器标记失败", ["某些虚拟显示器驱动（如向日葵）可能干扰此功能", "使用 --verbose 查看详细日志"])
@@ -143,7 +144,7 @@ def _handle_noprimary_only(args) -> bool:
     return False
 
 
-def _handle_global_ops(args) -> None:
+def _handle_global_ops(args: Namespace) -> None:
     """处理全局亮度/伽马（不指定 --output 时）。"""
     targets = [d for d in list_displays() if d.connected]
     if not targets:
@@ -157,7 +158,7 @@ def _handle_global_ops(args) -> None:
             _handle_gamma(args, t.name)
 
 
-def _dispatch_display_ops(args, device_name: str) -> None:  # noqa: C901  # 操作列表长但无简化空间
+def _dispatch_display_ops(args: Namespace, device_name: str) -> None:  # noqa: C901  # 操作列表长但无简化空间
     """调度各显示操作。"""
     if args.auto:
         _handle_auto(args, device_name)
