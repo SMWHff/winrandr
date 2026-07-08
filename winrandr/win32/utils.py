@@ -141,7 +141,7 @@ def get_screen_size_mm(gdi_name: str) -> tuple[int, int]:
         if not dc:
             return 0, 0
         return _GetDeviceCaps(dc, HORZSIZE), _GetDeviceCaps(dc, VERTSIZE)
-    except Exception:
+    except OSError:
         return 0, 0
     finally:
         if dc:
@@ -205,7 +205,7 @@ def set_display_config_available() -> bool:
     try:
         ret = _GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, pc, mc)
         _SDC_AVAILABLE = (ret == 0)
-    except Exception:
+    except OSError:
         _SDC_AVAILABLE = False
     if not _SDC_AVAILABLE:
         logger.warning("SetDisplayConfig 不可用（可能虚拟显示器驱动干扰），部分功能将受限。")

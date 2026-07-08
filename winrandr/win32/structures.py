@@ -81,7 +81,7 @@ class DISPLAYCONFIG_TARGET_MODE(Structure):
 
 
 class _ModeInfoUnion(Union):
-    _fields_ = [
+    _fields_ = [  # noqa: RUF012  # ctypes 要求 _fields_ 为类属性
         ("targetMode", DISPLAYCONFIG_TARGET_MODE),
         ("sourceMode", DISPLAYCONFIG_SOURCE_MODE),
     ]

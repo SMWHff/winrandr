@@ -103,7 +103,7 @@ def test_get_screen_size_mm_create_fails():
 def test_get_screen_size_mm_exception():
     """获取尺寸异常时返回 0, 0。"""
     with patch("winrandr.win32.utils._CreateDCW", return_value=0x1234):
-        with patch("winrandr.win32.utils._GetDeviceCaps", side_effect=Exception("mock")):
+        with patch("winrandr.win32.utils._GetDeviceCaps", side_effect=OSError("mock")):
             with patch("winrandr.win32.utils._DeleteDC"):
                 assert win32_utils.get_screen_size_mm(r"\\.\DISPLAY1") == (0, 0)
 

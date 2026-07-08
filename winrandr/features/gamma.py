@@ -29,8 +29,8 @@ def _apply_gamma(device_name: str, modifier: Callable) -> bool:
             return True
         finally:
             _DeleteDC(dc)
-    except Exception as e:
-        logger.error("伽马校正操作异常: %s", e)
+    except OSError:
+        logger.exception("伽马校正操作异常")
         return False
 
 
@@ -73,33 +73,34 @@ def identify_display(device_name: str, duration: float = 2.0) -> bool:
     """通过闪烁屏幕帮助识别指定显示器（闪 3 次后恢复原状）。"""
     try:
         dc = _CreateDCW("DISPLAY", device_name, None, None)
-        if not dc:
-            logger.error("无法为 %s 创建设备上下文", device_name)
-            return False
-        try:
-            ramp = (c_uint16 * (3 * 256))()
-            if not _GetDeviceGammaRamp(dc, ramp):
-                logger.error("无法获取 %s 的伽马校正表", device_name)
-                return False
-            saved = (c_uint16 * (3 * 256))()
-            for i in range(3 * 256):
-                saved[i] = ramp[i]
-
-            flash = (c_uint16 * (3 * 256))()
-            for i in range(3 * 256):
-                flash[i] = 65535
-            blank = (c_uint16 * (3 * 256))()  # all zeros → black
-
-            interval = duration / 6
-            for _ in range(3):
-                _SetDeviceGammaRamp(dc, flash)
-                time.sleep(interval)
-                _SetDeviceGammaRamp(dc, blank)
-                time.sleep(interval)
-        finally:
-            _SetDeviceGammaRamp(dc, saved)
-            _DeleteDC(dc)
-        return True
-    except Exception as e:
-        logger.error("识别显示器操作异常: %s", e)
+    except OSError:
+        logger.exception("识别显示器操作异常")
         return False
+    if not dc:
+        logger.error("无法为 %s 创建设备上下文", device_name)
+        return False
+
+    saved = (c_uint16 * (3 * 256))()
+    try:
+        ramp = (c_uint16 * (3 * 256))()
+        if not _GetDeviceGammaRamp(dc, ramp):
+            logger.error("无法获取 %s 的伽马校正表", device_name)
+            return False
+        for i in range(3 * 256):
+            saved[i] = ramp[i]
+
+        flash = (c_uint16 * (3 * 256))()
+        for i in range(3 * 256):
+            flash[i] = 65535
+        blank = (c_uint16 * (3 * 256))()
+
+        interval = duration / 6
+        for _ in range(3):
+            _SetDeviceGammaRamp(dc, flash)
+            time.sleep(interval)
+            _SetDeviceGammaRamp(dc, blank)
+            time.sleep(interval)
+    finally:
+        _SetDeviceGammaRamp(dc, saved)
+        _DeleteDC(dc)
+    return True

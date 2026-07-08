@@ -25,8 +25,8 @@ def _load_all() -> dict:
     try:
         with open(_PROFILES_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
-    except (json.JSONDecodeError, OSError) as e:
-        logger.error("读取配置文件失败: %s", e)
+    except (json.JSONDecodeError, OSError):
+        logger.exception("读取配置文件失败")
         return {}
 
 
@@ -36,8 +36,8 @@ def _save_all(data: dict) -> bool:
         with open(_PROFILES_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         return True
-    except OSError as e:
-        logger.error("写入配置文件失败: %s", e)
+    except OSError:
+        logger.exception("写入配置文件失败")
         return False
 
 
@@ -130,7 +130,7 @@ def diff_profile(name: str) -> list[str]:
     return lines
 
 
-def load_profile(name: str) -> bool:
+def load_profile(name: str) -> bool:  # noqa: C901  # 循环中含多条 API 调用，分支多但线性
     """恢复指定名称的显示器配置存档。"""
     data = _load_all()
     profile = data.get(name)
