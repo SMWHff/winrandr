@@ -9,15 +9,17 @@ winrandr/                 核心包
 ├── __main__.py           python -m winrandr 入口
 ├── cli/                  CLI 子包
 │   ├── __init__.py       argparse + 主流程编排
-│   └── handlers.py       操作处理函数 + 通用工具
-├── api.py                公开 API (查询/属性/相对定位，含 3 个子模块 re-export)
+│   ├── common.py         通用工具（日志/参数校验/辅助）
+│   ├── handlers.py       操作处理函数
+│   └── parser.py         argparse 参数解析器
+├── api.py                公开 API (查询/属性/相对定位，含 features/ 子模块 re-export)
 ├── edid.py               EDID 读取与解析（注册表 + 二进制解析）
 ├── formatter.py          xrandr 风格格式化输出
 ├── models.py             数据模型 (DisplayInfo, DisplayMode)
 ├── profiles.py           配置存档管理（保存/恢复显示器布局）
 ├── features/
-│   ├── gamma.py          伽马校正与亮度
-│   ├── layout.py         位置/旋转/主屏/关闭
+│   ├── gamma.py          伽马校正、亮度、显示器识别（identify_display）
+│   ├── layout.py         位置/旋转/主屏/关闭/相对定位
 │   └── resolution.py     分辨率/刷新率枚举与设置
 └── win32/                底层 Win32 绑定层
     ├── constants.py      Win32 API 常量 + 旋转映射表
@@ -36,9 +38,13 @@ winrandr/                 核心包
 - 主流程编排，每个操作提取为独立的 `_handle_*` 函数
 - 日志初始化
 
+### winrandr/cli/common.py
+- CLI 通用工具（`_normalize_name` / `_fail` / `_msg` / `_is_mod_op` / `_apply_aliases` / `_check_relative_mutex` / `_list_available_displays`）
+- 日志初始化 `_setup_logging`
+- 显示操作属性列表 `_MOD_OP_ATTRS`
+
 ### winrandr/cli/handlers.py
 - CLI 操作处理函数（`_handle_mode` / `_handle_pos` / `_handle_brightness` 等）
-- 通用工具（`_normalize_name` / `_fail` / `_msg` / `_is_mod_op` / `_apply_aliases`）
 
 ### winrandr/api.py
 - 业务逻辑 API 层：定义 `list_displays` / `set_position_relative` / `get_display_props` / `list_providers`
@@ -63,14 +69,15 @@ winrandr/                 核心包
 ### winrandr/features/gamma.py
 - `set_brightness`：单值伽马倍增调亮度
 - `set_gamma`：三通道独立伽马校正
+- `identify_display`：闪屏识别（创建 DC → 读写伽马表 → 闪烁白/黑 → 恢复）
 
 ### winrandr/features/layout.py
 - `set_position`：绝对定位
 - `set_rotation`：旋转（0/90/180/270）
 - `set_primary`：设为主显示器
 - `set_off`：关闭显示器
+- `set_noprimary`：清除所有主显示器标记
 - `set_reflect`：镜像翻转（仅 xy = 旋转 180°）
-- `identify_display`：闪屏识别
 
 ### winrandr/win32/bindings.py
 - 所有 Win32 API 的 ctypes 函数绑定
