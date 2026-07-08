@@ -209,5 +209,3 @@ def test_msg_dry_run(capsys):
     _msg(_ns(dry_run=True), "测试消息")
     out, _ = capsys.readouterr()
     assert out == "(Dry-Run) 测试消息\n"
-
-
