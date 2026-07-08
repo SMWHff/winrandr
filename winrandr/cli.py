@@ -39,41 +39,50 @@ def _build_parser():
   winrandr --output DISPLAY1 --left-of DISPLAY2
         """)
     p.add_argument("--version", action="version", version=f"winrandr {__version__}")
-    p.add_argument("--listmodes", action="store_true", help="列出每个显示器所有可用分辨率")
-    p.add_argument("-q", "--query", action="store_true", help="查询当前显示状态")
-    p.add_argument("--current", action="store_true", help=argparse.SUPPRESS)
-    p.add_argument("--prop", "--properties", action="store_true", help="显示显示器扩展属性（设备 ID、状态标志等）")
-    p.add_argument("--dry-run", "--dryrun", action="store_true", help="模拟操作，不实际更改配置")
-    p.add_argument("--verbose", "-v", action="store_true", help="详细日志输出（调试用）")
-    p.add_argument("--output", "-o", help="显示器名（如 DISPLAY1）")
-    p.add_argument("--auto", action="store_true", help="启用显示器并使用首选分辨率")
-    p.add_argument("--mode", "-m", help="分辨率（如 1920x1080）")
-    p.add_argument("-s", "--size", help=argparse.SUPPRESS)
-    p.add_argument("--orientation", choices=["normal", "inverted", "left", "right", "0", "1", "2", "3"], help=argparse.SUPPRESS)
-    p.add_argument("--rate", "-r", "--refresh", type=float, help="刷新率（Hz）")
-    p.add_argument("--pos", "-p", help="桌面位置（如 0x0）")
-    p.add_argument("--rotate", choices=["normal", "left", "right", "inverted"], help="旋转方向")
-    p.add_argument("--primary", action="store_true", help="设为主显示器")
-    p.add_argument("--preferred", action="store_true", help="设为注册表首选分辨率")
-    p.add_argument("--off", action="store_true", help="关闭显示器")
-    p.add_argument("--json", action="store_true", help="以 JSON 格式输出显示器信息")
-    p.add_argument("--brightness", type=float, help="亮度值（0.1-2.0，1.0 为正常）")
-    p.add_argument("--reflect", choices=["normal", "x", "y", "xy"], help="镜像翻转（仅 xy 支持）")
-    p.add_argument("-x", action="store_true", help=argparse.SUPPRESS)
-    p.add_argument("-y", action="store_true", help=argparse.SUPPRESS)
-    p.add_argument("--gamma", metavar="R:G:B", help="伽马校正（如 1.0:0.9:0.8）")
-    rg = p.add_mutually_exclusive_group()
-    rg.add_argument("--left-of", metavar="REF", help="放在参考显示器左侧")
-    rg.add_argument("--right-of", metavar="REF", help="放在参考显示器右侧")
-    rg.add_argument("--above", metavar="REF", help="放在参考显示器上方")
-    rg.add_argument("--below", metavar="REF", help="放在参考显示器下方")
-    rg.add_argument("--same-as", metavar="REF", help="与参考显示器同位置（镜像）")
-    p.add_argument("--noprimary", action="store_true", help="清除所有显示器的主显示器标记")
-    p.add_argument("--listproviders", action="store_true", help="列出 GPU 适配器")
-    p.add_argument("--listmonitors", action="store_true", help="列出带编号的显示器列表")
-    p.add_argument("--listactivemonitors", action="store_true", help=argparse.SUPPRESS)
-    p.add_argument("--screen", help=argparse.SUPPRESS)
-    p.add_argument("--nograb", action="store_true", help=argparse.SUPPRESS)
+
+    g_query = p.add_argument_group("查询选项")
+    g_query.add_argument("--listmodes", action="store_true", help="列出每个显示器所有可用分辨率")
+    g_query.add_argument("-q", "--query", action="store_true", help="查询当前显示状态")
+    g_query.add_argument("--current", action="store_true", help=argparse.SUPPRESS)
+    g_query.add_argument("--prop", "--properties", action="store_true", help="显示显示器扩展属性（设备 ID、状态标志等）")
+    g_query.add_argument("--json", action="store_true", help="以 JSON 格式输出显示器信息")
+    g_query.add_argument("--listproviders", action="store_true", help="列出 GPU 适配器")
+    g_query.add_argument("--listmonitors", action="store_true", help="列出带编号的显示器列表")
+    g_query.add_argument("--listactivemonitors", action="store_true", help=argparse.SUPPRESS)
+
+    g_cfg = p.add_argument_group("显示配置")
+    g_cfg.add_argument("--output", "-o", help="显示器名（如 DISPLAY1）")
+    g_cfg.add_argument("--mode", "-m", help="分辨率（如 1920x1080）")
+    g_cfg.add_argument("-s", "--size", help=argparse.SUPPRESS)
+    g_cfg.add_argument("--rate", "-r", "--refresh", type=float, help="刷新率（Hz）")
+    g_cfg.add_argument("--pos", "-p", help="桌面位置（如 0x0）")
+    g_cfg.add_argument("--rotate", choices=["normal", "left", "right", "inverted"], help="旋转方向")
+    g_cfg.add_argument("--auto", action="store_true", help="启用显示器并使用首选分辨率")
+    g_cfg.add_argument("--preferred", action="store_true", help="设为注册表首选分辨率")
+    g_cfg.add_argument("--primary", action="store_true", help="设为主显示器")
+    g_cfg.add_argument("--off", action="store_true", help="关闭显示器")
+    g_cfg.add_argument("--noprimary", action="store_true", help="清除所有显示器的主显示器标记")
+    g_cfg.add_argument("--orientation", choices=["normal", "inverted", "left", "right", "0", "1", "2", "3"], help=argparse.SUPPRESS)
+
+    g_rel = p.add_argument_group("相对定位（互斥）")
+    g_rel.add_argument("--left-of", metavar="REF", help="放在参考显示器左侧")
+    g_rel.add_argument("--right-of", metavar="REF", help="放在参考显示器右侧")
+    g_rel.add_argument("--above", metavar="REF", help="放在参考显示器上方")
+    g_rel.add_argument("--below", metavar="REF", help="放在参考显示器下方")
+    g_rel.add_argument("--same-as", metavar="REF", help="与参考显示器同位置（镜像）")
+
+    g_img = p.add_argument_group("图像调节")
+    g_img.add_argument("--brightness", type=float, help="亮度值（0.1-2.0，1.0 为正常）")
+    g_img.add_argument("--gamma", metavar="R:G:B", help="伽马校正（如 1.0:0.9:0.8）")
+    g_img.add_argument("--reflect", choices=["normal", "x", "y", "xy"], help="镜像翻转（仅 xy 支持）")
+    g_img.add_argument("-x", action="store_true", help=argparse.SUPPRESS)
+    g_img.add_argument("-y", action="store_true", help=argparse.SUPPRESS)
+
+    g_misc = p.add_argument_group("其他")
+    g_misc.add_argument("--dry-run", "--dryrun", action="store_true", help="模拟操作，不实际更改配置")
+    g_misc.add_argument("--verbose", "-v", action="store_true", help="详细日志输出（调试用）")
+    g_misc.add_argument("--screen", help=argparse.SUPPRESS)
+    g_misc.add_argument("--nograb", action="store_true", help=argparse.SUPPRESS)
     return p
 
 
@@ -115,6 +124,12 @@ def _is_mod_op(args) -> bool:
                 args.off, args.brightness, args.reflect, args.gamma,
                 args.left_of, args.right_of, args.above, args.below, args.same_as,
                 args.auto, args.noprimary])
+
+
+def _check_relative_mutex(args):
+    rel_args = [args.left_of, args.right_of, args.above, args.below, args.same_as]
+    if sum(1 for r in rel_args if r) > 1:
+        _fail("相对定位参数是互斥的，只能使用 --left-of / --right-of / --above / --below / --same-as 之一")
 
 
 # --- 操作处理函数 ---
@@ -205,6 +220,7 @@ def main():
     if args.verbose: logging.getLogger().setLevel(logging.DEBUG)
 
     _apply_aliases(args)
+    _check_relative_mutex(args)
 
     # --listproviders / --listmonitors
     if args.listproviders:

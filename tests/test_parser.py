@@ -1,7 +1,7 @@
 """Parser construction and argument parsing tests."""
 
 import pytest
-from winrandr.cli import _build_parser
+from winrandr.cli import _build_parser, _check_relative_mutex
 
 
 @pytest.mark.parametrize("args,attr", [
@@ -101,9 +101,12 @@ def test_parser_gamma():
 
 
 def test_parser_relative_mutual_exclusion():
+    """相对定位互斥校验由 _check_relative_mutex 在 main() 中执行。"""
+    import argparse
     p = _build_parser()
+    args = p.parse_args(["-o", "DISPLAY1", "--left-of", "DISPLAY2", "--right-of", "DISPLAY3"])
     with pytest.raises(SystemExit):
-        p.parse_args(["-o", "DISPLAY1", "--left-of", "DISPLAY2", "--right-of", "DISPLAY3"])
+        _check_relative_mutex(args)
 
 
 def test_parser_version():
