@@ -119,11 +119,14 @@ def _apply_aliases(args):
     elif args.y: args.reflect = "y"
 
 
+_MOD_OP_ATTRS = ["mode", "pos", "rotate", "primary", "preferred", "off",
+                  "brightness", "reflect", "gamma",
+                  "left_of", "right_of", "above", "below", "same_as",
+                  "auto", "noprimary"]
+
+
 def _is_mod_op(args) -> bool:
-    return any([args.mode, args.pos, args.rotate, args.primary, args.preferred,
-                args.off, args.brightness, args.reflect, args.gamma,
-                args.left_of, args.right_of, args.above, args.below, args.same_as,
-                args.auto, args.noprimary])
+    return any(getattr(args, a, None) for a in _MOD_OP_ATTRS)
 
 
 def _check_relative_mutex(args):
@@ -263,10 +266,8 @@ def main():
     if args.noprimary:
         if not args.dry_run and not set_noprimary(): _fail("清除主显示器标记失败", ["某些虚拟显示器驱动（如向日葵）可能干扰此功能", "使用 --verbose 查看详细日志"])
         _msg(args, "已清除所有显示器的主显示器标记")
-        other_ops = [args.mode, args.pos, args.rotate, args.primary, args.preferred,
-                     args.off, args.brightness, args.reflect, args.gamma,
-                     args.left_of, args.right_of, args.above, args.below, args.same_as, args.auto]
-        if not any(op for op in other_ops if op): return
+        other_ops = [a for a in _MOD_OP_ATTRS if a != "noprimary"]
+        if not any(getattr(args, a, None) for a in other_ops): return
 
     if not args.output: parser.error("--output 为必填参数")
     device_name = _normalize_name(args.output)
