@@ -2,7 +2,7 @@
 
 import argparse
 import pytest
-from winrandr.cli import _normalize_name, _fail, _apply_aliases, _is_mod_op
+from winrandr.cli import _normalize_name, _fail, _apply_aliases, _is_mod_op, _check_relative_mutex, _MOD_OP_ATTRS
 
 
 def test_normalize_name():
@@ -109,16 +109,9 @@ def test_apply_aliases_y_only():
 
 def test_is_mod_op_true():
     """修改类操作应返回 True。"""
-    for attr in ("mode", "pos", "rotate", "primary", "preferred",
-                 "off", "brightness", "reflect", "gamma",
-                 "left_of", "right_of", "above", "below", "same_as",
-                 "auto", "noprimary"):
-        ns = _ns(**{attr: True if attr in ("primary", "preferred", "off",
-                                           "auto", "noprimary") else
-                    "dummy" if attr in ("mode", "pos", "rotate",
-                                       "brightness", "reflect", "gamma",
-                                       "left_of", "right_of", "above",
-                                       "below", "same_as") else True})
+    for attr in _MOD_OP_ATTRS:
+        is_bool = attr in ("primary", "preferred", "off", "auto", "noprimary")
+        ns = _ns(**{attr: True if is_bool else "dummy"})
         assert _is_mod_op(ns), f"{attr} should be mod op"
 
 
@@ -126,3 +119,22 @@ def test_is_mod_op_false():
     """纯查询类操作应返回 False。"""
     ns = _ns(query=True, listmodes=True, json=True)
     assert not _is_mod_op(ns)
+
+
+def test_check_relative_mutex_single():
+    """单个相对定位参数不报错。"""
+    ns = _ns(left_of="DISPLAY2")
+    _check_relative_mutex(ns)  # should not raise
+
+
+def test_check_relative_mutex_multiple():
+    """多个相对定位参数应中断。"""
+    ns = _ns(left_of="DISPLAY2", right_of="DISPLAY3")
+    with pytest.raises(SystemExit):
+        _check_relative_mutex(ns)
+
+
+def test_check_relative_mutex_none():
+    """无相对定位参数不报错。"""
+    ns = _ns()
+    _check_relative_mutex(ns)  # should not raise
