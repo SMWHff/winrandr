@@ -63,7 +63,7 @@ _winrandr_completions() {
     local opts="
         --help -q --query --current --listmodes --listproviders
         --listmonitors --listactivemonitors --prop --properties
-        --json --verbose -v --version --dry-run --dryrun
+        --json --verbose --version --dry-run --dryrun
         --output -o --mode -m -s --size --rate -r --refresh
         --pos -p --rotate --orientation --primary --preferred
         --off --auto --brightness --gamma --reflect

@@ -3,7 +3,7 @@
 from argparse import Namespace
 import pytest
 from unittest.mock import patch
-from winrandr.cli_handlers import (
+from winrandr.cli.handlers import (
     _handle_mode, _handle_pos, _handle_gamma,
     _handle_brightness, _handle_reflect, _handle_relative,
     _handle_auto, _handle_rotate, _handle_primary,
@@ -165,66 +165,66 @@ def test_msg_dry_run(capsys):
 # --- 非 dry-run 模式：验证 API 实际被调用 ---
 
 def test_mode_non_dry_run():
-    with patch("winrandr.cli_handlers.set_resolution", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.set_resolution", return_value=True) as mock_fn:
         _handle_mode(_ns(mode="1920x1080", dry_run=False), DN)
         assert mock_fn.called is True
 
 def test_pos_non_dry_run():
-    with patch("winrandr.cli_handlers.set_position", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.set_position", return_value=True) as mock_fn:
         _handle_pos(_ns(pos="0x0", dry_run=False), DN)
         assert mock_fn.called is True
 
 def test_rotate_non_dry_run():
-    with patch("winrandr.cli_handlers.set_rotation", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.set_rotation", return_value=True) as mock_fn:
         _handle_rotate(_ns(rotate="normal", dry_run=False), DN)
         assert mock_fn.called is True
 
 def test_primary_non_dry_run():
-    with patch("winrandr.cli_handlers.set_primary", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.set_primary", return_value=True) as mock_fn:
         _handle_primary(_ns(primary=True, dry_run=False), DN)
         assert mock_fn.called is True
 
 def test_preferred_non_dry_run():
-    with patch("winrandr.cli_handlers.set_preferred_resolution", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.set_preferred_resolution", return_value=True) as mock_fn:
         _handle_preferred(_ns(preferred=True, dry_run=False), DN)
         assert mock_fn.called is True
 
 def test_off_non_dry_run():
-    with patch("winrandr.cli_handlers.set_off", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.set_off", return_value=True) as mock_fn:
         _handle_off(_ns(off=True, dry_run=False), DN)
         assert mock_fn.called is True
 
 def test_brightness_non_dry_run():
-    with patch("winrandr.cli_handlers.set_brightness", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.set_brightness", return_value=True) as mock_fn:
         _handle_brightness(_ns(brightness=1.0, dry_run=False), DN)
         assert mock_fn.called is True
 
 def test_gamma_non_dry_run():
-    with patch("winrandr.cli_handlers.set_gamma", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.set_gamma", return_value=True) as mock_fn:
         _handle_gamma(_ns(gamma="1.0:0.9:0.8", dry_run=False), DN)
         assert mock_fn.called is True
 
 def test_reflect_non_dry_run():
-    with patch("winrandr.cli_handlers.set_reflect", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.set_reflect", return_value=True) as mock_fn:
         _handle_reflect(_ns(reflect="xy", dry_run=False), DN)
         assert mock_fn.called is True
 
 def test_auto_non_dry_run():
-    with patch("winrandr.cli_handlers.set_auto", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.set_auto", return_value=True) as mock_fn:
         _handle_auto(_ns(auto=True, dry_run=False), DN)
         assert mock_fn.called is True
 
 
 def test_reflect_api_failure():
     """reflect=xy 但 set_reflect 失败时应退出。"""
-    with patch("winrandr.cli_handlers.set_reflect", return_value=False):
+    with patch("winrandr.cli.handlers.set_reflect", return_value=False):
         with pytest.raises(SystemExit):
             _handle_reflect(_ns(reflect="xy", dry_run=False), DN)
 
 
 def test_relative_api_failure():
     """相对定位 API 失败时应退出。"""
-    with patch("winrandr.cli_handlers.set_position_relative", return_value=False):
+    with patch("winrandr.cli.handlers.set_position_relative", return_value=False):
         with pytest.raises(SystemExit):
             _handle_relative(_ns(left_of="DISPLAY2", dry_run=False), DN)
 
@@ -232,47 +232,47 @@ def test_relative_api_failure():
 # --- API 调用失败路径（_fail → SystemExit）---
 
 def test_mode_api_failure():
-    with patch("winrandr.cli_handlers.set_resolution", return_value=False):
+    with patch("winrandr.cli.handlers.set_resolution", return_value=False):
         with pytest.raises(SystemExit):
             _handle_mode(_ns(mode="1920x1080", dry_run=False), DN)
 
 def test_pos_api_failure():
-    with patch("winrandr.cli_handlers.set_position", return_value=False):
+    with patch("winrandr.cli.handlers.set_position", return_value=False):
         with pytest.raises(SystemExit):
             _handle_pos(_ns(pos="0x0", dry_run=False), DN)
 
 def test_rotate_api_failure():
-    with patch("winrandr.cli_handlers.set_rotation", return_value=False):
+    with patch("winrandr.cli.handlers.set_rotation", return_value=False):
         with pytest.raises(SystemExit):
             _handle_rotate(_ns(rotate="normal", dry_run=False), DN)
 
 def test_primary_api_failure():
-    with patch("winrandr.cli_handlers.set_primary", return_value=False):
+    with patch("winrandr.cli.handlers.set_primary", return_value=False):
         with pytest.raises(SystemExit):
             _handle_primary(_ns(primary=True, dry_run=False), DN)
 
 def test_preferred_api_failure():
-    with patch("winrandr.cli_handlers.set_preferred_resolution", return_value=False):
+    with patch("winrandr.cli.handlers.set_preferred_resolution", return_value=False):
         with pytest.raises(SystemExit):
             _handle_preferred(_ns(preferred=True, dry_run=False), DN)
 
 def test_off_api_failure():
-    with patch("winrandr.cli_handlers.set_off", return_value=False):
+    with patch("winrandr.cli.handlers.set_off", return_value=False):
         with pytest.raises(SystemExit):
             _handle_off(_ns(off=True, dry_run=False), DN)
 
 def test_brightness_api_failure():
-    with patch("winrandr.cli_handlers.set_brightness", return_value=False):
+    with patch("winrandr.cli.handlers.set_brightness", return_value=False):
         with pytest.raises(SystemExit):
             _handle_brightness(_ns(brightness=1.0, dry_run=False), DN)
 
 def test_gamma_api_failure():
-    with patch("winrandr.cli_handlers.set_gamma", return_value=False):
+    with patch("winrandr.cli.handlers.set_gamma", return_value=False):
         with pytest.raises(SystemExit):
             _handle_gamma(_ns(gamma="1.0:0.9:0.8", dry_run=False), DN)
 
 def test_auto_api_failure():
-    with patch("winrandr.cli_handlers.set_auto", return_value=False):
+    with patch("winrandr.cli.handlers.set_auto", return_value=False):
         with pytest.raises(SystemExit):
             _handle_auto(_ns(auto=True, dry_run=False), DN)
 
@@ -304,7 +304,7 @@ def test_handle_listmodes_basic():
                        refresh_rate=60.0, position_x=0, position_y=0,
                        is_primary=True, rotation=0, width_mm=527, height_mm=296,
                        modes=[dm])
-    with patch("winrandr.cli_handlers.list_displays", return_value=[disp]):
+    with patch("winrandr.cli.handlers.list_displays", return_value=[disp]):
         _handle_listmodes(_ns(), as_json=False)
 
 def test_handle_listmodes_json():
@@ -316,12 +316,12 @@ def test_handle_listmodes_json():
                        refresh_rate=60.0, position_x=0, position_y=0,
                        is_primary=True, rotation=0, width_mm=527, height_mm=296,
                        modes=[dm])
-    with patch("winrandr.cli_handlers.list_displays", return_value=[disp]):
+    with patch("winrandr.cli.handlers.list_displays", return_value=[disp]):
         _handle_listmodes(_ns(), as_json=True)
 
 def test_handle_listmodes_no_displays():
     """无显示器时返回提示不报错。"""
-    with patch("winrandr.cli_handlers.list_displays", return_value=[]):
+    with patch("winrandr.cli.handlers.list_displays", return_value=[]):
         _handle_listmodes(_ns(), as_json=False)
 
 
@@ -329,18 +329,18 @@ def test_handle_listmodes_no_displays():
 
 def test_identify_dry_run():
     """dry-run 下只输出消息，不调用 API。"""
-    with patch("winrandr.cli_handlers.identify_display", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.identify_display", return_value=True) as mock_fn:
         _handle_identify(_ns(identify=True, dry_run=True), DN)
         assert mock_fn.called is False
 
 def test_identify_non_dry_run():
     """非 dry-run 模式调用 identify_display API。"""
-    with patch("winrandr.cli_handlers.identify_display", return_value=True) as mock_fn:
+    with patch("winrandr.cli.handlers.identify_display", return_value=True) as mock_fn:
         _handle_identify(_ns(identify=True, dry_run=False), DN)
         assert mock_fn.called is True
 
 def test_identify_api_failure():
     """API 失败时退出。"""
-    with patch("winrandr.cli_handlers.identify_display", return_value=False):
+    with patch("winrandr.cli.handlers.identify_display", return_value=False):
         with pytest.raises(SystemExit):
             _handle_identify(_ns(identify=True, dry_run=False), DN)

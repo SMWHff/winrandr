@@ -178,16 +178,16 @@ def test_list_available_displays_basic():
                     refresh_rate=60.0, position_x=0, position_y=0,
                     is_primary=True, rotation=0, width_mm=527, height_mm=296,
                     modes=[dm])
-    with patch("winrandr.cli_handlers.list_displays", return_value=[d]):
-        with patch("winrandr.cli_handlers.list_providers", return_value=[]):
+    with patch("winrandr.cli.handlers.list_displays", return_value=[d]):
+        with patch("winrandr.cli.handlers.list_providers", return_value=[]):
             result = _list_available_displays()
             assert "DISPLAY1" in result
 
 
 def test_list_available_displays_empty():
     """无显示器时返回提示信息。"""
-    with patch("winrandr.cli_handlers.list_displays", return_value=[]):
-        with patch("winrandr.cli_handlers.list_providers", return_value=[]):
+    with patch("winrandr.cli.handlers.list_displays", return_value=[]):
+        with patch("winrandr.cli.handlers.list_providers", return_value=[]):
             result = _list_available_displays()
             assert result == "未检测到显示器"
 
@@ -204,8 +204,8 @@ def test_list_available_displays_with_providers():
         {"name": "WinDisc", "string": "Virtual Display", "flags": 0},
         {"name": r"\\.\DISPLAY2", "string": "Provider2", "flags": 0},
     ]
-    with patch("winrandr.cli_handlers.list_displays", return_value=[d]):
-        with patch("winrandr.cli_handlers.list_providers", return_value=providers):
+    with patch("winrandr.cli.handlers.list_displays", return_value=[d]):
+        with patch("winrandr.cli.handlers.list_providers", return_value=providers):
             result = _list_available_displays()
             assert "DISPLAY1" in result
             assert "DISPLAY2" in result
@@ -218,8 +218,8 @@ def test_invalidate_qdc_cache_both():
     win32_utils._invalidate_qdc_cache()
     assert win32_utils._QDC_CACHE is None
     assert win32_utils._QDC_ALL_CACHE is None
-    with patch("winrandr.cli_handlers.list_displays", return_value=[]):
-        with patch("winrandr.cli_handlers.list_providers", return_value=[]):
+    with patch("winrandr.cli.handlers.list_displays", return_value=[]):
+        with patch("winrandr.cli.handlers.list_providers", return_value=[]):
             result = _list_available_displays()
             assert result == "未检测到显示器"
 

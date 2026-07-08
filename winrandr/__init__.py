@@ -1,6 +1,6 @@
 """winrandr — Windows xrandr-like display configuration tool."""
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = [
     "DisplayInfo", "DisplayMode",
@@ -34,5 +34,12 @@ from winrandr.api import (
     enumerate_modes as enumerate_modes,
 )
 from winrandr.edid import get_edid as get_edid
-from winrandr.profiles import save_profile as save_profile, load_profile as load_profile, list_profiles as list_profiles, delete_profile as delete_profile, diff_profile as diff_profile, preview_save as preview_save
-from winrandr.win32.constants import ROTATION_NAMES as ROTATION_NAMES, ROTATION_FROM_NAME as ROTATION_FROM_NAME
+from winrandr.profiles import (
+    save_profile as save_profile, load_profile as load_profile,
+    list_profiles as list_profiles, delete_profile as delete_profile,
+    diff_profile as diff_profile, preview_save as preview_save,
+)
+from winrandr.win32.constants import (
+    ROTATION_NAMES as ROTATION_NAMES,
+    ROTATION_FROM_NAME as ROTATION_FROM_NAME,
+)

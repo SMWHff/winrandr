@@ -7,7 +7,9 @@ main.py                   简易入口，转发到 winrandr.cli
 winrandr/                 核心包
 ├── __init__.py           版本号 + 公开 API 重导出
 ├── __main__.py           python -m winrandr 入口
-├── cli.py                argparse + 主流程编排
+├── cli/                  CLI 子包
+│   ├── __init__.py       argparse + 主流程编排
+│   └── handlers.py       操作处理函数 + 通用工具
 ├── api.py                公开 API (查询/属性/相对定位，含 3 个子模块 re-export)
 ├── edid.py               EDID 读取与解析（注册表 + 二进制解析）
 ├── formatter.py          xrandr 风格格式化输出
@@ -29,10 +31,14 @@ winrandr/                 核心包
 ### main.py
 - 保持为兼容入口，单纯委托给 `winrandr.cli.main()`
 
-### winrandr/cli.py
+### winrandr/cli/\_\_init\_\_.py
 - argparse 参数解析
 - 主流程编排，每个操作提取为独立的 `_handle_*` 函数
 - 日志初始化
+
+### winrandr/cli/handlers.py
+- CLI 操作处理函数（`_handle_mode` / `_handle_pos` / `_handle_brightness` 等）
+- 通用工具（`_normalize_name` / `_fail` / `_msg` / `_is_mod_op` / `_apply_aliases`）
 
 ### winrandr/api.py
 - 业务逻辑 API 层：定义 `list_displays` / `set_position_relative` / `get_display_props` / `list_providers`

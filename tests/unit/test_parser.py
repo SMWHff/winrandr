@@ -17,7 +17,7 @@ from winrandr.cli import _build_parser, _check_relative_mutex
     (["-q"], "query"),
     (["--current"], "current"),
     (["--dryrun"], "dry_run"),
-    (["-v"], "verbose"),
+    (["--verbose"], "verbose"),
     (["--json"], "json"),
     (["--prop"], "prop"),
     (["--properties"], "prop"),
@@ -33,6 +33,13 @@ def test_parser_basic():
     args = p.parse_args([])
     for attr in ["listmodes", "output", "mode", "rate", "json", "verbose"]:
         assert getattr(args, attr) is False or getattr(args, attr) is None
+
+
+def test_parser_version_with_v():
+    """-v 应触发 version 并退出（同 --version）。"""
+    p = _build_parser()
+    with pytest.raises(SystemExit, match="0"):
+        p.parse_args(["-v"])
 
 
 def test_parser_output_mode():

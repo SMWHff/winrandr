@@ -196,7 +196,7 @@ HDMI-1 disconnected
 | `--reflect xy` | `--reflect xy` | ✅ |
 | `--gamma r:g:b` | `--gamma` | ✅ |
 | `--preferred` | `--preferred` | ✅ |
-| `--verbose` | `--verbose, -v` | ✅ |
+| `--verbose` | `--verbose` | ✅ |
 | `--prop` | `--prop` | ✅ （显示设备 ID、状态标志） |
 | `--auto` | `--auto` | ✅ |
 | `--dry-run` | `--dry-run` | ✅ |

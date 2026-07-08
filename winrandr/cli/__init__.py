@@ -6,7 +6,7 @@ import sys
 from winrandr import __version__
 from winrandr.api import list_displays, get_display_props, list_providers, set_noprimary
 from winrandr.formatter import format_displays, format_monitor_list
-from winrandr.cli_handlers import (
+from winrandr.cli.handlers import (
     _setup_logging, _normalize_name, _fail, _msg, _list_available_displays,
     _MOD_OP_ATTRS, _is_mod_op, _apply_aliases, _check_relative_mutex,
     _handle_auto, _handle_mode, _handle_pos, _handle_rotate,
@@ -32,7 +32,7 @@ def _build_parser() -> argparse.ArgumentParser:
   winrandr --load-profile docked        恢复存档配置
   winrandr --list-profiles              列出所有存档""",
     )
-    p.add_argument("--version", action="version", version=f"winrandr {__version__}")
+    p.add_argument("-v", "--version", action="version", version=f"winrandr {__version__}")
 
     g_query = p.add_argument_group("查询选项")
     g_query.add_argument("--listmodes", action="store_true", help="列出每个显示器所有可用分辨率")
@@ -41,7 +41,9 @@ def _build_parser() -> argparse.ArgumentParser:
     g_query.add_argument("--prop", "--properties", action="store_true", help="显示显示器扩展属性（设备 ID、状态标志等）")
     g_query.add_argument("--json", action="store_true", help="以 JSON 格式输出显示器信息")
     g_query.add_argument("--listproviders", action="store_true", help="列出 GPU 适配器")
+    g_query.add_argument("--list-providers", action="store_true", dest="listproviders", help=argparse.SUPPRESS)
     g_query.add_argument("--listmonitors", action="store_true", help="列出带编号的显示器列表")
+    g_query.add_argument("--list-monitors", action="store_true", dest="listmonitors", help=argparse.SUPPRESS)
     g_query.add_argument("--listactivemonitors", action="store_true", help=argparse.SUPPRESS)
 
     g_cfg = p.add_argument_group("显示配置")
@@ -80,7 +82,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     g_misc = p.add_argument_group("其他")
     g_misc.add_argument("--dry-run", "--dryrun", action="store_true", help="模拟操作，不实际更改配置")
-    g_misc.add_argument("--verbose", "-v", action="store_true", help="详细日志输出（调试用）")
+    g_misc.add_argument("--verbose", action="store_true", help="详细日志输出（调试用）")
     g_misc.add_argument("--identify", action="store_true", help="通过闪烁屏幕识别显示器")
     g_misc.add_argument("--screen", help=argparse.SUPPRESS)
     g_misc.add_argument("--nograb", action="store_true", help=argparse.SUPPRESS)

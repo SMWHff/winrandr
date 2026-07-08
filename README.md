@@ -120,7 +120,7 @@ DISPLAY2 disconnected
 
 | 命令 | 说明 |
 |------|------|
-| `--verbose` / `-v` | DEBUG 级别日志 |
+| `--verbose` | DEBUG 级别日志 |
 | `--version` | 显示版本号 |
 | `--help` | 显示帮助 |
 | `--current` | 查询当前显示状态 |
@@ -151,7 +151,7 @@ DISPLAY2 disconnected
 | `xrandr` | `winrandr` | ✅ |
 | `-q` / `--query` | `-q` / `--query` | ✅ |
 | `--version` / `-v` | `--version` | ✅ |
-| `--verbose` | `--verbose, -v` | ✅ |
+| `--verbose` | `--verbose` | ✅ |
 | `--current` | `--current` | ✅ |
 | `--dryrun` | `--dry-run, --dryrun` | ✅ |
 | `--prop` / `--properties` | `--prop` | ✅ |
@@ -226,7 +226,7 @@ bash scripts/build.sh
 ```bash
 bash scripts/test.sh        # 集成测试（lint + pytest + 覆盖率）
 bash scripts/lint.sh        # Lint 检查
-uv run pytest tests/ -v     # 单元测试（393 项，100% 覆盖率）
+uv run pytest tests/ -v     # 单元测试（395 项，100% 覆盖率）
 ```
 
 ## 技术栈
@@ -243,8 +243,9 @@ main.py                   简易入口，转发到 winrandr.cli（主要用 `pyt
 winrandr/                 核心包
 ├── __init__.py           版本号 + 公开 API 重导出
 ├── __main__.py           python -m winrandr 入口
-├── cli.py                CLI 层：argparse 解析 + 主流程编排（≤300 行）
-├── cli_handlers.py       CLI 操作处理函数 + 通用工具 + 类型注解
+├── cli/                  CLI 子包
+│   ├── __init__.py       argparse 解析 + 主流程编排
+│   └── handlers.py       CLI 操作处理函数 + 通用工具
 ├── api.py                公开 API：list_displays / set_resolution 等
 ├── edid.py               EDID 读取与解析
 ├── formatter.py          xrandr 风格格式化输出

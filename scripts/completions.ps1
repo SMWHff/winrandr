@@ -65,7 +65,7 @@ Register-ArgumentCompleter -Native -CommandName winrandr, winrandr.exe -ScriptBl
         [PSCustomObject]@{Option='--prop';           Description='显示显示器扩展属性'}
         [PSCustomObject]@{Option='--properties';     Description='显示显示器扩展属性（同 --prop）'}
         [PSCustomObject]@{Option='--verbose';        Description='详细日志'}
-        [PSCustomObject]@{Option='-v';               Description='详细日志（同 --verbose）'}
+        [PSCustomObject]@{Option='-v';               Description='显示版本号（同 --version）'}
         [PSCustomObject]@{Option='--output';         Description='选择显示器'; NeedsArg=$true}
         [PSCustomObject]@{Option='-o';               Description='选择显示器（同 --output）'; NeedsArg=$true}
         [PSCustomObject]@{Option='--mode';           Description='设置分辨率'; NeedsArg=$true}

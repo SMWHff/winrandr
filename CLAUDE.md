@@ -36,8 +36,9 @@ main.py                   简易入口，转发到 winrandr.cli（主要用 `pyt
 winrandr/                 核心包
 ├── __init__.py           版本号 + 公开 API 重导出
 ├── __main__.py           python -m winrandr 入口
-├── cli.py                CLI 层：argparse 解析 + 主流程编排（≤300 行）
-├── cli_handlers.py       CLI 操作处理函数 + 通用工具 + 类型注解
+├── cli/                   CLI 子包（argparse + 操作处理函数）
+│   ├── __init__.py        argparse 解析 + 主流程编排（≤300 行）
+│   └── handlers.py        CLI 操作处理函数 + 通用工具 + 类型注解
 ├── api.py                公开 API：list_displays / set_resolution 等
 ├── edid.py               EDID 读取与解析（注册表 + 二进制解析）
 ├── formatter.py          xrandr 风格格式化输出
@@ -55,7 +56,7 @@ winrandr/                 核心包
     ├── bindings.py       Win32 API 函数绑定 (ctypes 声明)
     └── utils.py          内部工具函数 (查询/过滤/应用配置)
 
-tests/                    测试（393 项，100% 覆盖率）
+tests/                    测试（395 项，100% 覆盖率）
 ├── unit/                 单元测试
 │   ├── test_cli.py           CLI 工具函数测试
 │   ├── test_cli_handlers.py  CLI 操作处理函数测试

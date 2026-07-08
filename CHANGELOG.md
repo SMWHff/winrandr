@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.5.0 (2026-07-08)
+
+### Breaking Changes
+
+- `-v` 现在等价于 `--version`（与 xrandr 一致），不再是 `--verbose` 的别名。
+  如需详细日志请使用 `--verbose`（长选项不变）。
+
+### 架构重构
+
+- `winrandr/cli.py` + `cli_handlers.py` → `winrandr/cli/__init__.py` + `handlers.py` 子包
+- `winrandr/` 目录文件数从 9 降至 7，符合 ≤8 规范
+
+### 新增
+
+- `--list-providers`：`--listproviders` 的兼容别名
+- `--list-monitors`：`--listmonitors` 的兼容别名
+
+### 测试
+
+- 395 项（新增 2 项：`-v` 版本测试、解析器 `-v` → version 测试）
+- 全模块 100% 分支覆盖率（1345 语句）
+
 ## 0.4.0 (2026-07-08)
 
 ### 新增功能

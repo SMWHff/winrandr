@@ -211,7 +211,7 @@ winrandr --output DISPLAY1 --reflect xy        # 等同旋转 180°
 
 ```bash
 winrandr --verbose
-winrandr -v --listmodes
+winrandr --verbose --listmodes
 ```
 
 开启 DEBUG 级别日志，输出到 stderr 和 `logs/winrandr.log`，便于调试问题。
