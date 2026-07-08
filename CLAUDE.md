@@ -60,34 +60,17 @@ winrandr/                 核心包
 
 tests/                    测试（395 项，100% 覆盖率）
 ├── unit/                 单元测试
-│   ├── __init__.py
-│   ├── test_cli.py           CLI 工具函数测试
-│   ├── test_cli_handlers.py  CLI 操作处理函数测试（核心）
-│   ├── test_formatter.py     格式化输出测试
-│   ├── test_parser.py        CLI 参数解析测试
-│   ├── test_profiles.py      配置存档核心测试
 │   ├── test_win32_utils.py   Win32 工具函数测试
-│   ├── cli/
-│   │   ├── __init__.py
-│   │   └── test_cli_handlers_misc.py listmodes + identify 测试
-│   ├── profiles/
-│   │   ├── __init__.py
-│   │   └── test_profiles_extra.py 配置存档额外覆盖测试
-│   └── win32/
-│       ├── __init__.py
-│       └── test_filter_valid_paths.py filter_valid_paths 测试
-├── features/             功能模块测试
-│   ├── test_gamma.py         gamma 校正/亮度
-│   ├── test_layout.py        位置/旋转/主屏/关闭/相对定位
-│   └── test_resolution.py    分辨率/刷新率设置
+│   ├── cli/                  CLI 参数/工具/处理器测试（6 文件）
+│   ├── formatter/            格式化输出测试（2 文件）
+│   ├── profiles/             配置存档测试（3 文件）
+│   └── win32/               Win32 底层测试（2 文件）
+├── features/             功能模块测试（gamma/layout/resolution）
 └── integration/          集成测试
-    ├── test_api.py           API 函数
-    ├── test_cli_main.py      main() 入口（核心）
-    ├── test_cli_main_global.py  全局亮度/伽马测试
-    ├── test_cli_main_misc.py    版本/入口守卫/提供者/监视器测试
-    ├── test_cli_main_profiles.py 配置存档 CLI 测试
-    ├── test_edid.py          EDID 解析测试
-    └── test_models.py        数据模型 + 常量
+    ├── cli/                   CLI 入口测试（5 文件）
+    ├── test_api.py            API 函数
+    ├── test_edid.py           EDID 解析
+    └── test_models.py         数据模型
 
 scripts/
 ├── WinRandr.psm1         PowerShell 模块（7 个 cmdlet）
