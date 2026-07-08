@@ -39,7 +39,7 @@ winrandr/                 核心包
 - `set_position_relative`（相对定位，使用 `list_displays` 计算坐标）
 - `set_auto`（启用显示器并设首选分辨率）
 - `get_display_props` / `list_providers`（扩展属性与 GPU 列表）
-- 模式枚举（`_enumerate_modes`）
+- 模式枚举（`enumerate_modes`）
 
 ### winrandr/formatter.py
 - `format_displays`：xrandr 风格显示器信息输出

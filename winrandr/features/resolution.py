@@ -16,7 +16,7 @@ from winrandr.win32.constants import (
 logger = logging.getLogger(__name__)
 
 
-def _enumerate_modes(gdi_name: str, cur_width: int, cur_height: int, cur_refresh: float) -> list[DisplayMode]:
+def enumerate_modes(gdi_name: str, cur_width: int, cur_height: int, cur_refresh: float) -> list[DisplayMode]:
     """枚举指定显示器的所有可用模式，标记当前和首选。"""
     modes = []
     reg_dm = DEVMODE()

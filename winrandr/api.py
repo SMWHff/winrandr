@@ -30,7 +30,7 @@ from winrandr.features.layout import (  # noqa: F401
 )
 from winrandr.features.resolution import (  # noqa: F401
     set_resolution, set_preferred_resolution, set_auto,
-    _enumerate_modes,
+    enumerate_modes,
 )
 
 logger = logging.getLogger(__name__)
@@ -85,7 +85,7 @@ def list_displays() -> list[DisplayInfo]:
         friendly = get_friendly_name_via_enum(gdi_name)
         w_mm, h_mm = get_screen_size_mm(gdi_name) if active else (0, 0)
 
-        all_modes = _enumerate_modes(gdi_name, width, height, refresh) if active else []
+        all_modes = enumerate_modes(gdi_name, width, height, refresh) if active else []
 
         displays.append(DisplayInfo(
             name=gdi_name,
