@@ -1,6 +1,6 @@
 """测试格式化输出。"""
 
-from winrandr.formatter import _short_name, _fmt_modes, format_displays, format_monitor_list
+from winrandr.formatter import _short_name, _fmt_modes, _fmt_props, _rotation_part, format_displays, format_monitor_list
 from winrandr.models import DisplayInfo, DisplayMode
 
 
@@ -275,7 +275,26 @@ def test_format_monitor_list_no_connected():
 
 def test_fmt_props_empty():
     """空属性字典不产生输出行。"""
-    from winrandr.formatter import _fmt_props
     lines = []
     _fmt_props(lines, {})
     assert lines == []
+
+
+def test_rotation_part_normal():
+    assert "(normal left inverted right)" in _rotation_part(0)
+
+
+def test_rotation_part_left():
+    result = _rotation_part(90)
+    assert "left" in result
+    assert "(normal left inverted right)" in result
+
+
+def test_rotation_part_inverted():
+    result = _rotation_part(180)
+    assert "inverted" in result
+
+
+def test_rotation_part_right():
+    result = _rotation_part(270)
+    assert "right" in result

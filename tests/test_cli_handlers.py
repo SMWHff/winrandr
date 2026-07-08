@@ -6,7 +6,7 @@ from winrandr.cli import (
     _handle_mode, _handle_pos, _handle_gamma,
     _handle_brightness, _handle_reflect, _handle_relative,
     _handle_auto, _handle_rotate, _handle_primary,
-    _handle_preferred, _handle_off,
+    _handle_preferred, _handle_off, _msg,
 )
 
 
@@ -139,3 +139,16 @@ def test_preferred():
 
 def test_off():
     _handle_off(_ns(off=True), DN)
+
+
+# --- _msg (dry-run helper) ---
+
+def test_msg_normal(capsys):
+    _msg(_ns(dry_run=False), "测试消息")
+    out, _ = capsys.readouterr()
+    assert out == "测试消息\n"
+
+def test_msg_dry_run(capsys):
+    _msg(_ns(dry_run=True), "测试消息")
+    out, _ = capsys.readouterr()
+    assert out == "(Dry-Run) 测试消息\n"
