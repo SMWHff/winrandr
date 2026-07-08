@@ -203,7 +203,7 @@ bash scripts/build.sh
 
 ```bash
 bash scripts/test.sh        # 集成测试
-uv run pytest tests/ -v     # 单元测试（136 项）
+uv run pytest tests/ -v     # 单元测试（139 项）
 ```
 
 ## 技术栈
