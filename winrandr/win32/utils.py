@@ -198,7 +198,7 @@ def set_display_config_available() -> bool:
     pc = c_uint32(0)
     mc = c_uint32(0)
     try:
-        ret = _GetDisplayConfigBufferSizes(1, pc, mc)
+        ret = _GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, pc, mc)
         _SDC_AVAILABLE = (ret == 0)
     except Exception:
         _SDC_AVAILABLE = False
