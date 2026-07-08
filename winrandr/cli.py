@@ -6,20 +6,18 @@ from winrandr.api import (
     list_displays, set_resolution, set_preferred_resolution,
     set_position, set_position_relative, set_rotation,
     set_primary, set_off, set_brightness, set_gamma, set_reflect,
-    set_noprimary, set_auto, list_providers, get_display_props,
+    set_noprimary, set_auto, list_providers, get_display_props, enumerate_modes,
 )
 from winrandr.win32.constants import ROTATION_FROM_NAME
-from winrandr.formatter import format_displays, format_monitor_list
+from winrandr.formatter import format_displays, format_monitor_list, _fmt_modes
 
 
 def _setup_logging():
-    log_dir = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs"))
+    log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
     os.makedirs(log_dir, exist_ok=True)
-    logging.basicConfig(
-        level=logging.WARNING,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[logging.FileHandler(os.path.join(log_dir, "winrandr.log"), encoding="utf-8"), logging.StreamHandler(sys.stderr)],
-    )
+    log_path = os.path.join(log_dir, "winrandr.log")
+    logging.basicConfig(level=logging.WARNING, format="%(asctime)s [%(levelname)s] %(message)s",
+                        handlers=[logging.FileHandler(log_path, encoding="utf-8"), logging.StreamHandler(sys.stderr)])
 
 
 def _normalize_name(name: str) -> str:
@@ -95,23 +93,18 @@ def _fail(msg: str, suggestions: list[str] | None = None):
 
 
 def _list_available_displays() -> str:
-    active = {d.name.replace("\\\\.\\", "") for d in list_displays()}
-    all_names = set(active)
+    names = {d.name.replace("\\\\.\\", "") for d in list_displays()}
     for p in list_providers():
         sn = p["name"].replace("\\\\.\\", "")
-        if sn.startswith("DISPLAY"):
-            all_names.add(sn)
-    def _sort_key(n: str) -> tuple:
-        digits = n.replace("DISPLAY", "")
-        return (0, int(digits)) if digits.isdigit() else (1, n)
-    names = sorted(all_names, key=_sort_key)
-    return "可用显示器: " + ", ".join(names) if names else "未检测到显示器"
+        if sn.startswith("DISPLAY"): names.add(sn)
+    def _sk(n): return (0, int(n.replace("DISPLAY", ""))) if n.replace("DISPLAY", "").isdigit() else (1, n)
+    sorted_n = sorted(names, key=_sk)
+    return "可用显示器: " + ", ".join(sorted_n) if sorted_n else "未检测到显示器"
 
 
 def _apply_aliases(args):
     if args.size and not args.mode: args.mode = args.size
-    if args.orientation and not args.rotate:
-        args.rotate = {"0": "normal", "1": "normal", "2": "inverted", "3": "left"}.get(args.orientation, args.orientation)
+    if args.orientation and not args.rotate: args.rotate = {"0": "normal", "1": "normal", "2": "inverted", "3": "left"}.get(args.orientation, args.orientation)
     if args.listactivemonitors: args.listmonitors = True
     if args.reflect == "normal": args.reflect = None
     if args.x and args.y: args.reflect = "xy"
@@ -151,8 +144,7 @@ def _handle_mode(args, dn):
     except ValueError: _fail("--mode 格式错误", ["正确格式: WIDTHxHEIGHT（如 1920x1080）"])
     rate = args.rate or 0
     if not args.dry_run and not set_resolution(dn, w, h, rate): _fail("设置分辨率失败", ["请确认显示器支持该分辨率", "运行 'winrandr --listmodes' 查看可用模式", "使用 --verbose 查看详细日志"])
-    rate_suffix = f" @ {rate}Hz" if rate else ""
-    _msg(args, f"已设置 {args.output} 为 {w}x{h}{rate_suffix}")
+    _msg(args, f"已设置 {args.output} 为 {w}x{h}{' @ ' + str(rate) + 'Hz' if rate else ''}")
 
 def _handle_pos(args, dn):
     p = args.pos.strip().lower()
@@ -188,8 +180,7 @@ def _handle_off(args, dn):
     _msg(args, f"已关闭 {args.output}")
 
 def _handle_brightness(args, dn):
-    if not 0.1 <= args.brightness <= 2.0:
-        print(f"警告: 亮度值 {args.brightness} 超出建议范围 0.1-2.0", file=sys.stderr)
+    if not 0.1 <= args.brightness <= 2.0: print(f"警告: 亮度值 {args.brightness} 超出建议范围 0.1-2.0", file=sys.stderr)
     if not args.dry_run and not set_brightness(dn, args.brightness): _fail("设置亮度失败", ["某些驱动或远程桌面环境不支持亮度调节", "使用 --verbose 查看详细日志"])
     _msg(args, f"已将 {args.output} 亮度设为 {args.brightness}")
 
@@ -207,13 +198,28 @@ def _handle_gamma(args, dn):
     if not args.dry_run and not set_gamma(dn, r, g, b): _fail("设置伽马校正失败", ["某些驱动或远程桌面环境不支持伽马校正", "使用 --verbose 查看详细日志"])
     _msg(args, f"已将 {args.output} 伽马设为 {r}:{g}:{b}")
 
+def _handle_listmodes(args):
+    displays = list_displays()
+    if not displays: print("未检测到显示器。"); return
+    if args.output:
+        dn = _normalize_name(args.output)
+        displays = [d for d in displays if d.name == dn]
+        if not displays: _fail(f"未找到显示器: {args.output}", [_list_available_displays()])
+    for d in displays:
+        sn = d.name.replace("\\\\.\\", "")
+        print(f"{sn}:")
+        lines = []
+        _fmt_modes(lines, enumerate_modes(d.name, d.width, d.height, d.refresh_rate))
+        for l in lines: print(l)
+        print()
+
+
 def _handle_relative(args, dn):
     for attr, rel in (("left_of", "left-of"), ("right_of", "right-of"), ("above", "above"), ("below", "below"), ("same_as", "same-as")):
         ref = getattr(args, attr, None)
         if ref:
             if not args.dry_run and not set_position_relative(dn, ref, rel): _fail("相对定位失败", ["检查显示器名称是否正确", "某些虚拟显示器驱动（如向日葵）可能干扰此功能", "使用 --verbose 查看详细日志"])
-            _msg(args, f"已将 {args.output} 放在 {ref} 的 {rel}")
-            return
+            _msg(args, f"已将 {args.output} 放在 {ref} 的 {rel}"); return
 
 
 def main():
@@ -230,8 +236,7 @@ def main():
         providers = list_providers()
         if not providers: print("未检测到 GPU 适配器。")
         elif args.json:
-            import json
-            print(json.dumps(providers, indent=2, ensure_ascii=False))
+            import json; print(json.dumps(providers, indent=2, ensure_ascii=False))
         else:
             print("Providers:")
             for i, p in enumerate(providers): print(f"  Provider {i}: {p['string']} ({p['name']})")
@@ -245,6 +250,9 @@ def main():
         else:
             print(format_monitor_list(displays))
         return
+
+    # --listmodes
+    if args.listmodes: _handle_listmodes(args); return
 
     # 查询模式
     if not _is_mod_op(args):
