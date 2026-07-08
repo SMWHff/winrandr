@@ -268,6 +268,9 @@ def test_get_display_props_no_path_match():
                     props = get_display_props(r"\\.\DISPLAY1")
                     assert "adapter" not in props
                     assert "monitor_path" not in props
+
+
+def test_get_display_props_full_success():
     """get_display_props 完整成功路径。"""
     from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO
 

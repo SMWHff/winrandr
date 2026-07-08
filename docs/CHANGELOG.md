@@ -25,24 +25,14 @@
 
 ### Bug 修复
 
-- 修复 `test_profiles_extra.py` 未关闭文件句柄导致的 `ResourceWarning`
-
-### 文档
-
-- CLAUDE.md 更新测试目录架构描述
-- CHANGELOG 补充 0.6.0 及 0.7.0 变更
-
-## 0.6.0 (2026-07-08)
-
-### 架构重构
-
-- `winrandr/cli/handlers.py`（309 行）拆分为 `handlers.py`（203 行）+ `common.py`（111 行）
-- `winrandr/__init__.py`（113→65 行）：消除 `as X as X` 冗余重导出模式
-- 新增 5 个测试文件维持 ≤300 行约束
+- 修复 `test_api.py` 中缺失的 `def` 关键字导致 `test_get_display_props_full_success`
+  被隐藏在另一个测试函数体内（400 项测试）
 
 ### 测试
 
-- 395 项，全模块 100% 分支覆盖率（1371 语句）
+- 400 项（+5），全模块 100% 分支覆盖率（1371 语句）
+
+## 0.6.0 (2026-07-08)
 
 ### Breaking Changes
 

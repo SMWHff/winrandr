@@ -58,7 +58,7 @@ winrandr/                 核心包
     ├── bindings.py       Win32 API 函数绑定 (ctypes 声明)
     └── utils.py          内部工具函数 (查询/过滤/应用配置)
 
-tests/                    测试（395 项，100% 覆盖率）
+tests/                    测试（400 项，100% 覆盖率）
 ├── unit/                 单元测试
 │   ├── test_win32_utils.py   Win32 工具函数测试
 │   ├── cli/                  CLI 参数/工具/处理器测试（6 文件）

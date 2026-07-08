@@ -16,25 +16,20 @@ from winrandr.cli import (
 )
 
 
-def test_normalize_name():
-    assert _normalize_name("DISPLAY1") == r"\\.\DISPLAY1"
-    assert _normalize_name(r"\\.\DISPLAY1") == r"\\.\DISPLAY1"
-    assert _normalize_name("1") == r"\\.\DISPLAY1"
-    assert _normalize_name("display1") == r"\\.\DISPLAY1"
-
-
-def test_normalize_name_edge_cases():
-    assert _normalize_name("DISPLAY1") == r"\\.\DISPLAY1"
-    assert _normalize_name(r"\\.\DISPLAY1") == r"\\.\DISPLAY1"
-    assert _normalize_name("WinDisc") == "WinDisc"
-
-
-def test_normalize_name_various():
-    assert _normalize_name("\\\\.\\DISPLAY1") == r"\\.\DISPLAY1"
-    assert _normalize_name("display1") == r"\\.\DISPLAY1"
-    assert _normalize_name("1") == r"\\.\DISPLAY1"
-    assert _normalize_name("2") == r"\\.\DISPLAY2"
-    assert _normalize_name("WinDisc") == "WinDisc"
+@pytest.mark.parametrize(
+    "input_name,expected",
+    [
+        ("DISPLAY1", r"\\.\DISPLAY1"),
+        ("display1", r"\\.\DISPLAY1"),
+        ("1", r"\\.\DISPLAY1"),
+        ("2", r"\\.\DISPLAY2"),
+        (r"\\.\DISPLAY1", r"\\.\DISPLAY1"),
+        ("\\\\.\\DISPLAY1", r"\\.\DISPLAY1"),
+        ("WinDisc", "WinDisc"),
+    ],
+)
+def test_normalize_name(input_name, expected):
+    assert _normalize_name(input_name) == expected
 
 
 def test_fail_basic():

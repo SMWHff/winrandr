@@ -9,7 +9,7 @@ from winrandr.formatter import (
 from winrandr.models import DisplayInfo, DisplayMode
 
 
-def testshort_name():
+def test_short_name():
     assert short_name(r"\\.\DISPLAY1") == "DISPLAY1"
     assert short_name("DISPLAY1") == "DISPLAY1"
 
