@@ -9,11 +9,12 @@ echo ""
 echo "==> 验证所有公开函数..."
 uv run python -c "
 from winrandr import (
-    list_displays, set_resolution, set_position,
-    set_position_relative, set_rotation, set_primary,
-    set_off, set_brightness, set_gamma, set_reflect,
+    list_displays, set_resolution, set_preferred_resolution, set_auto,
+    set_position, set_position_relative, set_rotation, set_primary,
+    set_off, set_noprimary, set_brightness, set_gamma, set_reflect,
+    list_providers, get_display_props, get_edid,
 )
-print('所有 10 个公开函数均可导入')
+print('所有 16 个公开函数均可导入')
 "
 
 echo ""

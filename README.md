@@ -126,6 +126,7 @@ DISPLAY2 disconnected
 | `--listmonitors` | 带编号的显示器列表 |
 | `--listactivemonitors` | 带编号的显示器列表（同 --listmonitors） |
 | `--json` | JSON 格式输出（脚本解析用） |
+| `--noprimary` | 清除所有显示器的主显示器标记 |
 
 ## 与 xrandr 对照
 
@@ -161,7 +162,7 @@ DISPLAY2 disconnected
 | `--listproviders` | `--listproviders` | ✅ |
 | `--listmonitors` | `--listmonitors` | ✅ |
 | `--listactivemonitors` | `--listmonitors`（等效） | ⚠️ |
-| `--noprimary` | — | ❌ |
+| `--noprimary` | `--noprimary` | ✅ |
 | `--set <property> <value>` | — | ❌ 无标准 Win32 API |
 | `--scale WxH` | — | ❌ 无标准 Win32 API |
 | `--scale-from WxH` | — | ❌ 无标准 Win32 API |
@@ -170,9 +171,9 @@ DISPLAY2 disconnected
 | `--panning` | — | ❌ 无标准 Win32 API |
 | `--dpi DPI` | — | ❌ 无标准 Win32 API |
 | `--crtc CRTC` | — | ❌ 无标准 Win32 API |
-| `--screen SCREEN` | — | ❌ 无标准 Win32 API |
+| `--screen SCREEN` | `--screen`（静默兼容） | ⚠️ |
 | `--display DISPLAY` | — | ❌ 始终本地显示器 |
-| `--nograb` | — | ❌ Win32 无 X11 锁定机制 |
+| `--nograb` | `--nograb`（静默兼容） | ⚠️ |
 | `--newmode` / `--rmmode` | — | ❌ 无标准 Win32 API |
 | `--addmode` / `--delmode` | — | ❌ 无标准 Win32 API |
 | `--setmonitor` / `--delmonitor` | — | ❌ 无标准 Win32 API |
@@ -202,7 +203,7 @@ bash scripts/build.sh
 
 ```bash
 bash scripts/test.sh        # 集成测试
-uv run pytest tests/ -v     # 单元测试（66 项）
+uv run pytest tests/ -v     # 单元测试（130 项）
 ```
 
 ## 技术栈
@@ -221,17 +222,20 @@ winrandr/                 核心包
 ├── __main__.py           python -m winrandr 入口
 ├── cli.py                CLI 层：argparse 解析 + 主流程编排
 ├── api.py                公开 API：list_displays / set_resolution 等
+├── edid.py               EDID 读取与解析
 ├── formatter.py          xrandr 风格格式化输出
 ├── models.py             数据模型 (DisplayInfo, DisplayMode)
 ├── features/
 │   ├── __init__.py
 │   ├── gamma.py          伽马校正与亮度（SetDeviceGammaRamp）
-│   └── layout.py         位置/旋转/主屏/关闭/相对定位（SetDisplayConfig）
+│   ├── layout.py         位置/旋转/主屏/关闭/相对定位（SetDisplayConfig）
+│   └── resolution.py     分辨率/刷新率枚举与设置（ChangeDisplaySettingsEx）
 └── win32/                底层 Win32 绑定层
     ├── __init__.py       子包统一 re-export
     ├── constants.py      Win32 API 常量 + 旋转映射表
-    ├── structures.py     ctypes 结构体定义（DISPLAYCONFIG_*、DEVMODE 等）
-    └── bindings.py       Win32 API 函数绑定 + 内部工具函数
+    ├── structures.py     ctypes 结构体定义
+    ├── bindings.py       Win32 API 函数绑定 (ctypes 声明)
+    └── utils.py          内部工具函数 (查询/过滤/应用配置)
 ```
 
 ## 已知限制

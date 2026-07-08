@@ -1,6 +1,6 @@
 """测试格式化输出。"""
 
-from winrandr.formatter import _short_name, format_displays, format_monitor_list
+from winrandr.formatter import _short_name, _fmt_modes, format_displays, format_monitor_list
 from winrandr.models import DisplayInfo, DisplayMode
 
 
@@ -182,3 +182,100 @@ def test_format_monitor_list_basic():
     assert "DISPLAY1" in out and "DISPLAY2" in out
     assert "+*DISPLAY1" in out  # primary flag
     assert "+ DISPLAY2" in out   # non-primary flag
+
+
+def test_fmt_modes_preferred_flag():
+    """Preferred flag (+) always on preferred mode, independent of current."""
+    modes = [
+        DisplayMode(1920, 1080, 60.0, is_current=True, is_preferred=False),
+        DisplayMode(1920, 1080, 59.94, is_current=False, is_preferred=True),
+    ]
+    lines = []
+    _fmt_modes(lines, modes)
+    out = "\n".join(lines)
+    assert "60.00*" in out
+    assert "59.94+" in out
+
+
+def test_format_displays_empty():
+    """空显示器列表返回空字符串。"""
+    assert format_displays([]) == ""
+
+
+def test_format_displays_all_disconnected():
+    """全部断连的显示器。"""
+    displays = [
+        DisplayInfo(name=r"\\.\DISPLAY1", friendly_name="", connected=False,
+                    width=0, height=0, refresh_rate=0.0, position_x=0, position_y=0,
+                    is_primary=False, rotation=0, width_mm=0, height_mm=0, modes=[]),
+        DisplayInfo(name=r"\\.\DISPLAY2", friendly_name="", connected=False,
+                    width=0, height=0, refresh_rate=0.0, position_x=0, position_y=0,
+                    is_primary=False, rotation=0, width_mm=0, height_mm=0, modes=[]),
+    ]
+    out = format_displays(displays)
+    for d in ("DISPLAY1", "DISPLAY2", "disconnected"):
+        assert d in out
+    assert "no active displays" in out
+
+
+def test_format_displays_rotated_270():
+    """旋转 270° 时宽高交换，显示 inverted 名。"""
+    displays = [DisplayInfo(
+        name=r"\\.\DISPLAY1", friendly_name="", connected=True,
+        width=1920, height=1080, refresh_rate=60.0,
+        position_x=0, position_y=0, rotation=270,
+        is_primary=False, width_mm=527, height_mm=296,
+        modes=[DisplayMode(1920, 1080, 60.0, is_current=True, is_preferred=True)],
+    )]
+    out = format_displays(displays)
+    assert "1080x1920" in out  # 宽高已交换
+
+
+def test_format_displays_multiple_connected():
+    """多显示器布局：累积 current 计算正确。"""
+    displays = [
+        DisplayInfo(name=r"\\.\DISPLAY1", friendly_name="", connected=True,
+                    width=1920, height=1080, position_x=0, position_y=0,
+                    is_primary=True, rotation=0, width_mm=527, height_mm=296,
+                    modes=[DisplayMode(1920, 1080, 60.0)]),
+        DisplayInfo(name=r"\\.\DISPLAY2", friendly_name="", connected=True,
+                    width=1280, height=1024, position_x=1920, position_y=0,
+                    is_primary=False, rotation=0, width_mm=0, height_mm=0,
+                    modes=[DisplayMode(1280, 1024, 60.0)]),
+    ]
+    out = format_displays(displays)
+    assert "current 3200 x 1080" in out  # 1920+1280 = 3200
+    assert "primary" in out.split("\n")[2]  # DISPLAY1 line
+    assert "DISPLAY2" in out
+
+
+def test_format_displays_no_modes():
+    """连接但无模式列表的显示器。"""
+    displays = [DisplayInfo(
+        name=r"\\.\DISPLAY1", friendly_name="", connected=True,
+        width=1920, height=1080, refresh_rate=60.0,
+        position_x=0, position_y=0, is_primary=False, rotation=0,
+        width_mm=527, height_mm=296, modes=[],
+    )]
+    out = format_displays(displays)
+    assert "DISPLAY1 connected" in out
+    assert "1920x1080" in out
+
+
+def test_format_monitor_list_no_connected():
+    """--listmonitors 当无连接显示器时输出 0。"""
+    displays = [DisplayInfo(
+        name=r"\\.\DISPLAY1", friendly_name="", connected=False,
+        width=0, height=0, refresh_rate=0.0, position_x=0, position_y=0,
+        is_primary=False, rotation=0, width_mm=0, height_mm=0, modes=[],
+    )]
+    out = format_monitor_list(displays)
+    assert "Monitors: 0" in out
+
+
+def test_fmt_props_empty():
+    """空属性字典不产生输出行。"""
+    from winrandr.formatter import _fmt_props
+    lines = []
+    _fmt_props(lines, {})
+    assert lines == []

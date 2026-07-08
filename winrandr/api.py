@@ -3,72 +3,37 @@
 import logging
 from ctypes import sizeof, byref
 
-from winrandr.models import DisplayMode, DisplayInfo
+from winrandr.models import DisplayInfo
 from winrandr.win32.constants import (
     DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
     DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
     DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
     ROTATION_DEGREES,
-    CDS_UPDATEREGISTRY, DISP_CHANGE_SUCCESSFUL, DISP_CHANGE_MESSAGES,
-    ENUM_CURRENT_SETTINGS,
     DISPLAY_DEVICE_ATTACHED_TO_DESKTOP, DISPLAY_DEVICE_PRIMARY_DEVICE,
     DISPLAY_DEVICE_MIRRORING_DRIVER, DISPLAY_DEVICE_VGA_COMPATIBLE,
     DISPLAY_DEVICE_REMOVABLE, DISPLAY_DEVICE_DISCONNECTED,
     DISPLAY_DEVICE_REMOTE, DISPLAY_DEVICE_MODESPRUNED,
 )
-from winrandr.win32.structures import DEVMODE, DISPLAY_DEVICE
-from winrandr.win32.bindings import (
+from winrandr.win32.structures import DISPLAY_DEVICE
+from winrandr.win32.utils import (
     query_active_config, query_all_config, get_gdi_name,
     get_friendly_name_via_enum, get_screen_size_mm,
     get_resolution_refresh_via_enum,
     get_adapter_name, get_monitor_device_path,
-    _ChangeDisplaySettingsEx, _EnumDisplaySettings, _EnumDisplayDevices,
 )
-
+from winrandr.win32.bindings import _EnumDisplayDevices
+from winrandr.edid import get_edid
 from winrandr.features.gamma import set_brightness, set_gamma  # noqa: F401
 from winrandr.features.layout import (  # noqa: F401
-    set_position, set_rotation,
-    set_primary, set_off, set_reflect,
+    set_position, set_rotation, set_primary, set_off, set_reflect,
+    set_noprimary,
+)
+from winrandr.features.resolution import (  # noqa: F401
+    set_resolution, set_preferred_resolution, set_auto,
+    _enumerate_modes,
 )
 
 logger = logging.getLogger(__name__)
-
-
-ENUM_REGISTRY_SETTINGS = 0xFFFFFFFE
-
-
-def _enumerate_modes(gdi_name: str, cur_width: int, cur_height: int, cur_refresh: float) -> list[DisplayMode]:
-    """枚举指定显示器的所有可用模式。"""
-    modes = []
-    i = 0
-
-    # 通过 ENUM_REGISTRY_SETTINGS 获取默认模式，标记为首选
-    reg_dm = DEVMODE()
-    reg_dm.dmSize = sizeof(DEVMODE)
-    has_reg = _EnumDisplaySettings(gdi_name, ENUM_REGISTRY_SETTINGS, byref(reg_dm))
-
-    while True:
-        dm = DEVMODE()
-        dm.dmSize = sizeof(DEVMODE)
-        ret = _EnumDisplaySettings(gdi_name, i, byref(dm))
-        if not ret:
-            break
-        if dm.dmPelsWidth > 0 and dm.dmPelsHeight > 0 and dm.dmDisplayFrequency > 0:
-            rr = float(dm.dmDisplayFrequency)
-            is_cur = (dm.dmPelsWidth == cur_width and dm.dmPelsHeight == cur_height
-                      and abs(rr - cur_refresh) < 0.01)
-            is_pref = bool(has_reg
-                           and dm.dmPelsWidth == reg_dm.dmPelsWidth
-                           and dm.dmPelsHeight == reg_dm.dmPelsHeight)
-            modes.append(DisplayMode(
-                width=dm.dmPelsWidth,
-                height=dm.dmPelsHeight,
-                refresh_rate=rr,
-                is_current=is_cur,
-                is_preferred=is_pref,
-            ))
-        i += 1
-    return modes
 
 
 def list_displays() -> list[DisplayInfo]:
@@ -141,56 +106,9 @@ def list_displays() -> list[DisplayInfo]:
     return displays
 
 
-def set_resolution(device_name: str, width: int, height: int, refresh_rate: float = 0) -> bool:
-    """设置显示器的分辨率和刷新率。"""
-    dm = DEVMODE()
-    dm.dmSize = sizeof(DEVMODE)
-
-    ret = _EnumDisplaySettings(device_name, ENUM_CURRENT_SETTINGS, byref(dm))
-    if not ret:
-        logger.error("无法获取 %s 的当前显示设置", device_name)
-        return False
-
-    dm.dmFields = 0
-    dm.dmPelsWidth = width
-    dm.dmPelsHeight = height
-    dm.dmBitsPerPel = 32
-    dm.dmFields |= 0x00080000 | 0x00100000 | 0x00040000
-
-    if refresh_rate > 0:
-        dm.dmDisplayFrequency = int(refresh_rate)
-        dm.dmFields |= 0x00400000
-
-    ret = _ChangeDisplaySettingsEx(device_name, byref(dm), None, CDS_UPDATEREGISTRY, None)
-    if ret != DISP_CHANGE_SUCCESSFUL:
-        msg = DISP_CHANGE_MESSAGES.get(ret, f"未知错误码 {ret}")
-        logger.error("应用分辨率失败: %s", msg)
-        return False
-    return True
-
-
-def set_preferred_resolution(device_name: str) -> bool:
-    """设置为注册表中保存的首选分辨率。"""
-    dm = DEVMODE()
-    dm.dmSize = sizeof(DEVMODE)
-    if not _EnumDisplaySettings(device_name, ENUM_REGISTRY_SETTINGS, byref(dm)):
-        logger.error("无法获取 %s 的注册表设置", device_name)
-        return False
-    return set_resolution(
-        device_name,
-        dm.dmPelsWidth,
-        dm.dmPelsHeight,
-        float(dm.dmDisplayFrequency) if dm.dmDisplayFrequency > 0 else 0,
-    )
-
-
-def set_auto(device_name: str) -> bool:
-    """启用显示器并使用首选分辨率（等效于 xrandr --auto）。"""
-    return set_preferred_resolution(device_name)
-
-
 def _short_name(name: str) -> str:
-    return name.split("\\")[-1]
+    """从 GDI 设备名中提取短名称。"""
+    return name.replace("\\\\.\\", "").strip()
 
 
 def set_position_relative(device_name: str, reference_name: str, relation: str) -> bool:
@@ -232,34 +150,25 @@ def get_display_props(device_name: str) -> dict:
     """获取指定显示器的扩展属性（用于 --prop）。"""
     props = {}
 
-    # 通过 EnumDisplayDevices 获取 DeviceID 和状态标志
     dd = DISPLAY_DEVICE()
     dd.cb = sizeof(DISPLAY_DEVICE)
     if _EnumDisplayDevices(device_name, 0, byref(dd), 0):
         if dd.DeviceID:
             props["device_id"] = dd.DeviceID
-        # 解码 StateFlags
-        flags = []
-        if dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP:
-            flags.append("attached")
-        if dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE:
-            flags.append("primary")
-        if dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER:
-            flags.append("mirroring")
-        if dd.StateFlags & DISPLAY_DEVICE_REMOVABLE:
-            flags.append("removable")
-        if dd.StateFlags & DISPLAY_DEVICE_DISCONNECTED:
-            flags.append("disconnected")
-        if dd.StateFlags & DISPLAY_DEVICE_REMOTE:
-            flags.append("remote")
-        if dd.StateFlags & DISPLAY_DEVICE_VGA_COMPATIBLE:
-            flags.append("vga")
-        if dd.StateFlags & DISPLAY_DEVICE_MODESPRUNED:
-            flags.append("modes_pruned")
+        flag_names = {
+            DISPLAY_DEVICE_ATTACHED_TO_DESKTOP: "attached",
+            DISPLAY_DEVICE_PRIMARY_DEVICE: "primary",
+            DISPLAY_DEVICE_MIRRORING_DRIVER: "mirroring",
+            DISPLAY_DEVICE_REMOVABLE: "removable",
+            DISPLAY_DEVICE_DISCONNECTED: "disconnected",
+            DISPLAY_DEVICE_REMOTE: "remote",
+            DISPLAY_DEVICE_VGA_COMPATIBLE: "vga",
+            DISPLAY_DEVICE_MODESPRUNED: "modes_pruned",
+        }
+        flags = [n for f, n in flag_names.items() if dd.StateFlags & f]
         if flags:
             props["state_flags"] = ", ".join(flags)
 
-    # 通过 QDC 获取适配器名称和显示器设备路径
     config = query_all_config()
     if config:
         paths, modes, path_count, mode_count = config
@@ -273,6 +182,10 @@ def get_display_props(device_name: str) -> dict:
                 if mon_path:
                     props["monitor_path"] = mon_path
                 break
+
+    edid = get_edid(device_name)
+    if edid:
+        props.update(edid)
 
     return props
 

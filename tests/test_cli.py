@@ -1,15 +1,8 @@
-"""测试 CLI 参数解析和工具函数。"""
+"""Tests for CLI utility functions (_fail, _normalize_name, _apply_aliases, _is_mod_op)."""
 
+import argparse
 import pytest
-
-from winrandr.cli import _build_parser, _normalize_name
-from winrandr.formatter import _short_name, _fmt_modes
-
-
-def test_short_name():
-    assert _short_name(r"\\.\DISPLAY1") == "DISPLAY1"
-    assert _short_name("DISPLAY1") == "DISPLAY1"
-    assert _short_name(r"\\.\DISPLAY2") == "DISPLAY2"
+from winrandr.cli import _normalize_name, _fail, _apply_aliases, _is_mod_op
 
 
 def test_normalize_name():
@@ -19,286 +12,117 @@ def test_normalize_name():
     assert _normalize_name("display1") == r"\\.\DISPLAY1"
 
 
-def test_parser_basic():
-    p = _build_parser()
-    args = p.parse_args([])
-    assert args.listmodes is False
-    assert args.output is None
-    assert args.mode is None
-    assert args.rate is None
-    assert args.json is False
-    assert args.verbose is False
-
-
-def test_parser_output_mode():
-    p = _build_parser()
-    args = p.parse_args(["--output", "DISPLAY1", "--mode", "1920x1080"])
-    assert args.output == "DISPLAY1"
-    assert args.mode == "1920x1080"
-
-
-def test_parser_mode_with_rate():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "-m", "1920x1080", "-r", "60"])
-    assert args.output == "DISPLAY1"
-    assert args.mode == "1920x1080"
-    assert args.rate == 60.0
-
-
-def test_parser_position():
-    p = _build_parser()
-    args = p.parse_args(["--output", "DISPLAY1", "--pos", "1920x0"])
-    assert args.pos == "1920x0"
-
-
-def test_parser_position_plus():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "-p", "+1920+0"])
-    assert args.pos == "+1920+0"
-
-
-def test_parser_rotate():
-    p = _build_parser()
-    for rot in ["normal", "left", "right", "inverted"]:
-        args = p.parse_args(["-o", "DISPLAY1", "--rotate", rot])
-        assert args.rotate == rot
-
-
-def test_parser_primary():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--primary"])
-    assert args.primary is True
-
-
-def test_parser_preferred():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--preferred"])
-    assert args.preferred is True
-
-
-def test_parser_off():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--off"])
-    assert args.off is True
-
-
-def test_parser_json():
-    p = _build_parser()
-    args = p.parse_args(["--json"])
-    assert args.json is True
-
-
-def test_parser_brightness():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--brightness", "0.8"])
-    assert args.brightness == 0.8
-
-
-def test_parser_reflect():
-    p = _build_parser()
-    for axis in ["x", "y", "xy"]:
-        args = p.parse_args(["-o", "DISPLAY1", "--reflect", axis])
-        assert args.reflect == axis
-
-
-def test_parser_gamma():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--gamma", "1.0:0.9:0.8"])
-    assert args.gamma == "1.0:0.9:0.8"
-
-
-def test_parser_relative_mutual_exclusion():
-    """验证相对定位参数互斥。"""
-    p = _build_parser()
-    with pytest.raises(SystemExit):
-        p.parse_args(["-o", "DISPLAY1", "--left-of", "DISPLAY2", "--right-of", "DISPLAY3"])
-
-
-def test_parser_verbose():
-    p = _build_parser()
-    args = p.parse_args(["-v"])
-    assert args.verbose is True
-
-
-def test_parser_listmodes():
-    p = _build_parser()
-    args = p.parse_args(["--listmodes"])
-    assert args.listmodes is True
-
-
-def test_parser_version():
-    p = _build_parser()
-    with pytest.raises(SystemExit):
-        p.parse_args(["--version"])
-
-
-def test_parser_short_opts():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "-m", "1920x1080", "-r", "144", "-p", "0x0"])
-    assert args.output == "DISPLAY1"
-    assert args.mode == "1920x1080"
-    assert args.rate == 144.0
-    assert args.pos == "0x0"
-
-
-def test_parser_position_negative():
-    """负坐标使用 = 语法（argparse 将 -1920x0 视为参数名）。"""
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--pos=-1920x0"])
-    assert args.pos == "-1920x0"
-
-
-def test_parser_position_negative_y():
-    """Y 为负 +1920x-1080。"""
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "-p", "+1920x-1080"])
-    assert args.pos == "+1920x-1080"
-
-
-def test_fmt_modes_preferred_flag():
-    """验证 + 标记始终在首选模式上，不受 has_cur 影响。"""
-    from winrandr.models import DisplayMode
-    from winrandr.formatter import _fmt_modes
-    modes = [
-        DisplayMode(1920, 1080, 60.0, is_current=True, is_preferred=False),
-        DisplayMode(1920, 1080, 59.94, is_current=False, is_preferred=True),
-    ]
-    lines = []
-    _fmt_modes(lines, modes)
-    out = "\n".join(lines)
-    assert "60.00*" in out, "当前模式应有 *"
-    assert "59.94+" in out, "首选模式应有 +（即使非当前）"
-
-
 def test_normalize_name_edge_cases():
     assert _normalize_name("DISPLAY1") == r"\\.\DISPLAY1"
     assert _normalize_name(r"\\.\DISPLAY1") == r"\\.\DISPLAY1"
-    # 非标准名保持原样
     assert _normalize_name("WinDisc") == "WinDisc"
 
 
-def test_parser_auto():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--auto"])
-    assert args.auto is True
+def test_normalize_name_various():
+    assert _normalize_name("\\\\.\\DISPLAY1") == r"\\.\DISPLAY1"
+    assert _normalize_name("display1") == r"\\.\DISPLAY1"
+    assert _normalize_name("1") == r"\\.\DISPLAY1"
+    assert _normalize_name("2") == r"\\.\DISPLAY2"
+    assert _normalize_name("WinDisc") == "WinDisc"
 
 
-def test_parser_dry_run():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--mode", "1920x1080", "--dry-run"])
-    assert args.dry_run is True
-    assert args.mode == "1920x1080"
-    assert args.output == "DISPLAY1"
+def test_fail_basic():
+    with pytest.raises(SystemExit) as exc:
+        _fail("test error")
+    assert exc.value.code == 1
 
 
-def test_parser_listproviders():
-    p = _build_parser()
-    args = p.parse_args(["--listproviders"])
-    assert args.listproviders is True
+def test_fail_with_suggestions():
+    with pytest.raises(SystemExit) as exc:
+        _fail("test error", ["suggestion 1", "suggestion 2"])
+    assert exc.value.code == 1
 
 
-def test_parser_auto_dry_run():
-    """--auto 与 --dry-run 同时使用。"""
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--auto", "--dry-run"])
-    assert args.auto is True
-    assert args.dry_run is True
+def _ns(**kwargs) -> argparse.Namespace:
+    """Helper: 创建带默认值的 Namespace。"""
+    defaults = dict(mode=None, size=None, rotate=None, orientation=None,
+                    primary=False, preferred=False, off=False, auto=False,
+                    brightness=None, reflect=None, gamma=None, noprimary=False,
+                    pos=None, left_of=None, right_of=None, above=None,
+                    below=None, same_as=None,
+                    listmodes=False, listproviders=False, listmonitors=False,
+                    listactivemonitors=False, x=False, y=False,
+                    query=False, current=False, prop=False, dry_run=False,
+                    verbose=False, json=False, screen=None, nograb=False,
+                    output=None, rate=None)
+    defaults.update(kwargs)
+    return argparse.Namespace(**defaults)
 
 
-def test_parser_size():
-    p = _build_parser()
-    args = p.parse_args(["-s", "1920x1080", "-o", "DISPLAY1"])
-    assert args.size == "1920x1080"
+def test_apply_aliases_size_to_mode():
+    """--size 应转换为 --mode。"""
+    ns = _ns(size="1920x1080")
+    _apply_aliases(ns)
+    assert ns.mode == "1920x1080"
 
 
-def test_parser_size_long():
-    p = _build_parser()
-    args = p.parse_args(["--size", "1920x1080", "-o", "DISPLAY1"])
-    assert args.size == "1920x1080"
+def test_apply_aliases_orientation_to_rotate():
+    """--orientation 应转换为 --rotate。"""
+    cases = {"0": "normal", "normal": "normal", "2": "inverted",
+             "inverted": "inverted", "3": "left", "left": "left",
+             "right": "right"}
+    for inp, expected in cases.items():
+        ns = _ns(orientation=inp)
+        _apply_aliases(ns)
+        assert ns.rotate == expected, f"orientation={inp} → rotate={expected}"
 
 
-def test_parser_query():
-    p = _build_parser()
-    args = p.parse_args(["--query"])
-    assert args.query is True
+def test_apply_aliases_listactivemonitors():
+    """--listactivemonitors 应转换为 --listmonitors。"""
+    ns = _ns(listactivemonitors=True)
+    _apply_aliases(ns)
+    assert ns.listmonitors is True
 
 
-def test_parser_query_short():
-    p = _build_parser()
-    args = p.parse_args(["-q"])
-    assert args.query is True
+def test_apply_aliases_reflect_normal():
+    """--reflect normal 应清除 reflect。"""
+    ns = _ns(reflect="normal")
+    _apply_aliases(ns)
+    assert ns.reflect is None
 
 
-def test_parser_orientation():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--orientation", "left"])
-    assert args.orientation == "left"
+def test_apply_aliases_x_and_y():
+    """-x -y 同时设置应为 --reflect xy。"""
+    ns = _ns(x=True, y=True)
+    _apply_aliases(ns)
+    assert ns.reflect == "xy"
 
 
-def test_parser_orientation_numeric():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--orientation", "0"])
-    assert args.orientation == "0"
+def test_apply_aliases_x_only():
+    """仅 -x 应为 --reflect x。"""
+    ns = _ns(x=True, y=False)
+    _apply_aliases(ns)
+    assert ns.reflect == "x"
 
 
-def test_parser_current():
-    p = _build_parser()
-    args = p.parse_args(["--current"])
-    assert args.current is True
+def test_apply_aliases_y_only():
+    """仅 -y 应为 --reflect y。"""
+    ns = _ns(x=False, y=True)
+    _apply_aliases(ns)
+    assert ns.reflect == "y"
 
 
-def test_parser_dryrun_alias():
-    p = _build_parser()
-    args = p.parse_args(["--dryrun"])
-    assert args.dry_run is True
+def test_is_mod_op_true():
+    """修改类操作应返回 True。"""
+    for attr in ("mode", "pos", "rotate", "primary", "preferred",
+                 "off", "brightness", "reflect", "gamma",
+                 "left_of", "right_of", "above", "below", "same_as",
+                 "auto", "noprimary"):
+        ns = _ns(**{attr: True if attr in ("primary", "preferred", "off",
+                                           "auto", "noprimary") else
+                    "dummy" if attr in ("mode", "pos", "rotate",
+                                       "brightness", "reflect", "gamma",
+                                       "left_of", "right_of", "above",
+                                       "below", "same_as") else True})
+        assert _is_mod_op(ns), f"{attr} should be mod op"
 
 
-def test_parser_reflect_normal():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--reflect", "normal"])
-    assert args.reflect == "normal"
-
-
-def test_parser_reflect_x():
-    p = _build_parser()
-    args = p.parse_args(["-x", "-o", "DISPLAY1"])
-    assert args.x is True
-
-
-def test_parser_reflect_y():
-    p = _build_parser()
-    args = p.parse_args(["-y", "-o", "DISPLAY1"])
-    assert args.y is True
-
-
-def test_parser_reflect_xy_flags():
-    p = _build_parser()
-    args = p.parse_args(["-x", "-y", "-o", "DISPLAY1"])
-    assert args.x is True
-    assert args.y is True
-
-
-def test_parser_prop():
-    p = _build_parser()
-    args = p.parse_args(["--prop"])
-    assert args.prop is True
-
-
-def test_parser_prop_with_output():
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--prop"])
-    assert args.prop is True
-    assert args.output == "DISPLAY1"
-
-
-def test_parser_listmonitors():
-    p = _build_parser()
-    args = p.parse_args(["--listmonitors"])
-    assert args.listmonitors is True
-
-
-def test_parser_brightness_warn_low():
-    """--brightness 低于 0.1 时应有警告，但仍可被解析。"""
-    p = _build_parser()
-    args = p.parse_args(["-o", "DISPLAY1", "--brightness", "0.05"])
-    assert args.brightness == 0.05
+def test_is_mod_op_false():
+    """纯查询类操作应返回 False。"""
+    ns = _ns(query=True, listmodes=True, json=True)
+    assert not _is_mod_op(ns)

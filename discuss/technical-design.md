@@ -65,5 +65,5 @@ nuitka --standalone --onefile --mingw64 --assume-yes-for-downloads winrandr/__ma
 - [x] 物理尺寸显示（GDI GetDeviceCaps）
 - [ ] `--scale` / `--transform` 缩放变换
 - [ ] `--fb` 设置帧缓冲大小
-- [ ] EDID 信息读取
+- [x] EDID 信息读取（从注册表 `SYSTEM\CurrentControlSet\Enum\DISPLAY\{id}\{instance}\Device Parameters` 读取并解析）
 - [ ] 配置文件持久化

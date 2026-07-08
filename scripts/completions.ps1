@@ -51,6 +51,7 @@ Register-ArgumentCompleter -Native -CommandName winrandr, winrandr.exe, python -
         [PSCustomObject]@{Option='--version';        Description='显示版本号'}
         [PSCustomObject]@{Option='--listmodes';      Description='列出所有可用分辨率'}
         [PSCustomObject]@{Option='--prop';           Description='显示显示器扩展属性'}
+        [PSCustomObject]@{Option='--properties';     Description='显示显示器扩展属性（同 --prop）'}
         [PSCustomObject]@{Option='--output';         Description='选择显示器'; NeedsArg=$true}
         [PSCustomObject]@{Option='--mode';           Description='设置分辨率'; NeedsArg=$true}
         [PSCustomObject]@{Option='--rate';           Description='设置刷新率'; NeedsArg=$true}
@@ -71,6 +72,7 @@ Register-ArgumentCompleter -Native -CommandName winrandr, winrandr.exe, python -
         [PSCustomObject]@{Option='--verbose';        Description='详细日志'}
         [PSCustomObject]@{Option='--auto';           Description='启用显示器（首选分辨率）'}
         [PSCustomObject]@{Option='--dry-run';        Description='模拟操作，不实际更改'}
+        [PSCustomObject]@{Option='--noprimary';     Description='清除所有主显示器标记'}
         [PSCustomObject]@{Option='--listproviders';  Description='列出 GPU 适配器'}
         [PSCustomObject]@{Option='--listmonitors';  Description='列出带编号的显示器'}
         [PSCustomObject]@{Option='--listactivemonitors'; Description='列出活动显示器（同 --listmonitors）'}

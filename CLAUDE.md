@@ -35,20 +35,26 @@ winrandr/                 核心包
 ├── __main__.py           python -m winrandr 入口
 ├── cli.py                CLI 层：argparse 解析 + 主流程编排
 ├── api.py                公开 API：list_displays / set_resolution 等
+├── edid.py               EDID 读取与解析（注册表 + 二进制解析）
 ├── formatter.py          xrandr 风格格式化输出
 ├── models.py             数据模型 (DisplayInfo, DisplayMode)
 ├── features/
 │   ├── __init__.py
 │   ├── gamma.py          伽马校正与亮度（SetDeviceGammaRamp）
-│   └── layout.py         位置/旋转/主屏/关闭/相对定位（SetDisplayConfig）
+│   ├── layout.py         位置/旋转/主屏/关闭/相对定位（SetDisplayConfig）
+│   └── resolution.py     分辨率/刷新率枚举与设置（ChangeDisplaySettingsEx）
 └── win32/                底层 Win32 绑定层
     ├── __init__.py       子包统一 re-export
     ├── constants.py      Win32 API 常量 + 旋转映射表
     ├── structures.py     ctypes 结构体定义（DISPLAYCONFIG_*、DEVMODE 等）
-    └── bindings.py       Win32 API 函数绑定 + 内部工具函数
+    ├── bindings.py       Win32 API 函数绑定 (ctypes 声明)
+    └── utils.py          内部工具函数 (查询/过滤/应用配置)
 
 tests/                    测试
-├── test_cli.py           CLI 参数解析测试（44+ 项）
+├── test_cli.py           CLI 工具函数测试（_fail / _normalize_name）
+├── test_cli_handlers.py  CLI 操作处理函数测试
+├── test_parser.py        CLI 参数解析测试（50+ 项，含 parametrize 合并的布尔标记测试）
+├── test_edid.py          EDID 解析纯逻辑测试（15 项）
 ├── test_formatter.py     格式化输出测试
 ├── test_constants.py     常量与旋转映射一致性测试
 └── test_models.py        数据模型测试
@@ -64,13 +70,13 @@ scripts/
 
 | 操作 | API | 文件 |
 |------|-----|------|
-| 查询显示器 | `QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS)` | bindings.py |
-| 列可用模式 | `EnumDisplaySettings` 遍历 | api.py |
-| 改分辨率 | `ChangeDisplaySettingsEx(CDS_UPDATEREGISTRY)` | api.py |
+| 查询显示器 | `QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS)` | utils.py |
+| 列可用模式 | `EnumDisplaySettings` 遍历 | features/resolution.py |
+| 改分辨率 | `ChangeDisplaySettingsEx(CDS_UPDATEREGISTRY)` | features/resolution.py |
 | 改位置/旋转/主屏/关闭 | `SetDisplayConfig` + SDC flags | features/layout.py |
-| 读物理尺寸 | `CreateDCW` + `GetDeviceCaps(HORZSIZE/VERTSIZE)` | bindings.py |
+| 读物理尺寸 | `CreateDCW` + `GetDeviceCaps(HORZSIZE/VERTSIZE)` | utils.py |
 | 亮度和伽马 | `GetDeviceGammaRamp` / `SetDeviceGammaRamp` | features/gamma.py |
-| 查适配器/设备路径 | `DisplayConfigGetDeviceInfo` (SOURCE_NAME/TARGET_NAME/ADAPTER_NAME) | bindings.py |
+| 查适配器/设备路径 | `DisplayConfigGetDeviceInfo` (SOURCE_NAME/TARGET_NAME/ADAPTER_NAME) | utils.py |
 
 ## 关键设计决策
 

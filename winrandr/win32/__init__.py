@@ -3,3 +3,4 @@
 from winrandr.win32.constants import *
 from winrandr.win32.structures import *
 from winrandr.win32.bindings import *
+from winrandr.win32.utils import *

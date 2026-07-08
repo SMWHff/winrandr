@@ -2,7 +2,7 @@
 
 import logging
 
-from winrandr.win32.bindings import (
+from winrandr.win32.utils import (
     set_display_config_available, query_active_config, get_gdi_name,
     find_path_idx, apply_filtered, apply_config,
 )
@@ -23,12 +23,12 @@ def set_position(device_name: str, x: int, y: int) -> bool:
 
     idx = find_path_idx(paths, path_count, device_name)
     if idx is None:
-        logger.error("未找到显示器: %s", device_name)
+        logger.error("未找到显示器（set_position）: %s — QDC 路径表中不存在", device_name)
         return False
 
     mode_idx = paths[idx].sourceInfo.modeInfoIdx
     if mode_idx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID or mode_idx >= mode_count:
-        logger.error("显示器 %s 模式索引无效", device_name)
+        logger.error("显示器 %s 模式索引无效（idx=%d, mode_count=%d）", device_name, mode_idx, mode_count)
         return False
 
     modes[mode_idx]._union.sourceMode.position.x = x
@@ -52,9 +52,10 @@ def set_rotation(device_name: str, degrees: int) -> bool:
 
     idx = find_path_idx(paths, path_count, device_name)
     if idx is None:
-        logger.error("未找到显示器: %s", device_name)
+        logger.error("未找到显示器（set_rotation）: %s — QDC 路径表中不存在", device_name)
         return False
 
+    logger.debug("设置 %s 旋转: %d°", device_name, degrees)
     paths[idx].targetInfo.rotation = rot
     return apply_filtered(paths, path_count, modes, mode_count)
 
@@ -78,8 +79,9 @@ def set_primary(device_name: str) -> bool:
             paths[i].sourceInfo.statusFlags &= ~0x01
 
     if not found:
-        logger.error("未找到显示器: %s", device_name)
+        logger.error("未找到显示器（set_primary）: %s — QDC 路径表中不存在", device_name)
         return False
+    logger.debug("设置主显示器: %s", device_name)
     return apply_filtered(paths, path_count, modes, mode_count)
 
 
@@ -92,6 +94,7 @@ def set_off(device_name: str) -> bool:
         return False
     paths, modes, path_count, mode_count = config
 
+    logger.debug("关闭显示器: %s（共 %d 个路径）", device_name, path_count)
     kept = []
     for i in range(path_count):
         gdi = get_gdi_name(paths[i])
@@ -99,7 +102,7 @@ def set_off(device_name: str) -> bool:
             kept.append(i)
 
     if len(kept) == path_count:
-        logger.error("未找到显示器: %s", device_name)
+        logger.error("未找到显示器（set_off）: %s — QDC 路径表中不存在", device_name)
         return False
 
     new_paths = (DISPLAYCONFIG_PATH_INFO * len(kept))()
@@ -107,6 +110,22 @@ def set_off(device_name: str) -> bool:
         new_paths[dest] = paths[src_idx]
 
     return apply_config(new_paths, len(kept), modes, mode_count)
+
+
+def set_noprimary() -> bool:
+    """清除所有显示器的主显示器标记。"""
+    if not set_display_config_available():
+        return False
+    config = query_active_config()
+    if config is None:
+        return False
+    paths, modes, path_count, mode_count = config
+
+    for i in range(path_count):
+        paths[i].sourceInfo.statusFlags &= ~0x01
+
+    logger.debug("已清除 %d 个路径的主显示器标记", path_count)
+    return apply_filtered(paths, path_count, modes, mode_count)
 
 
 def set_reflect(device_name: str, axis: str) -> bool:
