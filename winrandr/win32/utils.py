@@ -82,6 +82,7 @@ def query_active_config():
 
     ret = _GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, byref(path_count), byref(mode_count))
     if ret != 0:
+        logger.error("GetDisplayConfigBufferSizes (active) 失败, 错误码=%d", ret)
         return None
 
     paths = (DISPLAYCONFIG_PATH_INFO * path_count.value)()
@@ -92,6 +93,7 @@ def query_active_config():
         byref(mode_count), modes, None,
     )
     if ret != 0:
+        logger.error("QueryDisplayConfig (active) 失败, 错误码=%d", ret)
         return None
 
     _QDC_CACHE = (paths, modes, path_count.value, mode_count.value)
@@ -105,6 +107,7 @@ def query_all_config():
 
     ret = _GetDisplayConfigBufferSizes(QDC_ALL_PATHS, byref(path_count), byref(mode_count))
     if ret != 0:
+        logger.error("GetDisplayConfigBufferSizes (all) 失败, 错误码=%d", ret)
         return None
 
     paths = (DISPLAYCONFIG_PATH_INFO * path_count.value)()
@@ -115,6 +118,7 @@ def query_all_config():
         byref(mode_count), modes, None,
     )
     if ret != 0:
+        logger.error("QueryDisplayConfig (all) 失败, 错误码=%d", ret)
         return None
 
     return paths, modes, path_count.value, mode_count.value
@@ -162,6 +166,14 @@ def get_resolution_refresh_via_enum(gdi_name: str):
     return dm.dmPelsWidth, dm.dmPelsHeight, float(dm.dmDisplayFrequency), dm.dmBitsPerPel
 
 
+SDC_ERROR_MESSAGES = {
+    5: "拒绝访问（请以管理员身份运行）",
+    31: "一般性故障（驱动可能不支持操作）",
+    50: "操作不受支持",
+    87: "参数无效",
+    1610: "显示配置无效（虚拟显示器驱动可能干扰）",
+}
+
 def apply_config(paths, path_count, modes, mode_count, flags=None):
     """应用显示配置，成功后自动失效 QDC 缓存。"""
     if flags is None:
@@ -169,10 +181,13 @@ def apply_config(paths, path_count, modes, mode_count, flags=None):
             SDC_APPLY | SDC_USE_SUPPLIED_DISPLAY_CONFIG
             | SDC_ALLOW_CHANGES | SDC_SAVE_TO_DATABASE
         )
-    ok = _SetDisplayConfig(path_count, paths, mode_count, modes, flags) == 0
-    if ok:
+    ret = _SetDisplayConfig(path_count, paths, mode_count, modes, flags)
+    if ret == 0:
         _invalidate_qdc_cache()
-    return ok
+        return True
+    msg = SDC_ERROR_MESSAGES.get(ret, f"未知错误码 {ret}")
+    logger.error("SetDisplayConfig 失败: %s", msg)
+    return False
 
 
 def set_display_config_available() -> bool:
@@ -180,9 +195,11 @@ def set_display_config_available() -> bool:
     global _SDC_AVAILABLE
     if _SDC_AVAILABLE is not None:
         return _SDC_AVAILABLE
+    pc = c_uint32(0)
+    mc = c_uint32(0)
     try:
-        r = _SetDisplayConfig(0, None, 0, None, SDC_APPLY)
-        _SDC_AVAILABLE = (r == 0)
+        ret = _GetDisplayConfigBufferSizes(1, pc, mc)
+        _SDC_AVAILABLE = (ret == 0)
     except Exception:
         _SDC_AVAILABLE = False
     if not _SDC_AVAILABLE:
