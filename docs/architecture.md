@@ -127,7 +127,7 @@ winrandr/                 核心包
 | 列可用模式 | `EnumDisplaySettings` 遍历 | features/resolution.py |
 | 改分辨率 | `ChangeDisplaySettingsEx(CDS_UPDATEREGISTRY)` | features/resolution.py |
 | 改位置/旋转/主屏/关闭/清除主屏 | `SetDisplayConfig` + SDC flags | features/layout.py |
-| 读物理尺寸 | `CreateDCW` + `GetDeviceCaps(HORZSIZE/VERTSIZE)` | bindings.py |
+| 读物理尺寸 | `CreateDCW` + `GetDeviceCaps(HORZSIZE/VERTSIZE)` | utils.py |
 | 亮度和伽马 | `GetDeviceGammaRamp` / `SetDeviceGammaRamp` | features/gamma.py |
 | 查适配器/设备路径 | `DisplayConfigGetDeviceInfo` (SOURCE/TARGET/ADAPTER_NAME) | bindings.py |
 | 读 EDID | `EnumDisplayDevices` 获取 DeviceID → `winreg` 读取注册表 `Enum\DISPLAY\{id}\{instance}\Device Parameters` | edid.py |
