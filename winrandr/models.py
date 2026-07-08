@@ -26,7 +26,6 @@ class DisplayInfo:
     position_y: int = 0
     is_primary: bool = False
     rotation: int = 0
-    bits_per_pixel: int = 32
     width_mm: int = 0
     height_mm: int = 0
     modes: list[DisplayMode] = field(default_factory=list)

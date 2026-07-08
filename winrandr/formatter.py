@@ -2,11 +2,7 @@
 
 from collections import defaultdict
 
-from winrandr.win32.constants import ROTATION_NAMES, ROTATION_DEGREES
-
-
-# 角度 → SDK 常量 ID 反向映射
-_DEG_TO_ID = {v: k for k, v in ROTATION_DEGREES.items()}
+from winrandr.win32.constants import ROTATION_NAMES, ROTATION_MAP
 
 _ALL_ROTATIONS = "normal left inverted right"
 
@@ -35,7 +31,7 @@ def _rotation_part(degrees: int) -> str:
     """构建 xrandr 风格的旋转信息片段。"""
     if degrees == 0:
         return f"({_ALL_ROTATIONS})"
-    name = ROTATION_NAMES.get(_DEG_TO_ID.get(degrees, 1), "normal")
+    name = ROTATION_NAMES.get(ROTATION_MAP.get(degrees, 1), "normal")
     return f"{name} ({_ALL_ROTATIONS})"
 
 
