@@ -13,9 +13,10 @@ def test_enumerate_modes_empty():
 
 def test_enumerate_modes_skips_invalid():
     """无效尺寸（frequency=0）的 mode 应跳过（覆盖 33->44 分支）。"""
+    from ctypes import sizeof
+
     from winrandr.features.resolution import enumerate_modes
     from winrandr.win32.structures import DEVMODE
-    from ctypes import sizeof
 
     def fake_enum(_name, _i, dm_ptr):
         dm_ptr._obj.dmSize = sizeof(DEVMODE)

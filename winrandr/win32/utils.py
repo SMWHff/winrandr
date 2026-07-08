@@ -1,29 +1,42 @@
 """内部工具函数：显示配置查询、设备信息获取、配置应用。"""
 
 import logging
-from ctypes import sizeof, byref, c_uint32
+from ctypes import byref, c_uint32, sizeof
 
+from winrandr.win32.bindings import (
+    _CreateDCW,
+    _DeleteDC,
+    _DisplayConfigGetDeviceInfo,
+    _EnumDisplayDevices,
+    _EnumDisplaySettings,
+    _GetDeviceCaps,
+    _GetDisplayConfigBufferSizes,
+    _QueryDisplayConfig,
+    _SetDisplayConfig,
+)
 from winrandr.win32.constants import (
-    QDC_ONLY_ACTIVE_PATHS, QDC_ALL_PATHS,
-    SDC_APPLY, SDC_USE_SUPPLIED_DISPLAY_CONFIG,
-    SDC_SAVE_TO_DATABASE, SDC_ALLOW_CHANGES,
+    DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME,
     DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME,
     DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME,
-    DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME,
-    DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
     DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
     DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
+    DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
     ENUM_CURRENT_SETTINGS,
+    QDC_ALL_PATHS,
+    QDC_ONLY_ACTIVE_PATHS,
+    SDC_ALLOW_CHANGES,
+    SDC_APPLY,
+    SDC_SAVE_TO_DATABASE,
+    SDC_USE_SUPPLIED_DISPLAY_CONFIG,
 )
 from winrandr.win32.structures import (
-    DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO,
-    DISPLAYCONFIG_SOURCE_DEVICE_NAME, DISPLAYCONFIG_TARGET_DEVICE_NAME,
-    DISPLAYCONFIG_ADAPTER_NAME, DISPLAY_DEVICE, DEVMODE,
-)
-from winrandr.win32.bindings import (
-    _GetDisplayConfigBufferSizes, _QueryDisplayConfig, _SetDisplayConfig,
-    _DisplayConfigGetDeviceInfo, _EnumDisplaySettings,
-    _EnumDisplayDevices, _CreateDCW, _DeleteDC, _GetDeviceCaps,
+    DEVMODE,
+    DISPLAY_DEVICE,
+    DISPLAYCONFIG_ADAPTER_NAME,
+    DISPLAYCONFIG_MODE_INFO,
+    DISPLAYCONFIG_PATH_INFO,
+    DISPLAYCONFIG_SOURCE_DEVICE_NAME,
+    DISPLAYCONFIG_TARGET_DEVICE_NAME,
 )
 
 logger = logging.getLogger(__name__)

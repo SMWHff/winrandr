@@ -8,11 +8,14 @@ from unittest.mock import patch
 
 import pytest
 
-from winrandr.profiles import (
-    _save_all, save_profile, load_profile,
-    delete_profile, diff_profile,
-)
 from winrandr.models import DisplayInfo, DisplayMode
+from winrandr.profiles import (
+    _save_all,
+    delete_profile,
+    diff_profile,
+    load_profile,
+    save_profile,
+)
 
 
 def _make_display(name="DISPLAY1", x=0, y=0, w=1920, h=1080, rr=60.0,
@@ -98,7 +101,7 @@ def test_diff_profile_primary_change(temp_profiles):
             }],
             "created": "2026-01-01T00:00:00",
             "version": "0.3.6",
-        }
+        },
     }
     _save_all(config)
     cur = _make_display("DISPLAY1", 0, 0, 1920, 1080, 60.0, 0, primary=False)

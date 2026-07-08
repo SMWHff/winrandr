@@ -6,12 +6,18 @@ from unittest.mock import patch
 
 import pytest
 
-from winrandr.profiles import (
-    _load_all, _save_all, save_profile, load_profile,
-    list_profiles, delete_profile, get_profile_names, diff_profile,
-    preview_save,
-)
 from winrandr.models import DisplayInfo, DisplayMode
+from winrandr.profiles import (
+    _load_all,
+    _save_all,
+    delete_profile,
+    diff_profile,
+    get_profile_names,
+    list_profiles,
+    load_profile,
+    preview_save,
+    save_profile,
+)
 
 
 def _make_display(name="DISPLAY1", x=0, y=0, w=1920, h=1080, rr=60.0,
@@ -97,7 +103,7 @@ def test_load_profile_success(temp_profiles):
             }],
             "created": "2026-01-01T00:00:00",
             "version": "0.3.5",
-        }
+        },
     }
     _save_all(config)
 
@@ -123,7 +129,7 @@ def test_load_profile_display_not_connected(temp_profiles):
             }],
             "created": "2026-01-01T00:00:00",
             "version": "0.3.5",
-        }
+        },
     }
     _save_all(config)
 
@@ -144,7 +150,7 @@ def test_load_profile_set_auto_fails(temp_profiles):
             }],
             "created": "2026-01-01T00:00:00",
             "version": "0.3.5",
-        }
+        },
     }
     _save_all(config)
 
@@ -223,7 +229,7 @@ def test_diff_profile_all_match(temp_profiles):
             }],
             "created": "2026-01-01T00:00:00",
             "version": "0.3.5",
-        }
+        },
     }
     _save_all(config)
     with patch("winrandr.profiles.list_displays",
@@ -242,7 +248,7 @@ def test_diff_profile_with_changes(temp_profiles):
             }],
             "created": "2026-01-01T00:00:00",
             "version": "0.3.5",
-        }
+        },
     }
     _save_all(config)
     cur = _make_display("DISPLAY1", 0, 0, 1920, 1080, 60.0, 0, True)
@@ -264,7 +270,7 @@ def test_diff_profile_not_connected(temp_profiles):
             }],
             "created": "2026-01-01T00:00:00",
             "version": "0.3.5",
-        }
+        },
     }
     _save_all(config)
     with patch("winrandr.profiles.list_displays",

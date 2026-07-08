@@ -1,6 +1,13 @@
 """测试格式化输出。"""
 
-from winrandr.formatter import short_name, fmt_modes, _fmt_props, _rotation_part, format_displays, format_monitor_list
+from winrandr.formatter import (
+    _fmt_props,
+    _rotation_part,
+    fmt_modes,
+    format_displays,
+    format_monitor_list,
+    short_name,
+)
 from winrandr.models import DisplayInfo, DisplayMode
 
 

@@ -6,13 +6,23 @@ import sys
 from argparse import Namespace
 
 from winrandr.api import (
-    list_displays, set_resolution, set_preferred_resolution,
-    set_position, set_position_relative, set_rotation,
-    set_primary, set_off, set_brightness, set_gamma, set_reflect,
-    set_auto, list_providers, identify_display,
+    identify_display,
+    list_displays,
+    list_providers,
+    set_auto,
+    set_brightness,
+    set_gamma,
+    set_off,
+    set_position,
+    set_position_relative,
+    set_preferred_resolution,
+    set_primary,
+    set_reflect,
+    set_resolution,
+    set_rotation,
 )
-from winrandr.win32.constants import ROTATION_FROM_NAME
 from winrandr.formatter import fmt_modes
+from winrandr.win32.constants import ROTATION_FROM_NAME
 
 
 def _setup_logging() -> None:

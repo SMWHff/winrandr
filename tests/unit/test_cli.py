@@ -1,11 +1,18 @@
 """Tests for CLI utility functions (_fail, _normalize_name, _apply_aliases, _is_mod_op)."""
 
 import argparse
-import pytest
 from unittest.mock import patch
+
+import pytest
+
 from winrandr.cli import (
-    _normalize_name, _fail, _apply_aliases, _is_mod_op,
-    _check_relative_mutex, _MOD_OP_ATTRS, _list_available_displays,
+    _MOD_OP_ATTRS,
+    _apply_aliases,
+    _check_relative_mutex,
+    _fail,
+    _is_mod_op,
+    _list_available_displays,
+    _normalize_name,
 )
 
 

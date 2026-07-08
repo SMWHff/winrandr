@@ -3,9 +3,11 @@
 import subprocess
 import sys as _sys
 from unittest.mock import patch
+
 import pytest
-from winrandr.models import DisplayInfo, DisplayMode
+
 from winrandr.cli import main as cli_main
+from winrandr.models import DisplayInfo, DisplayMode
 
 
 def _fake_display(name="DISPLAY1", connected=True, **kw):

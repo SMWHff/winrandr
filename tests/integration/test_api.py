@@ -2,11 +2,13 @@
 
 from unittest.mock import patch
 
-from winrandr.models import DisplayInfo
 from winrandr.api import (
-    list_displays, set_position_relative, list_providers, get_display_props,
+    get_display_props,
+    list_displays,
+    list_providers,
+    set_position_relative,
 )
-
+from winrandr.models import DisplayInfo
 
 # --- list_displays ---
 
@@ -17,7 +19,10 @@ def test_list_displays_empty():
 def test_list_displays_source_fallback():
     """source modeInfoIdx 无效时回退到 EnumDisplaySettings 获取分辨率。"""
     from winrandr.win32.constants import DISPLAYCONFIG_PATH_MODE_IDX_INVALID
-    from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO
+    from winrandr.win32.structures import (
+        DISPLAYCONFIG_MODE_INFO,
+        DISPLAYCONFIG_PATH_INFO,
+    )
     paths = (DISPLAYCONFIG_PATH_INFO * 1)()
     modes = (DISPLAYCONFIG_MODE_INFO * 1)()
     paths[0].sourceInfo.modeInfoIdx = DISPLAYCONFIG_PATH_MODE_IDX_INVALID
@@ -48,8 +53,14 @@ def _disp(name="DISPLAY1", x=0, y=0, w=1920, h=1080):
 
 def test_list_displays_refresh_fallback():
     """vSyncFreq.Denominator == 0 时回退到 EnumDisplaySettings 获取刷新率。"""
-    from winrandr.win32.constants import DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, DISPLAYCONFIG_MODE_INFO_TYPE_TARGET
-    from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO
+    from winrandr.win32.constants import (
+        DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
+        DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
+    )
+    from winrandr.win32.structures import (
+        DISPLAYCONFIG_MODE_INFO,
+        DISPLAYCONFIG_PATH_INFO,
+    )
     paths = (DISPLAYCONFIG_PATH_INFO * 1)()
     modes = (DISPLAYCONFIG_MODE_INFO * 2)()
     paths[0].sourceInfo.modeInfoIdx = 0
@@ -133,8 +144,14 @@ def test_rel_position_short_name():
 
 def test_list_displays_refresh_from_qdc():
     """vSyncFreq.Denominator 非零时从 QDC 直接获取刷新率。"""
-    from winrandr.win32.constants import DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, DISPLAYCONFIG_MODE_INFO_TYPE_TARGET
-    from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO
+    from winrandr.win32.constants import (
+        DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
+        DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
+    )
+    from winrandr.win32.structures import (
+        DISPLAYCONFIG_MODE_INFO,
+        DISPLAYCONFIG_PATH_INFO,
+    )
     paths = (DISPLAYCONFIG_PATH_INFO * 1)()
     modes = (DISPLAYCONFIG_MODE_INFO * 2)()
     paths[0].sourceInfo.modeInfoIdx = 0

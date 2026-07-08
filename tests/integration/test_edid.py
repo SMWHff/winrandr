@@ -1,7 +1,8 @@
 """EDID parsing tests — extracted from test_models.py."""
 
-from unittest.mock import patch, MagicMock
-from winrandr.edid import _parse_edid, _find_edid_name, _find_edid_serial
+from unittest.mock import MagicMock, patch
+
+from winrandr.edid import _find_edid_name, _find_edid_serial, _parse_edid
 
 
 def _build_edid(

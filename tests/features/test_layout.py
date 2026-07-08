@@ -1,7 +1,6 @@
 """Tests for features/layout.py with mocked Win32 API."""
 
-from unittest.mock import patch, MagicMock
-
+from unittest.mock import MagicMock, patch
 
 # --- failure paths ---
 
@@ -135,8 +134,14 @@ def test_set_reflect_xy_delegates():
 
 def _make_valid_qdc(path_count=1, mode_count=2):
     """创建有效的 QDC 配置用于成功路径测试。"""
-    from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO
-    from winrandr.win32.constants import DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, DISPLAYCONFIG_MODE_INFO_TYPE_TARGET
+    from winrandr.win32.constants import (
+        DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
+        DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
+    )
+    from winrandr.win32.structures import (
+        DISPLAYCONFIG_MODE_INFO,
+        DISPLAYCONFIG_PATH_INFO,
+    )
     paths = (DISPLAYCONFIG_PATH_INFO * path_count)()
     modes = (DISPLAYCONFIG_MODE_INFO * mode_count)()
     for i in range(path_count):

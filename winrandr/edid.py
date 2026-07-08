@@ -2,11 +2,11 @@
 
 import logging
 import winreg
-from ctypes import sizeof, byref
+from ctypes import byref, sizeof
 from datetime import datetime
 
-from winrandr.win32.structures import DISPLAY_DEVICE
 from winrandr.win32.bindings import _EnumDisplayDevices
+from winrandr.win32.structures import DISPLAY_DEVICE
 
 logger = logging.getLogger(__name__)
 

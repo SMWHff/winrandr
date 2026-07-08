@@ -2,8 +2,10 @@
 
 from argparse import Namespace
 from unittest.mock import patch
+
 import pytest
-from winrandr.cli.handlers import _handle_listmodes, _handle_identify
+
+from winrandr.cli.handlers import _handle_identify, _handle_listmodes
 
 DN = r"\\.\DISPLAY1"
 
@@ -23,7 +25,7 @@ def _ns(**kwargs) -> Namespace:
 
 def test_handle_listmodes_basic():
     """基本 listmodes 输出。"""
-    from winrandr.models import DisplayMode, DisplayInfo
+    from winrandr.models import DisplayInfo, DisplayMode
     dm = DisplayMode(1920, 1080, 60.0, True, True)
     disp = DisplayInfo(name=r"\\.\DISPLAY1", friendly_name="Fake",
                        connected=True, width=1920, height=1080,
@@ -36,7 +38,7 @@ def test_handle_listmodes_basic():
 
 def test_handle_listmodes_json():
     """listmodes --json 输出。"""
-    from winrandr.models import DisplayMode, DisplayInfo
+    from winrandr.models import DisplayInfo, DisplayMode
     dm = DisplayMode(1920, 1080, 60.0, True, True)
     disp = DisplayInfo(name=r"\\.\DISPLAY1", friendly_name="Fake",
                        connected=True, width=1920, height=1080,

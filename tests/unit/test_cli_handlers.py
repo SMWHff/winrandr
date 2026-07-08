@@ -1,15 +1,25 @@
 """Tests for CLI handler functions with dry-run mode."""
 
 from argparse import Namespace
-import pytest
 from unittest.mock import patch
-from winrandr.cli.handlers import (
-    _handle_mode, _handle_pos, _handle_gamma,
-    _handle_brightness, _handle_reflect, _handle_relative,
-    _handle_auto, _handle_rotate, _handle_primary,
-    _handle_preferred, _handle_off, _msg, _setup_logging,
-)
 
+import pytest
+
+from winrandr.cli.handlers import (
+    _handle_auto,
+    _handle_brightness,
+    _handle_gamma,
+    _handle_mode,
+    _handle_off,
+    _handle_pos,
+    _handle_preferred,
+    _handle_primary,
+    _handle_reflect,
+    _handle_relative,
+    _handle_rotate,
+    _msg,
+    _setup_logging,
+)
 
 DN = r"\\.\DISPLAY1"
 

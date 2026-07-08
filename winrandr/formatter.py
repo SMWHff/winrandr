@@ -3,7 +3,7 @@
 from collections import defaultdict
 
 from winrandr.models import DisplayInfo, DisplayMode
-from winrandr.win32.constants import ROTATION_NAMES, ROTATION_MAP
+from winrandr.win32.constants import ROTATION_MAP, ROTATION_NAMES
 
 _ALL_ROTATIONS = "normal left inverted right"
 
@@ -23,7 +23,7 @@ def format_monitor_list(displays: list[DisplayInfo]) -> str:
         mm_h = d.height_mm or 0
         lines.append(
             f" {i}: +{pri}{name} {d.width}/{mm_w}"
-            f"x{d.height}/{mm_h}+{d.position_x}+{d.position_y}  {name}"
+            f"x{d.height}/{mm_h}+{d.position_x}+{d.position_y}  {name}",
         )
     return "\n".join(lines)
 
@@ -47,7 +47,7 @@ def format_displays(displays: list[DisplayInfo]) -> str:
             max_y = max(d.position_y + d.height for d in connected)
             lines.append(
                 f"Screen 0: minimum 320 x 200, current {max_x} x {max_y},"
-                f" maximum 32767 x 32767"
+                f" maximum 32767 x 32767",
             )
         else:
             lines.append("Screen 0: minimum 320 x 200, current (no active displays),"
@@ -72,7 +72,7 @@ def format_displays(displays: list[DisplayInfo]) -> str:
 
             lines.append(
                 f"{name} {status} {primary}{disp_w}x{disp_h}"
-                f"+{d.position_x}+{d.position_y} {_rotation_part(d.rotation)}{mm}"
+                f"+{d.position_x}+{d.position_y} {_rotation_part(d.rotation)}{mm}",
             )
             if d.modes:
                 fmt_modes(lines, d.modes)

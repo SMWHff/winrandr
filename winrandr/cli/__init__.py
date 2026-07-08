@@ -2,17 +2,33 @@
 import logging
 import sys
 
-from winrandr.api import list_displays, get_display_props, list_providers, set_noprimary
-from winrandr.formatter import format_displays, format_monitor_list
+from winrandr.api import get_display_props, list_displays, list_providers, set_noprimary
 from winrandr.cli.handlers import (
-    _setup_logging, _normalize_name, _fail, _msg, _list_available_displays,
-    _MOD_OP_ATTRS, _is_mod_op, _apply_aliases, _check_relative_mutex,
-    _handle_auto, _handle_mode, _handle_pos, _handle_rotate,
-    _handle_primary, _handle_preferred, _handle_off,
-    _handle_brightness, _handle_reflect, _handle_gamma,
-    _handle_relative, _handle_listmodes, _handle_identify,
+    _MOD_OP_ATTRS,
+    _apply_aliases,
+    _check_relative_mutex,
+    _fail,
+    _handle_auto,
+    _handle_brightness,
+    _handle_gamma,
+    _handle_identify,
+    _handle_listmodes,
+    _handle_mode,
+    _handle_off,
+    _handle_pos,
+    _handle_preferred,
+    _handle_primary,
+    _handle_reflect,
+    _handle_relative,
+    _handle_rotate,
+    _is_mod_op,
+    _list_available_displays,
+    _msg,
+    _normalize_name,
+    _setup_logging,
 )
 from winrandr.cli.parser import build_parser
+from winrandr.formatter import format_displays, format_monitor_list
 
 
 def _handle_providers(args) -> None:
@@ -31,8 +47,8 @@ def _handle_providers(args) -> None:
 def _handle_monitors(args) -> None:
     displays = list_displays()
     if args.json:
-        from dataclasses import asdict
         import json
+        from dataclasses import asdict
         print(json.dumps([asdict(d) for d in displays if d.connected], indent=2, ensure_ascii=False))
     elif not displays:
         print("未检测到显示器。")
@@ -76,7 +92,7 @@ def _handle_save_profile(args) -> None:
 def _handle_load_profile(args) -> None:
     if not args.load_profile:
         _fail("存档名不能为空")
-    from winrandr.profiles import load_profile, diff_profile
+    from winrandr.profiles import diff_profile, load_profile
     if args.dry_run:
         for line in diff_profile(args.load_profile):
             print(line)
@@ -109,8 +125,8 @@ def _handle_query(args) -> None:
         for d in displays:
             d.properties = get_display_props(d.name)
     if args.json:
-        from dataclasses import asdict
         import json
+        from dataclasses import asdict
         print(json.dumps([asdict(d) for d in displays], indent=2, ensure_ascii=False))
     else:
         print(format_displays(displays))

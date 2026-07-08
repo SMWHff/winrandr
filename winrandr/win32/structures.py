@@ -1,8 +1,11 @@
 """Win32 显示 API 相关的 ctypes 结构体定义。"""
 
 from ctypes import (
-    wintypes, Structure, Union,
-    c_uint32, c_uint64,
+    Structure,
+    Union,
+    c_uint32,
+    c_uint64,
+    wintypes,
 )
 
 from winrandr.win32.constants import CCHDEVICENAME

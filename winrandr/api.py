@@ -1,42 +1,62 @@
 """公开 API：显示器信息查询和配置修改。"""
 
 __all__ = [
-    "list_displays", "set_position_relative", "get_display_props",
+    "get_display_props",
+    "list_displays",
     "list_providers",
+    "set_position_relative",
 ]
 
 import logging
-from ctypes import sizeof, byref
+from ctypes import byref, sizeof
 
-from winrandr.models import DisplayInfo
+from winrandr.edid import get_edid
+from winrandr.features.gamma import (  # noqa: F401
+    identify_display,
+    set_brightness,
+    set_gamma,
+)
+from winrandr.features.layout import (  # noqa: F401
+    set_noprimary,
+    set_off,
+    set_position,
+    set_primary,
+    set_reflect,
+    set_rotation,
+)
+from winrandr.features.resolution import (  # noqa: F401
+    enumerate_modes,
+    set_auto,
+    set_preferred_resolution,
+    set_resolution,
+)
 from winrandr.formatter import short_name
+from winrandr.models import DisplayInfo
+from winrandr.win32.bindings import _EnumDisplayDevices
 from winrandr.win32.constants import (
-    DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
+    DISPLAY_DEVICE_ATTACHED_TO_DESKTOP,
+    DISPLAY_DEVICE_DISCONNECTED,
+    DISPLAY_DEVICE_MIRRORING_DRIVER,
+    DISPLAY_DEVICE_MODESPRUNED,
+    DISPLAY_DEVICE_PRIMARY_DEVICE,
+    DISPLAY_DEVICE_REMOTE,
+    DISPLAY_DEVICE_REMOVABLE,
+    DISPLAY_DEVICE_VGA_COMPATIBLE,
     DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
     DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
+    DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
     ROTATION_DEGREES,
-    DISPLAY_DEVICE_ATTACHED_TO_DESKTOP, DISPLAY_DEVICE_PRIMARY_DEVICE,
-    DISPLAY_DEVICE_MIRRORING_DRIVER, DISPLAY_DEVICE_VGA_COMPATIBLE,
-    DISPLAY_DEVICE_REMOVABLE, DISPLAY_DEVICE_DISCONNECTED,
-    DISPLAY_DEVICE_REMOTE, DISPLAY_DEVICE_MODESPRUNED,
 )
 from winrandr.win32.structures import DISPLAY_DEVICE
 from winrandr.win32.utils import (
-    query_active_config, query_all_config, get_gdi_name,
-    get_friendly_name_via_enum, get_screen_size_mm,
+    get_adapter_name,
+    get_friendly_name_via_enum,
+    get_gdi_name,
+    get_monitor_device_path,
     get_resolution_refresh_via_enum,
-    get_adapter_name, get_monitor_device_path,
-)
-from winrandr.win32.bindings import _EnumDisplayDevices
-from winrandr.edid import get_edid
-from winrandr.features.gamma import set_brightness, set_gamma, identify_display  # noqa: F401
-from winrandr.features.layout import (  # noqa: F401
-    set_position, set_rotation, set_primary, set_off, set_reflect,
-    set_noprimary,
-)
-from winrandr.features.resolution import (  # noqa: F401
-    set_resolution, set_preferred_resolution, set_auto,
-    enumerate_modes,
+    get_screen_size_mm,
+    query_active_config,
+    query_all_config,
 )
 
 logger = logging.getLogger(__name__)

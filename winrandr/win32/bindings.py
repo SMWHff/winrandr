@@ -1,11 +1,14 @@
 """Win32 API 函数绑定（ctypes 声明）。"""
 import ctypes
-from ctypes import wintypes, POINTER
+from ctypes import POINTER, wintypes
 
 from winrandr.win32.structures import (
-    DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO,
+    DEVMODE,
+    DISPLAY_DEVICE,
     DISPLAYCONFIG_DEVICE_INFO_HEADER,
-    DISPLAY_DEVICE, DEVMODE, c_uint32,
+    DISPLAYCONFIG_MODE_INFO,
+    DISPLAYCONFIG_PATH_INFO,
+    c_uint32,
 )
 
 _user32 = ctypes.windll.user32

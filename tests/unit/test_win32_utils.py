@@ -1,8 +1,8 @@
 """Tests for win32/utils.py utility functions."""
 from unittest.mock import patch
 
-from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO
 from winrandr.win32 import utils as win32_utils
+from winrandr.win32.structures import DISPLAYCONFIG_MODE_INFO, DISPLAYCONFIG_PATH_INFO
 
 
 def _clear_caches():
@@ -134,7 +134,10 @@ def test_get_friendly_name_via_enum_first_fails():
 def test_query_all_config_success():
     """query_all_config 正常返回配置（覆盖缓存失效后的成功路径）。"""
     _clear_caches()
-    from winrandr.win32.constants import DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, DISPLAYCONFIG_MODE_INFO_TYPE_TARGET
+    from winrandr.win32.constants import (
+        DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
+        DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
+    )
     path_count_val = 1
     mode_count_val = 2
 
@@ -266,7 +269,8 @@ def test_apply_filtered_success():
 
     # 设置有效 mode 索引
     from winrandr.win32.constants import (
-        DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
+        DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
+        DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
     )
     paths[0].sourceInfo.modeInfoIdx = 0
     paths[0].targetInfo.modeInfoIdx = 1

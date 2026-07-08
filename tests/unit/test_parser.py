@@ -1,6 +1,7 @@
 """Parser construction and argument parsing tests."""
 
 import pytest
+
 from winrandr.cli import _check_relative_mutex
 from winrandr.cli.parser import build_parser
 

@@ -1,18 +1,25 @@
 """分辨率和刷新率管理。"""
 
 import logging
-from ctypes import sizeof, byref
+from ctypes import byref, sizeof
 
 from winrandr.models import DisplayMode
-from winrandr.win32.structures import DEVMODE
 from winrandr.win32.bindings import (
-    _ChangeDisplaySettingsEx, _EnumDisplaySettings,
+    _ChangeDisplaySettingsEx,
+    _EnumDisplaySettings,
 )
 from winrandr.win32.constants import (
-    ENUM_REGISTRY_SETTINGS, ENUM_CURRENT_SETTINGS,
-    CDS_UPDATEREGISTRY, DISP_CHANGE_SUCCESSFUL, DISP_CHANGE_MESSAGES,
-    DM_BITSPERPEL, DM_PELSWIDTH, DM_PELSHEIGHT, DM_DISPLAYFREQUENCY,
+    CDS_UPDATEREGISTRY,
+    DISP_CHANGE_MESSAGES,
+    DISP_CHANGE_SUCCESSFUL,
+    DM_BITSPERPEL,
+    DM_DISPLAYFREQUENCY,
+    DM_PELSHEIGHT,
+    DM_PELSWIDTH,
+    ENUM_CURRENT_SETTINGS,
+    ENUM_REGISTRY_SETTINGS,
 )
+from winrandr.win32.structures import DEVMODE
 
 logger = logging.getLogger(__name__)
 

@@ -1,11 +1,11 @@
 """Tests for win32/utils.py filter_valid_paths and apply_filtered."""
 
-from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO
 from winrandr.win32.constants import (
-    DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
     DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
     DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
+    DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
 )
+from winrandr.win32.structures import DISPLAYCONFIG_MODE_INFO, DISPLAYCONFIG_PATH_INFO
 from winrandr.win32.utils import filter_valid_paths
 
 

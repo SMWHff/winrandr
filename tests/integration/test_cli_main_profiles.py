@@ -1,9 +1,11 @@
 """Tests for main() CLI entry point — profile operations."""
 
-import pytest
 from unittest.mock import patch
-from winrandr.models import DisplayInfo, DisplayMode
+
+import pytest
+
 from winrandr.cli import main as cli_main
+from winrandr.models import DisplayInfo, DisplayMode
 
 
 def _fake_display(name="DISPLAY1", connected=True, **kw):

@@ -1,11 +1,17 @@
 """测试数据模型与常量。"""
 
 from dataclasses import asdict
+
 from winrandr.models import DisplayInfo, DisplayMode
 from winrandr.win32.constants import (
-    ROTATION_MAP, ROTATION_NAMES, ROTATION_FROM_NAME, ROTATION_DEGREES,
+    CDS_UPDATEREGISTRY,
+    DISP_CHANGE_SUCCESSFUL,
     DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
-    CDS_UPDATEREGISTRY, DISP_CHANGE_SUCCESSFUL, ENUM_CURRENT_SETTINGS,
+    ENUM_CURRENT_SETTINGS,
+    ROTATION_DEGREES,
+    ROTATION_FROM_NAME,
+    ROTATION_MAP,
+    ROTATION_NAMES,
 )
 
 
