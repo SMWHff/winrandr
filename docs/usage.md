@@ -146,16 +146,16 @@ winrandr --output DISPLAY1 --off
 
 **PowerShell：**
 ```powershell
-. ./scripts/completions.ps1
+. ./scripts/completions/completions.ps1
 # 或永久生效：
 Add-Content $PROFILE "`n. 'C:\path\to\winrandr\scripts\completions.ps1'"
 ```
 
 **Bash / Zsh（WSL / Cygwin / Git Bash）：**
 ```bash
-source scripts/completions.bash
+source scripts/completions/completions.bash
 # 永久生效：
-echo "source '$(pwd)/scripts/completions.bash'" >> ~/.bashrc
+echo "source '$(pwd)/scripts/completions/completions.bash'" >> ~/.bashrc
 ```
 
 支持参数名和显示器名的 Tab 补全，显示器名从工具实际输出动态获取。
@@ -271,7 +271,7 @@ winrandr --identify --output DISPLAY1             # 闪 3 次白屏识别显示�
 ## 构建 exe
 
 ```bash
-bash scripts/build.sh
+bash scripts/build/build.sh
 ```
 
 依赖 `uv`，首次构建自动下载 zig 编译器。

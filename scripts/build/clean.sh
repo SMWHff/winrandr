@@ -1,5 +1,5 @@
 #!/bin/bash
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 set -e
 
 echo "==> 清理 Nuitka 构建缓存..."

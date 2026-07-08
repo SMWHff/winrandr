@@ -200,22 +200,22 @@ DISPLAY2 disconnected
 
 ```powershell
 # PowerShell 临时加载
-. ./scripts/completions.ps1
+. ./scripts/completions/completions.ps1
 # 永久生效
 Add-Content $PROFILE "`n. 'C:\path\to\winrandr\scripts\completions.ps1'"
 ```
 
 ```bash
 # Bash / Zsh（WSL / Cygwin / Git Bash）
-source scripts/completions.bash
+source scripts/completions/completions.bash
 # 永久生效：追加到 ~/.bashrc 或 ~/.zshrc
-echo "source '$(pwd)/scripts/completions.bash'" >> ~/.bashrc
+echo "source '$(pwd)/scripts/completions/completions.bash'" >> ~/.bashrc
 ```
 
 ## 从源码构建
 
 ```bash
-bash scripts/build.sh
+bash scripts/build/build.sh
 # exe 输出到 dist/winrandr.exe
 ```
 
@@ -224,8 +224,8 @@ bash scripts/build.sh
 ## 测试
 
 ```bash
-bash scripts/test.sh        # 集成测试（lint + pytest + 覆盖率）
-bash scripts/lint.sh        # Lint 检查
+bash scripts/dev/test.sh        # 集成测试（lint + pytest + 覆盖率）
+bash scripts/dev/lint.sh        # Lint 检查
 uv run pytest tests/ -v     # 单元测试（395 项，100% 覆盖率）
 ```
 

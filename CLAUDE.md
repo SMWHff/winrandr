@@ -9,22 +9,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 uv sync --dev
 
 # 运行（开发模式）
-bash scripts/run.sh
-bash scripts/run.sh --output DISPLAY1 --mode 1920x1080 --rate 60
+bash scripts/dev/run.sh
+bash scripts/dev/run.sh --output DISPLAY1 --mode 1920x1080 --rate 60
 
 # Lint 检查
-bash scripts/lint.sh
+bash scripts/dev/lint.sh
 
 # 运行测试
-bash scripts/test.sh                    # 集成测试（导入检查 + pytest + 覆盖率）
+bash scripts/dev/test.sh                    # 集成测试（导入检查 + pytest + 覆盖率）
 uv run pytest tests/test_cli.py -v      # 单个测试文件
 uv run pytest tests/test_cli.py::test_parser_basic -v  # 单个测试
 
 # 构建单文件 exe（输出到 dist/winrandr.exe）
-bash scripts/build.sh
+bash scripts/build/build.sh
 
 # 构建 exe（清除 Nuitka 缓存后重建，变更包结构时必须）
-uv run nuitka --clean-cache=all && rm -rf dist/* && bash scripts/build.sh
+uv run nuitka --clean-cache=all && rm -rf dist/* && bash scripts/build/build.sh
 ```
 
 **注意：** 变更包结构（新增/删除/移动 .py 文件）后，必须清除 Nuitka 缓存再构建，否则 exe 中可能包含旧代码。
@@ -89,13 +89,18 @@ tests/                    测试（395 项，100% 覆盖率）
     └── test_models.py        数据模型 + 常量
 
 scripts/
-├── build.sh              构建 exe（Nuitka，入口 winrandr 包）
-├── test.sh               集成测试脚本（导入 + lint + pytest + 覆盖率）
-├── lint.sh               Lint 检查（ruff + 导入验证）
-├── run.sh                uv run -m winrandr 快捷脚本
-├── completions.ps1       PowerShell Tab 补全
-├── completions.bash      Bash/Zsh Tab 补全（WSL/Cygwin）
-└── clean.sh              清理构建缓存和 __pycache__
+├── WinRandr.psm1         PowerShell 模块（7 个 cmdlet）
+├── dev/
+│   ├── run.sh            uv run -m winrandr 快捷脚本
+│   ├── lint.sh           Lint 检查（ruff + 导入验证）
+│   ├── test.sh           集成测试脚本（导入 + lint + pytest + 覆盖率）
+│   └── setup.sh          一键初始化（check uv, sync, verify）
+├── build/
+│   ├── build.sh          构建 exe（Nuitka，入口 winrandr 包）
+│   └── clean.sh          清理构建缓存和 __pycache__
+└── completions/
+    ├── completions.ps1   PowerShell Tab 补全
+    └── completions.bash  Bash/Zsh Tab 补全（WSL/Cygwin）
 
 .github/
 ├── workflows/

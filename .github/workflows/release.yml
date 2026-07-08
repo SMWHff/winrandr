@@ -20,11 +20,11 @@ jobs:
         run: uv sync --dev
 
       - name: Build exe
-        run: bash scripts/build.sh
+        run: bash scripts/build/build.sh
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/winrandr.exe
           body: |
-            使用 `bash scripts/setup.sh` 初始化，详见 README。
+            使用 `bash scripts/dev/setup.sh` 初始化，详见 README。

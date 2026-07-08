@@ -37,13 +37,13 @@ jobs:
       - name: Verify shell completions (bash)
         shell: bash
         run: |
-          bash -n scripts/completions.bash
+          bash -n scripts/completions/completions.bash
           echo "Bash completion syntax OK"
 
       - name: Verify shell completions (PowerShell)
         shell: pwsh
         run: |
           $errors = $null
-          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content scripts/completions.ps1 -Raw), [ref]$errors)
+          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content scripts/completions/completions.ps1 -Raw), [ref]$errors)
           if ($errors) { throw "PowerShell syntax errors found" }
           Write-Host "PowerShell completion syntax OK"

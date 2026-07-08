@@ -1,5 +1,5 @@
 #!/bin/bash
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 set -e
 
 PY_MAJOR=$(uv run python -c "import sys; print(sys.version_info.major)")

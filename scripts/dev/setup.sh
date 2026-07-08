@@ -1,5 +1,5 @@
 #!/bin/bash
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 set -e
 
 echo "==> 检查 uv..."
@@ -16,8 +16,8 @@ uv run python -m winrandr --version
 
 echo ""
 echo "==> 安装完成！使用方式："
-echo "  bash scripts/run.sh              # 运行 winrandr"
-echo "  bash scripts/test.sh             # 运行测试"
-echo "  bash scripts/build.sh            # 构建 exe"
-echo "  bash scripts/lint.sh             # Lint 检查"
-echo "  bash scripts/clean.sh            # 清理缓存"
+echo "  bash scripts/dev/run.sh              # 运行 winrandr"
+echo "  bash scripts/dev/test.sh             # 运行测试"
+echo "  bash scripts/build/build.sh          # 构建 exe"
+echo "  bash scripts/dev/lint.sh             # Lint 检查"
+echo "  bash scripts/build/clean.sh          # 清理缓存"

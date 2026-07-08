@@ -13,8 +13,8 @@
 
 ## 测试
 
-- [ ] `bash scripts/test.sh` 全部通过
-- [ ] `bash scripts/lint.sh` 全部通过
+- [ ] `bash scripts/dev/test.sh` 全部通过
+- [ ] `bash scripts/dev/lint.sh` 全部通过
 - [ ] 新增测试覆盖了变更代码
 
 ## 检查清单
