@@ -210,13 +210,21 @@ def main():
     if args.listproviders:
         providers = list_providers()
         if not providers: print("未检测到 GPU 适配器。")
+        elif args.json:
+            import json
+            print(json.dumps(providers, indent=2, ensure_ascii=False))
         else:
             print("Providers:")
             for i, p in enumerate(providers): print(f"  Provider {i}: {p['string']} ({p['name']})")
         return
     if args.listmonitors:
         displays = list_displays()
-        print(format_monitor_list(displays) if displays else "未检测到显示器。")
+        if not displays: print("未检测到显示器。"); return
+        if args.json:
+            import json; from dataclasses import asdict
+            print(json.dumps([asdict(d) for d in displays if d.connected], indent=2, ensure_ascii=False))
+        else:
+            print(format_monitor_list(displays))
         return
 
     # 查询模式
