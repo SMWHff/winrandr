@@ -1,6 +1,48 @@
 # Changelog
 
-## 0.5.0 (2026-07-08)
+## 0.7.0 (2026-07-09)
+
+### 架构重构
+
+- `tests/unit/` 目录拆分（9→2 文件）：CLI 测试移入 `cli/`，formatter 测试移入 `formatter/`，
+  配置存档测试移入 `profiles/`
+- `tests/integration/` 目录拆分（9→4 文件）：5 个 CLI 入口测试移入 `cli/` 子目录
+- 消除 `profiles.py` 和 `cli/__init__.py` 中的局部导入（晦涩性坏味道）
+- 消除 `cli/handlers.py` 中的冗余局部导入
+
+### 新增
+
+- PowerShell 模块 cmdlet 从 7 个扩展到 14 个：`Set-WinRandrRotation`、`Set-WinRandrOff`、
+  `Set-WinRandrAuto`、`Set-WinRandrGamma`、`Set-WinRandrRelative`、`Get-WinRandrProfile`、
+  `Remove-WinRandrProfile`；统一错误处理（退出码检查）
+- GitHub Issue 模板：Bug 报告 + 功能请求
+
+### CI/构建
+
+- test.yml + release.yml 添加 uv 缓存步骤（基于 uv.lock 哈希）
+- 覆盖率失败阈值从 80% 提升至 95%（CI + pyproject.toml）
+- 添加 `[tool.coverage.report] fail_under = 95` 本地默认
+
+### Bug 修复
+
+- 修复 `test_profiles_extra.py` 未关闭文件句柄导致的 `ResourceWarning`
+
+### 文档
+
+- CLAUDE.md 更新测试目录架构描述
+- CHANGELOG 补充 0.6.0 及 0.7.0 变更
+
+## 0.6.0 (2026-07-08)
+
+### 架构重构
+
+- `winrandr/cli/handlers.py`（309 行）拆分为 `handlers.py`（203 行）+ `common.py`（111 行）
+- `winrandr/__init__.py`（113→65 行）：消除 `as X as X` 冗余重导出模式
+- 新增 5 个测试文件维持 ≤300 行约束
+
+### 测试
+
+- 395 项，全模块 100% 分支覆盖率（1371 语句）
 
 ### Breaking Changes
 

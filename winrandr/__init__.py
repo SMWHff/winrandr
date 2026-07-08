@@ -1,6 +1,6 @@
 """winrandr — Windows xrandr-like display configuration tool."""
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 __all__ = [
     "ROTATION_FROM_NAME",
