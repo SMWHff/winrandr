@@ -72,20 +72,19 @@ def save_profile(name: str) -> bool:
         print("错误: 未检测到活动显示器，无法存档", file=sys.stderr)
         return False
 
-    configs = []
-    for d in displays:
-        configs.append(
-            {
-                "name": d.name,
-                "x": d.position_x,
-                "y": d.position_y,
-                "width": d.width,
-                "height": d.height,
-                "refresh_rate": d.refresh_rate,
-                "rotation": d.rotation,
-                "is_primary": d.is_primary,
-            }
-        )
+    configs = [
+        {
+            "name": d.name,
+            "x": d.position_x,
+            "y": d.position_y,
+            "width": d.width,
+            "height": d.height,
+            "refresh_rate": d.refresh_rate,
+            "rotation": d.rotation,
+            "is_primary": d.is_primary,
+        }
+        for d in displays
+    ]
 
     data = _load_all()
     data[name] = {
