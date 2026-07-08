@@ -148,13 +148,11 @@ def _handle_mode(args, dn):
 
 def _handle_pos(args, dn):
     p = args.pos.strip().lower()
-    # xrandr 兼容：+1920+0 → 1920+0 → 按 + 拆分 → ["1920", "0"]
     if "x" not in p:
         p = p.lstrip("+")
         if "+" in p:
             xs = p.split("+")
-            if len(xs) == 2 and xs[0].lstrip("-").isdigit() and xs[1].lstrip("-").isdigit():
-                p = f"{xs[0]}x{xs[1]}"
+            if len(xs) == 2 and xs[0].lstrip("-").isdigit() and xs[1].lstrip("-").isdigit(): p = f"{xs[0]}x{xs[1]}"
     p = p.lstrip("+").split("x")
     if len(p) != 2: _fail("--pos 格式必须为 XxY（如 1920x0、+1920x0）")
     try: x, y = int(p[0]), int(p[1])
@@ -198,18 +196,20 @@ def _handle_gamma(args, dn):
     if not args.dry_run and not set_gamma(dn, r, g, b): _fail("设置伽马校正失败", ["某些驱动或远程桌面环境不支持伽马校正", "使用 --verbose 查看详细日志"])
     _msg(args, f"已将 {args.output} 伽马设为 {r}:{g}:{b}")
 
-def _handle_listmodes(args):
+def _handle_listmodes(args, as_json=False):
     displays = list_displays()
     if not displays: print("未检测到显示器。"); return
     if args.output:
         dn = _normalize_name(args.output)
         displays = [d for d in displays if d.name == dn]
         if not displays: _fail(f"未找到显示器: {args.output}", [_list_available_displays()])
+    for d in displays: d.modes = enumerate_modes(d.name, d.width, d.height, d.refresh_rate)
+    if as_json:
+        import json; from dataclasses import asdict
+        print(json.dumps([asdict(d) for d in displays], indent=2, ensure_ascii=False)); return
     for d in displays:
-        sn = d.name.replace("\\\\.\\", "")
-        print(f"{sn}:")
-        lines = []
-        _fmt_modes(lines, enumerate_modes(d.name, d.width, d.height, d.refresh_rate))
+        sn = d.name.replace("\\\\.\\", ""); print(f"{sn}:")
+        lines = []; _fmt_modes(lines, d.modes)
         for l in lines: print(l)
         print()
 
@@ -252,7 +252,7 @@ def main():
         return
 
     # --listmodes
-    if args.listmodes: _handle_listmodes(args); return
+    if args.listmodes: _handle_listmodes(args, args.json); return
 
     # 查询模式
     if not _is_mod_op(args):

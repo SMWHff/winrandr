@@ -169,6 +169,18 @@ def test_parser_reflect_xy_flags():
     assert args.x and args.y
 
 
+def test_parser_listmodes_json():
+    p = _build_parser()
+    args = p.parse_args(["--listmodes", "--json"])
+    assert args.listmodes and args.json
+
+
+def test_parser_listmodes_with_output():
+    p = _build_parser()
+    args = p.parse_args(["--listmodes", "-o", "DISPLAY1"])
+    assert args.listmodes and args.output == "DISPLAY1"
+
+
 def test_parser_prop_with_output():
     p = _build_parser()
     args = p.parse_args(["-o", "DISPLAY1", "--prop"])
