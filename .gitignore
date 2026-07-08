@@ -9,5 +9,6 @@ logs/
 .pytest_cache/
 nuitka-crash-report.xml
 *.egg-info/
+htmlcov/
 .coverage
 .coverage.*
