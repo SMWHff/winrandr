@@ -138,3 +138,19 @@ def test_check_relative_mutex_none():
     """无相对定位参数不报错。"""
     ns = _ns()
     _check_relative_mutex(ns)  # should not raise
+
+
+@pytest.mark.parametrize("attr,val", [
+    ("left_of", "DISPLAY2"), ("right_of", "DISPLAY2"),
+    ("above", "DISPLAY2"), ("below", "DISPLAY2"), ("same_as", "DISPLAY2"),
+])
+def test_check_relative_mutex_each(attr, val):
+    """每个单相对定位参数单独使用不报错。"""
+    _check_relative_mutex(_ns(**{attr: val}))
+
+
+def test_mod_op_attrs_consistency():
+    """_MOD_OP_ATTRS 中每个属性在默认 Namespace 中为 None/False。"""
+    ns = _ns()
+    for attr in _MOD_OP_ATTRS:
+        assert not getattr(ns, attr, None), f"{attr} 应默认为空"
