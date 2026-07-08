@@ -1,41 +1,37 @@
-"""CLI 入口：argparse 解析 + xrandr 风格输出格式化。"""
-import argparse, sys, os, logging
+"""CLI 入口：argparse 解析 + 主流程编排。"""
+import argparse
+import logging
+import sys
 
 from winrandr import __version__
-from winrandr.api import (
-    list_displays, set_resolution, set_preferred_resolution,
-    set_position, set_position_relative, set_rotation,
-    set_primary, set_off, set_brightness, set_gamma, set_reflect,
-    set_noprimary, set_auto, list_providers, get_display_props, enumerate_modes,
+from winrandr.api import list_displays, get_display_props, list_providers, set_noprimary
+from winrandr.formatter import format_displays, format_monitor_list
+from winrandr.cli_handlers import (
+    _setup_logging, _normalize_name, _fail, _msg, _list_available_displays,
+    _MOD_OP_ATTRS, _is_mod_op, _apply_aliases, _check_relative_mutex,
+    _handle_auto, _handle_mode, _handle_pos, _handle_rotate,
+    _handle_primary, _handle_preferred, _handle_off,
+    _handle_brightness, _handle_reflect, _handle_gamma,
+    _handle_relative, _handle_listmodes, _handle_identify,
 )
-from winrandr.win32.constants import ROTATION_FROM_NAME
-from winrandr.formatter import format_displays, format_monitor_list, _fmt_modes
 
 
-def _setup_logging():
-    log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
-    os.makedirs(log_dir, exist_ok=True)
-    log_path = os.path.join(log_dir, "winrandr.log")
-    logging.basicConfig(level=logging.WARNING, format="%(asctime)s [%(levelname)s] %(message)s",
-                        handlers=[logging.FileHandler(log_path, encoding="utf-8"), logging.StreamHandler(sys.stderr)])
-
-
-def _normalize_name(name: str) -> str:
-    n = name.strip().upper()
-    prefix = "\\\\.\\"
-    if n.startswith(prefix): return n
-    if n.startswith("DISPLAY"): return prefix + n
-    return prefix + "DISPLAY" + n if n.isdigit() else name
-
-
-def _build_parser():
-    p = argparse.ArgumentParser(description="winrandr — 类 xrandr 的 Windows 显示配置工具", epilog="""示例:
+def _build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        description="winrandr — 类 xrandr 的 Windows 显示配置工具",
+        epilog="""示例：
   winrandr                             列出所有显示器
   winrandr --output DISPLAY1 --mode 1920x1080 --rate 60
   winrandr --output DISPLAY1 --pos 0x0 --rotate normal
   winrandr --output DISPLAY1 --primary --off
   winrandr --output DISPLAY1 --left-of DISPLAY2
-        """)
+  winrandr --brightness 0.7             批量调暗所有显示器
+  winrandr --gamma 1.0:0.9:0.8          批量设置伽马
+  winrandr --identify --output DISPLAY1
+  winrandr --save-profile docked        保存当前配置为存档
+  winrandr --load-profile docked        恢复存档配置
+  winrandr --list-profiles              列出所有存档""",
+    )
     p.add_argument("--version", action="version", version=f"winrandr {__version__}")
 
     g_query = p.add_argument_group("查询选项")
@@ -76,157 +72,27 @@ def _build_parser():
     g_img.add_argument("-x", action="store_true", help=argparse.SUPPRESS)
     g_img.add_argument("-y", action="store_true", help=argparse.SUPPRESS)
 
+    g_profile = p.add_argument_group("存档管理（保存/恢复显示器布局）")
+    g_profile.add_argument("--save-profile", metavar="NAME", help="保存当前配置为存档")
+    g_profile.add_argument("--load-profile", metavar="NAME", help="加载指定存档并恢复显示器布局")
+    g_profile.add_argument("--list-profiles", action="store_true", help="列出所有已保存的存档")
+    g_profile.add_argument("--delete-profile", metavar="NAME", help="删除指定存档")
+
     g_misc = p.add_argument_group("其他")
     g_misc.add_argument("--dry-run", "--dryrun", action="store_true", help="模拟操作，不实际更改配置")
     g_misc.add_argument("--verbose", "-v", action="store_true", help="详细日志输出（调试用）")
+    g_misc.add_argument("--identify", action="store_true", help="通过闪烁屏幕识别显示器")
     g_misc.add_argument("--screen", help=argparse.SUPPRESS)
     g_misc.add_argument("--nograb", action="store_true", help=argparse.SUPPRESS)
     return p
 
 
-def _fail(msg: str, suggestions: list[str] | None = None):
-    print(f"错误: {msg}", file=sys.stderr)
-    if suggestions:
-        print("建议:", file=sys.stderr)
-        for s in suggestions: print(f"  - {s}", file=sys.stderr)
-    sys.exit(1)
-
-
-def _list_available_displays() -> str:
-    names = {d.name.replace("\\\\.\\", "") for d in list_displays()}
-    for p in list_providers():
-        sn = p["name"].replace("\\\\.\\", "")
-        if sn.startswith("DISPLAY"): names.add(sn)
-    def _sk(n): return (0, int(n.replace("DISPLAY", ""))) if n.replace("DISPLAY", "").isdigit() else (1, n)
-    sorted_n = sorted(names, key=_sk)
-    return "可用显示器: " + ", ".join(sorted_n) if sorted_n else "未检测到显示器"
-
-
-def _apply_aliases(args):
-    if args.size and not args.mode: args.mode = args.size
-    if args.orientation and not args.rotate: args.rotate = {"0": "normal", "1": "normal", "2": "inverted", "3": "left"}.get(args.orientation, args.orientation)
-    if args.listactivemonitors: args.listmonitors = True
-    if args.reflect == "normal": args.reflect = None
-    if args.x and args.y: args.reflect = "xy"
-    elif args.x: args.reflect = "x"
-    elif args.y: args.reflect = "y"
-
-
-_MOD_OP_ATTRS = ["mode", "pos", "rotate", "primary", "preferred", "off",
-                  "brightness", "reflect", "gamma",
-                  "left_of", "right_of", "above", "below", "same_as",
-                  "auto", "noprimary"]
-
-
-def _is_mod_op(args) -> bool:
-    return any(getattr(args, a, None) for a in _MOD_OP_ATTRS)
-
-
-def _check_relative_mutex(args):
-    rel_args = [args.left_of, args.right_of, args.above, args.below, args.same_as]
-    if sum(1 for r in rel_args if r) > 1:
-        _fail("相对定位参数是互斥的，只能使用 --left-of / --right-of / --above / --below / --same-as 之一")
-
-
-# --- 操作处理函数 ---
-
-def _msg(args, text: str):
-    """dry-run 模式下加 (Dry-Run) 前缀。"""
-    print(f"(Dry-Run) {text}" if args.dry_run else text)
-
-def _handle_auto(args, dn):
-    if not args.dry_run and not set_auto(dn): _fail("自动配置失败", ["请确认显示器连接正常", "尝试使用 --mode 手动指定分辨率"])
-    _msg(args, f"已启用 {args.output}（首选分辨率）")
-
-def _handle_mode(args, dn):
-    if "x" not in args.mode.lower(): _fail("--mode 格式必须为 WIDTHxHEIGHT（如 1920x1080）")
-    try: w, h = map(int, args.mode.lower().split("x"))
-    except ValueError: _fail("--mode 格式错误", ["正确格式: WIDTHxHEIGHT（如 1920x1080）"])
-    rate = args.rate or 0
-    if not args.dry_run and not set_resolution(dn, w, h, rate): _fail("设置分辨率失败", ["请确认显示器支持该分辨率", "运行 'winrandr --listmodes' 查看可用模式", "使用 --verbose 查看详细日志"])
-    _msg(args, f"已设置 {args.output} 为 {w}x{h}{' @ ' + str(rate) + 'Hz' if rate else ''}")
-
-def _handle_pos(args, dn):
-    p = args.pos.strip().lower()
-    if "x" not in p:
-        p = p.lstrip("+")
-        if "+" in p:
-            xs = p.split("+")
-            if len(xs) == 2 and xs[0].lstrip("-").isdigit() and xs[1].lstrip("-").isdigit(): p = f"{xs[0]}x{xs[1]}"
-    p = p.lstrip("+").split("x")
-    if len(p) != 2: _fail("--pos 格式必须为 XxY（如 1920x0、+1920x0）")
-    try: x, y = int(p[0]), int(p[1])
-    except ValueError: _fail("--pos 格式错误", ["正确格式: XxY（如 1920x0 或 +1920+0）"])
-    if not args.dry_run and not set_position(dn, x, y): _fail("设置位置失败", ["某些虚拟显示器驱动（如向日葵）可能干扰此功能", "使用 --verbose 查看详细日志"])
-    _msg(args, f"已将 {args.output} 移动到 ({x}, {y})")
-
-def _handle_rotate(args, dn):
-    deg = ROTATION_FROM_NAME[args.rotate]
-    if not args.dry_run and not set_rotation(dn, deg): _fail("设置旋转失败", ["某些虚拟显示器驱动（如向日葵）可能干扰此功能", "请确认显示器支持旋转", "使用 --verbose 查看详细日志"])
-    _msg(args, f"已将 {args.output} 旋转为 {args.rotate} ({deg}°)")
-
-def _handle_primary(args, dn):
-    if not args.dry_run and not set_primary(dn): _fail("设置主显示器失败", ["某些虚拟显示器驱动（如向日葵）可能干扰此功能", "使用 --verbose 查看详细日志"])
-    _msg(args, f"已将 {args.output} 设为主显示器")
-
-def _handle_preferred(args, dn):
-    if not args.dry_run and not set_preferred_resolution(dn): _fail("设置首选分辨率失败", ["该显示器可能未注册首选分辨率", "使用 --mode 手动指定分辨率", "使用 --verbose 查看详细日志"])
-    _msg(args, f"已将 {args.output} 设为首选分辨率")
-
-def _handle_off(args, dn):
-    if not args.dry_run and not set_off(dn): _fail("关闭显示器失败", ["某些虚拟显示器驱动（如向日葵）可能干扰此功能", "请确认指定了正确的显示器名称", "使用 --verbose 查看详细日志"])
-    _msg(args, f"已关闭 {args.output}")
-
-def _handle_brightness(args, dn):
-    if not 0.1 <= args.brightness <= 2.0: print(f"警告: 亮度值 {args.brightness} 超出建议范围 0.1-2.0", file=sys.stderr)
-    if not args.dry_run and not set_brightness(dn, args.brightness): _fail("设置亮度失败", ["某些驱动或远程桌面环境不支持亮度调节", "使用 --verbose 查看详细日志"])
-    _msg(args, f"已将 {args.output} 亮度设为 {args.brightness}")
-
-def _handle_reflect(args, dn):
-    if args.reflect in ("x", "y"): _fail(f"单轴镜像翻转（-{args.reflect}）在 Windows 上无标准 API 支持")
-    if not args.dry_run and not set_reflect(dn, args.reflect): _fail("设置镜像翻转失败", ["请使用 --reflect xy（等同于旋转 180°）", "单轴反射在 Windows 上无标准 API 支持"])
-    _msg(args, f"已将 {args.output} 设为 {args.reflect} 镜像翻转")
-
-def _handle_gamma(args, dn):
-    try: vals = [float(x) for x in args.gamma.split(":")]
-    except ValueError: _fail("--gamma 格式错误，使用 R:G:B 或单一值")
-    if len(vals) == 1: r = g = b = vals[0]
-    elif len(vals) == 3: r, g, b = vals
-    else: _fail("--gamma 格式错误，使用 R:G:B 或单一值")
-    if not args.dry_run and not set_gamma(dn, r, g, b): _fail("设置伽马校正失败", ["某些驱动或远程桌面环境不支持伽马校正", "使用 --verbose 查看详细日志"])
-    _msg(args, f"已将 {args.output} 伽马设为 {r}:{g}:{b}")
-
-def _handle_listmodes(args, as_json=False):
-    displays = list_displays()
-    if not displays: print("未检测到显示器。"); return
-    if args.output:
-        dn = _normalize_name(args.output)
-        displays = [d for d in displays if d.name == dn]
-        if not displays: _fail(f"未找到显示器: {args.output}", [_list_available_displays()])
-    for d in displays: d.modes = enumerate_modes(d.name, d.width, d.height, d.refresh_rate)
-    if as_json:
-        import json; from dataclasses import asdict
-        print(json.dumps([asdict(d) for d in displays], indent=2, ensure_ascii=False)); return
-    for d in displays:
-        sn = d.name.replace("\\\\.\\", ""); print(f"{sn}:")
-        lines = []; _fmt_modes(lines, d.modes)
-        for l in lines: print(l)
-        print()
-
-
-def _handle_relative(args, dn):
-    for attr, rel in (("left_of", "left-of"), ("right_of", "right-of"), ("above", "above"), ("below", "below"), ("same_as", "same-as")):
-        ref = getattr(args, attr, None)
-        if ref:
-            if not args.dry_run and not set_position_relative(dn, ref, rel): _fail("相对定位失败", ["检查显示器名称是否正确", "某些虚拟显示器驱动（如向日葵）可能干扰此功能", "使用 --verbose 查看详细日志"])
-            _msg(args, f"已将 {args.output} 放在 {ref} 的 {rel}"); return
-
-
-def main():
+def main() -> None:
     parser = _build_parser()
     args = parser.parse_args()
     _setup_logging()
-    if args.verbose: logging.getLogger().setLevel(logging.DEBUG)
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     _apply_aliases(args)
     _check_relative_mutex(args)
@@ -234,66 +100,163 @@ def main():
     # --listproviders / --listmonitors
     if args.listproviders:
         providers = list_providers()
-        if not providers: print("未检测到 GPU 适配器。")
-        elif args.json:
-            import json; print(json.dumps(providers, indent=2, ensure_ascii=False))
+        if args.json:
+            import json
+            print(json.dumps(providers, indent=2, ensure_ascii=False))
+        elif not providers:
+            print("未检测到 GPU 适配器。")
         else:
             print("Providers:")
-            for i, p in enumerate(providers): print(f"  Provider {i}: {p['string']} ({p['name']})")
+            for i, p in enumerate(providers):
+                print(f"  Provider {i}: {p['string']} ({p['name']})")
         return
     if args.listmonitors:
         displays = list_displays()
-        if not displays: print("未检测到显示器。"); return
         if args.json:
-            import json; from dataclasses import asdict
+            from dataclasses import asdict
+            import json
             print(json.dumps([asdict(d) for d in displays if d.connected], indent=2, ensure_ascii=False))
+        elif not displays:
+            print("未检测到显示器。")
         else:
             print(format_monitor_list(displays))
         return
 
     # --listmodes
-    if args.listmodes: _handle_listmodes(args, args.json); return
+    if args.listmodes:
+        _handle_listmodes(args, args.json)
+        return
+
+    # 存档管理（不依赖 --output）
+    if args.list_profiles:
+        from winrandr.profiles import list_profiles
+        profiles = list_profiles()
+        if args.json:
+            import json
+            print(json.dumps(profiles, indent=2, ensure_ascii=False))
+        elif not profiles:
+            print("暂无存档。")
+        else:
+            print("已保存的存档：")
+            for p in profiles:
+                dt = p["created"][:10] if p["created"] else "未知"
+                displays = ", ".join(p.get("displays", [])) if p.get("displays") else ""
+                line = f"  {p['name']:20s}  {dt}  {p['display_count']} 台"
+                if displays:
+                    line += f"  [{displays}]"
+                print(line)
+        return
+    if args.save_profile is not None:
+        if not args.save_profile:
+            _fail("存档名不能为空")
+        if args.dry_run:
+            from winrandr.profiles import preview_save
+            for line in preview_save():
+                print(line)
+        else:
+            from winrandr.profiles import save_profile
+            if not save_profile(args.save_profile):
+                _fail(f"保存存档失败: {args.save_profile}")
+            print(f"已保存配置为「{args.save_profile}」")
+        return
+    if args.load_profile is not None:
+        if not args.load_profile:
+            _fail("存档名不能为空")
+        from winrandr.profiles import load_profile, diff_profile
+        if args.dry_run:
+            for line in diff_profile(args.load_profile):
+                print(line)
+        elif not load_profile(args.load_profile):
+            _fail(f"加载存档失败: {args.load_profile}")
+        else:
+            print(f"已加载配置「{args.load_profile}」")
+        return
+    if args.delete_profile is not None:
+        if not args.delete_profile:
+            _fail("存档名不能为空")
+        from winrandr.profiles import delete_profile
+        if not delete_profile(args.delete_profile):
+            _fail(f"删除存档失败: {args.delete_profile}")
+        print(f"已删除存档「{args.delete_profile}」")
+        return
 
     # 查询模式
     if not _is_mod_op(args):
         displays = list_displays()
-        if not displays: print("未检测到活动显示器。"); sys.exit(1)
+        if not displays:
+            print("未检测到活动显示器。")
+            sys.exit(1)
         if args.output:
             device_name = _normalize_name(args.output)
             displays = [d for d in displays if d.name == device_name]
-            if not displays: _fail(f"未找到显示器: {args.output}", [_list_available_displays()])
+            if not displays:
+                _fail(f"未找到显示器: {args.output}", [_list_available_displays()])
         if args.prop:
-            for d in displays: d.properties = get_display_props(d.name)
+            for d in displays:
+                d.properties = get_display_props(d.name)
         if args.json:
-            from dataclasses import asdict; import json
+            from dataclasses import asdict
+            import json
             print(json.dumps([asdict(d) for d in displays], indent=2, ensure_ascii=False))
-        else: print(format_displays(displays))
+        else:
+            print(format_displays(displays))
         return
 
     # --noprimary 单独使用
     if args.noprimary:
-        if not args.dry_run and not set_noprimary(): _fail("清除主显示器标记失败", ["某些虚拟显示器驱动（如向日葵）可能干扰此功能", "使用 --verbose 查看详细日志"])
+        if not args.dry_run and not set_noprimary():
+            _fail("清除主显示器标记失败", ["某些虚拟显示器驱动（如向日葵）可能干扰此功能", "使用 --verbose 查看详细日志"])
         _msg(args, "已清除所有显示器的主显示器标记")
         other_ops = [a for a in _MOD_OP_ATTRS if a != "noprimary"]
-        if not any(getattr(args, a, None) for a in other_ops): return
+        if not any(getattr(args, a, None) for a in other_ops):
+            return
 
-    if not args.output: parser.error("--output 为必填参数")
+    # 全局操作：亮度/伽马可不带 --output，应用到所有已连接显示器
+    _GLOBAL_ONLY_ATTRS = frozenset({"brightness", "gamma"})
+    if not args.output:
+        mod_attrs = {a for a in _MOD_OP_ATTRS if getattr(args, a, None)}
+        if mod_attrs and mod_attrs.issubset(_GLOBAL_ONLY_ATTRS):
+            targets = [d for d in list_displays() if d.connected]
+            if not targets:
+                _fail("没有已连接的显示器")
+            for t in targets:
+                short = t.name.replace("\\\\.\\", "")
+                args.output = short
+                if args.brightness is not None:
+                    _handle_brightness(args, t.name)
+                if args.gamma is not None:
+                    _handle_gamma(args, t.name)
+            return
+        parser.error("--output 为必填参数")
     device_name = _normalize_name(args.output)
     if not any(d.name == device_name for d in list_displays()):
         _fail(f"未找到显示器: {args.output}", [_list_available_displays()])
 
     # 调度各操作
-    if args.auto: _handle_auto(args, device_name)
-    if args.mode: _handle_mode(args, device_name)
-    if args.pos: _handle_pos(args, device_name)
-    if args.rotate: _handle_rotate(args, device_name)
-    if args.primary: _handle_primary(args, device_name)
-    if args.preferred: _handle_preferred(args, device_name)
-    if args.off: _handle_off(args, device_name)
-    if args.brightness is not None: _handle_brightness(args, device_name)
-    if args.reflect: _handle_reflect(args, device_name)
-    if args.gamma: _handle_gamma(args, device_name)
+    if args.auto:
+        _handle_auto(args, device_name)
+    if args.mode:
+        _handle_mode(args, device_name)
+    if args.pos:
+        _handle_pos(args, device_name)
+    if args.rotate:
+        _handle_rotate(args, device_name)
+    if args.primary:
+        _handle_primary(args, device_name)
+    if args.preferred:
+        _handle_preferred(args, device_name)
+    if args.off:
+        _handle_off(args, device_name)
+    if args.brightness is not None:
+        _handle_brightness(args, device_name)
+    if args.reflect:
+        _handle_reflect(args, device_name)
+    if args.gamma:
+        _handle_gamma(args, device_name)
+    if args.identify:
+        _handle_identify(args, device_name)
     _handle_relative(args, device_name)
 
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()

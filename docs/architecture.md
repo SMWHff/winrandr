@@ -12,6 +12,7 @@ winrandr/                 核心包
 ├── edid.py               EDID 读取与解析（注册表 + 二进制解析）
 ├── formatter.py          xrandr 风格格式化输出
 ├── models.py             数据模型 (DisplayInfo, DisplayMode)
+├── profiles.py           配置存档管理（保存/恢复显示器布局）
 ├── features/
 │   ├── gamma.py          伽马校正与亮度
 │   ├── layout.py         位置/旋转/主屏/关闭
@@ -34,22 +35,24 @@ winrandr/                 核心包
 - 日志初始化
 
 ### winrandr/api.py
-- `list_displays` / `set_resolution` / `set_preferred_resolution`（查询与分辨率）
-- 16 个公开函数（其中 12 个委托给 `features/` 子模块）
-- `set_position_relative`（相对定位，使用 `list_displays` 计算坐标）
-- `set_auto`（启用显示器并设首选分辨率）
-- `get_display_props` / `list_providers`（扩展属性与 GPU 列表）
-- 模式枚举（`enumerate_modes`）
+- 业务逻辑 API 层：定义 `list_displays` / `set_position_relative` / `get_display_props` / `list_providers`
+- 从 `features/` 子模块重导出 13 个函数（分辨率/布局/伽马操作）
+- 从 `features/gamma.py` 重导出 `identify_display`（闪屏识别）
 
 ### winrandr/formatter.py
 - `format_displays`：xrandr 风格显示器信息输出
 - `format_monitor_list`：--listmonitors 格式输出
-- 旋转信息格式化（`_rotation_part`）
+- 旋转信息格式化（`short_name` / `_rotation_part`）
 
 ### winrandr/edid.py
 - EDID 二进制数据解析（`_parse_edid` / `_find_edid_desc` / `_find_edid_name` / `_find_edid_serial`）
 - 注册表 EDID 读取（`get_edid` 通过 `EnumDisplayDevices` + `winreg`）
 - 纯逻辑模块，无硬件依赖
+
+### winrandr/profiles.py
+- 配置存档管理（`save_profile` / `load_profile` / `list_profiles` / `delete_profile` / `diff_profile` / `preview_save`）
+- 存储为 `%APPDATA%/winrandr/profiles.json`
+- 加载时按顺序调用 `set_auto` → `set_position` → `set_rotation` → `set_resolution` → `set_primary`
 
 ### winrandr/features/gamma.py
 - `set_brightness`：单值伽马倍增调亮度
@@ -61,6 +64,7 @@ winrandr/                 核心包
 - `set_primary`：设为主显示器
 - `set_off`：关闭显示器
 - `set_reflect`：镜像翻转（仅 xy = 旋转 180°）
+- `identify_display`：闪屏识别
 
 ### winrandr/win32/bindings.py
 - 所有 Win32 API 的 ctypes 函数绑定
@@ -96,8 +100,18 @@ winrandr/                 核心包
 | `set_brightness(name, val)` | 设备名、亮度值 | 伽马校正调亮度 |
 | `set_gamma(name, r, g, b)` | 设备名、红/绿/蓝乘数 | 伽马校正（三通道独立） |
 | `set_reflect(name, axis)` | 设备名、轴 (x/y/xy) | 镜像翻转（仅 xy） |
+| `set_noprimary()` | 无 | 清除所有显示器的主显示器标记 |
+| `enumerate_modes(name, w, h, rr)` | 设备名、宽、高、刷新率 | 枚举所有可用分辨率模式 |
 | `get_edid(name)` | 设备名 | 从注册表读取显示器 EDID 并解析为 dict（含 mfg/product/name/serial/date/version/size/desc） |
 | `get_display_props(name)` | 设备名 | 获取扩展属性（设备 ID、状态标志、适配器路径、EDID 信息） |
+| `list_providers()` | 无 | 列出 GPU 适配器 |
+| `identify_display(name)` | 设备名 | 闪屏识别显示器 |
+| `save_profile(name)` | 存档名 | 保存当前配置为命名存档 |
+| `load_profile(name)` | 存档名 | 恢复指定存档的显示器布局 |
+| `list_profiles()` | 无 | 列出所有已保存存档 |
+| `delete_profile(name)` | 存档名 | 删除指定存档 |
+| `diff_profile(name)` | 存档名 | 对比当前配置与存档差异，返回可读变更列表 |
+| `preview_save()` | 无 | 预览当前配置摘要（供 `--save-profile --dry-run` 使用） |
 
 ## Win32 API 映射
 
@@ -136,7 +150,7 @@ QueryDisplayConfig(获取当前配置，带缓存)
 - **去重策略**：Windows 可能为同一显示器返回多条 QDC 路径，按 GDI 设备名去重
 - **回退机制**：QDC mode 数组可能不含当前 target mode 的刷新率，此时用 `EnumDisplaySettings` 获取
 - **虚拟驱动屏蔽**：OrayIddDriver 可能破坏 `SetDisplayConfig`，通过 `apply_filtered()` 过滤无效路径
-- **QDC 缓存**：`query_active_config()` 缓存结果避免多次查询同一配置，`apply_config()` 成功后自动失效缓存
+- **QDC 缓存**：`query_active_config()` 与 `query_all_config()` 均缓存结果避免多次查询，`apply_config()` 成功后自动失效两个缓存
 
 ## EDID 解析
 

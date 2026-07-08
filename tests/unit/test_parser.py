@@ -102,7 +102,6 @@ def test_parser_gamma():
 
 def test_parser_relative_mutual_exclusion():
     """相对定位互斥校验由 _check_relative_mutex 在 main() 中执行。"""
-    import argparse
     p = _build_parser()
     args = p.parse_args(["-o", "DISPLAY1", "--left-of", "DISPLAY2", "--right-of", "DISPLAY3"])
     with pytest.raises(SystemExit):
@@ -207,3 +206,15 @@ def test_parser_screen_nograb():
     p = _build_parser()
     args = p.parse_args(["--screen", "0", "--nograb"])
     assert args.screen == "0" and args.nograb
+
+
+def test_parser_help_output(capsys):
+    """--help 输出应包含关键选项。"""
+    p = _build_parser()
+    with pytest.raises(SystemExit):
+        p.parse_args(["--help"])
+    out, _ = capsys.readouterr()
+    for key in ("--mode", "--output", "--rotate", "--primary", "--off",
+                "--brightness", "--gamma", "--reflect", "--json",
+                "--listmodes", "--dry-run"):
+        assert key in out

@@ -5,5 +5,7 @@ dist/
 __pycache__/
 logs/
 .venv/
+.ruff_cache/
+.pytest_cache/
 nuitka-crash-report.xml
 *.egg-info/

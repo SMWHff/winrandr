@@ -209,4 +209,4 @@ HDMI-1 disconnected
 | `--fb` | — | ❌ 无标准 Win32 API |
 | `--panning` | — | ❌ 无标准 Win32 API |
 | `--newmode / --addmode` | — | ❌ 无标准 Win32 API |
-| `--listproviders` | — | ❌ 无标准 Win32 API |
+| `--listproviders` | `--listproviders` | ✅ |

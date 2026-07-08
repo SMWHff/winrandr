@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass, field
 
+__all__ = ["DisplayInfo", "DisplayMode"]
+
 
 @dataclass
 class DisplayMode:
@@ -29,4 +31,4 @@ class DisplayInfo:
     width_mm: int = 0
     height_mm: int = 0
     modes: list[DisplayMode] = field(default_factory=list)
-    properties: dict | None = None
+    properties: dict[str, str] | None = None

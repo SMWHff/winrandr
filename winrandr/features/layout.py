@@ -12,11 +12,16 @@ from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO
 logger = logging.getLogger(__name__)
 
 
+def _require_active_config():
+    """获取活动 QDC 配置，SDC 不可用时返回 None。"""
+    if not set_display_config_available():
+        return None
+    return query_active_config()
+
+
 def set_position(device_name: str, x: int, y: int) -> bool:
     """设置显示器的桌面位置。"""
-    if not set_display_config_available():
-        return False
-    config = query_active_config()
+    config = _require_active_config()
     if config is None:
         return False
     paths, modes, path_count, mode_count = config
@@ -43,9 +48,7 @@ def set_rotation(device_name: str, degrees: int) -> bool:
         logger.error("无效旋转角度: %d（必须为 0、90、180 或 270）", degrees)
         return False
 
-    if not set_display_config_available():
-        return False
-    config = query_active_config()
+    config = _require_active_config()
     if config is None:
         return False
     paths, modes, path_count, mode_count = config
@@ -62,9 +65,7 @@ def set_rotation(device_name: str, degrees: int) -> bool:
 
 def set_primary(device_name: str) -> bool:
     """将指定显示器设为主显示器。"""
-    if not set_display_config_available():
-        return False
-    config = query_active_config()
+    config = _require_active_config()
     if config is None:
         return False
     paths, modes, path_count, mode_count = config
@@ -87,9 +88,7 @@ def set_primary(device_name: str) -> bool:
 
 def set_off(device_name: str) -> bool:
     """关闭（禁用）指定显示器。"""
-    if not set_display_config_available():
-        return False
-    config = query_active_config()
+    config = _require_active_config()
     if config is None:
         return False
     paths, modes, path_count, mode_count = config
@@ -114,9 +113,7 @@ def set_off(device_name: str) -> bool:
 
 def set_noprimary() -> bool:
     """清除所有显示器的主显示器标记。"""
-    if not set_display_config_available():
-        return False
-    config = query_active_config()
+    config = _require_active_config()
     if config is None:
         return False
     paths, modes, path_count, mode_count = config

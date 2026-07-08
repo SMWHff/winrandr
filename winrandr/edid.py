@@ -41,7 +41,7 @@ def _find_edid_serial(data: bytes) -> str | None:
     return _find_edid_desc(data, 0xFF)
 
 
-def _parse_edid(data: bytes) -> dict:
+def _parse_edid(data: bytes) -> dict[str, str]:
     """解析 EDID 二进制数据，返回可读的显示器信息。"""
     if len(data) < 128 or data[0:8] != b'\x00\xff\xff\xff\xff\xff\xff\x00':
         return {"edid_raw": data[:128].hex().upper()[:64] + "..." if data else "unavailable"}
@@ -70,7 +70,7 @@ def _parse_edid(data: bytes) -> dict:
     return info
 
 
-def get_edid(gdi_name: str) -> dict:
+def get_edid(gdi_name: str) -> dict[str, str]:
     """从注册表读取指定显示器的 EDID 并解析。"""
     dd = DISPLAY_DEVICE()
     dd.cb = sizeof(DISPLAY_DEVICE)

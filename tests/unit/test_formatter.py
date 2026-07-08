@@ -1,13 +1,12 @@
 """测试格式化输出。"""
 
-from winrandr.formatter import _short_name, _fmt_modes, _fmt_props, _rotation_part, format_displays, format_monitor_list
+from winrandr.formatter import short_name, fmt_modes, _fmt_props, _rotation_part, format_displays, format_monitor_list
 from winrandr.models import DisplayInfo, DisplayMode
 
 
-def test_short_name():
-    assert _short_name(r"\\.\DISPLAY1") == "DISPLAY1"
-    assert _short_name("DISPLAY1") == "DISPLAY1"
-
+def testshort_name():
+    assert short_name(r"\\.\DISPLAY1") == "DISPLAY1"
+    assert short_name("DISPLAY1") == "DISPLAY1"
 
 def test_format_displays_basic():
     displays = [
@@ -30,9 +29,7 @@ def test_format_displays_basic():
     assert "1920x1080" in out
     assert "primary" in out
     assert "60.00*+" in out
-    # 旋转列表
     assert "normal left inverted right" in out
-
 
 def test_format_displays_disconnected():
     displays = [
@@ -48,7 +45,6 @@ def test_format_displays_disconnected():
     assert "DISPLAY1" in out
     assert "disconnected" in out
     assert "minimum 320 x 200" in out
-
 
 def test_format_displays_with_props():
     displays = [
@@ -69,9 +65,7 @@ def test_format_displays_with_props():
     assert "device id: MONITOR\\TEST123" in out
     assert "state flags: attached, primary" in out
 
-
 def test_format_displays_non_primary():
-    """非主显示器不带 primary 关键字。"""
     displays = [
         DisplayInfo(
             name=r"\\.\DISPLAY1", friendly_name="", connected=True,
@@ -84,11 +78,9 @@ def test_format_displays_non_primary():
     ]
     out = format_displays(displays)
     assert "DISPLAY1 connected 1920x1080+0+0" in out
-    assert "primary" not in out.split("\n")[2]  # display line doesn't have primary
-
+    assert "primary" not in out.split("\n")[2]
 
 def test_format_displays_rotated_left():
-    """旋转 90°（left）时输出宽高交换并显示旋转名称。"""
     displays = [
         DisplayInfo(
             name=r"\\.\DISPLAY1", friendly_name="", connected=True,
@@ -99,12 +91,10 @@ def test_format_displays_rotated_left():
         ),
     ]
     out = format_displays(displays)
-    assert "1080x1920" in out.split("\n")[2]  # 宽高已交换
+    assert "1080x1920" in out.split("\n")[2]
     assert "left (normal left inverted right)" in out
 
-
 def test_format_displays_rotated_inverted():
-    """旋转 180°（inverted）宽高不变但有旋转名。"""
     displays = [
         DisplayInfo(
             name=r"\\.\DISPLAY1", friendly_name="", connected=True,
@@ -115,12 +105,10 @@ def test_format_displays_rotated_inverted():
         ),
     ]
     out = format_displays(displays)
-    assert "1920x1080" in out.split("\n")[2]  # 180° 不交换
+    assert "1920x1080" in out.split("\n")[2]
     assert "inverted (normal left inverted right)" in out
 
-
 def test_format_displays_normal_rotation_list():
-    """确认 normal 旋转显示完整的可选方向列表。"""
     displays = [
         DisplayInfo(
             name=r"\\.\DISPLAY1", friendly_name="", connected=True,
@@ -135,9 +123,7 @@ def test_format_displays_normal_rotation_list():
     assert "(normal left inverted right)" in line
     assert "normal left inverted right" in line
 
-
 def test_format_modes_alignment():
-    """分辨率列表中各列对齐。"""
     displays = [
         DisplayInfo(
             name=r"\\.\DISPLAY1", friendly_name="", connected=True,
@@ -155,16 +141,12 @@ def test_format_modes_alignment():
     ]
     out = format_displays(displays)
     lines = out.split("\n")
-    # 模式行格式：   1024x768       60.00
-    mode_lines = [l for l in lines if "x" in l and l.strip().startswith("1")]
+    mode_lines = [line for line in lines if "x" in line and line.strip().startswith("1")]
     for ml in mode_lines:
-        # 验证分辨率与刷新率之间有足够的间距（≥3 空格）
         parts = ml.strip().split()
         assert len(parts) >= 2
 
-
 def test_format_monitor_list_basic():
-    """--listmonitors 格式：编号、标记、分辨率/物理尺寸、位置。"""
     displays = [
         DisplayInfo(
             name=r"\\.\DISPLAY1", friendly_name="", connected=True,
@@ -180,30 +162,24 @@ def test_format_monitor_list_basic():
     out = format_monitor_list(displays)
     assert "Monitors: 2" in out
     assert "DISPLAY1" in out and "DISPLAY2" in out
-    assert "+*DISPLAY1" in out  # primary flag
-    assert "+ DISPLAY2" in out   # non-primary flag
-
+    assert "+*DISPLAY1" in out
+    assert "+ DISPLAY2" in out
 
 def test_fmt_modes_preferred_flag():
-    """Preferred flag (+) always on preferred mode, independent of current."""
     modes = [
         DisplayMode(1920, 1080, 60.0, is_current=True, is_preferred=False),
         DisplayMode(1920, 1080, 59.94, is_current=False, is_preferred=True),
     ]
     lines = []
-    _fmt_modes(lines, modes)
+    fmt_modes(lines, modes)
     out = "\n".join(lines)
     assert "60.00*" in out
     assert "59.94+" in out
 
-
 def test_format_displays_empty():
-    """空显示器列表返回空字符串。"""
     assert format_displays([]) == ""
 
-
 def test_format_displays_all_disconnected():
-    """全部断连的显示器。"""
     displays = [
         DisplayInfo(name=r"\\.\DISPLAY1", friendly_name="", connected=False,
                     width=0, height=0, refresh_rate=0.0, position_x=0, position_y=0,
@@ -217,9 +193,7 @@ def test_format_displays_all_disconnected():
         assert d in out
     assert "no active displays" in out
 
-
 def test_format_displays_rotated_270():
-    """旋转 270° 时宽高交换，显示 inverted 名。"""
     displays = [DisplayInfo(
         name=r"\\.\DISPLAY1", friendly_name="", connected=True,
         width=1920, height=1080, refresh_rate=60.0,
@@ -228,11 +202,9 @@ def test_format_displays_rotated_270():
         modes=[DisplayMode(1920, 1080, 60.0, is_current=True, is_preferred=True)],
     )]
     out = format_displays(displays)
-    assert "1080x1920" in out  # 宽高已交换
-
+    assert "1080x1920" in out
 
 def test_format_displays_multiple_connected():
-    """多显示器布局：累积 current 计算正确。"""
     displays = [
         DisplayInfo(name=r"\\.\DISPLAY1", friendly_name="", connected=True,
                     width=1920, height=1080, position_x=0, position_y=0,
@@ -244,13 +216,11 @@ def test_format_displays_multiple_connected():
                     modes=[DisplayMode(1280, 1024, 60.0)]),
     ]
     out = format_displays(displays)
-    assert "current 3200 x 1080" in out  # 1920+1280 = 3200
-    assert "primary" in out.split("\n")[2]  # DISPLAY1 line
+    assert "current 3200 x 1080" in out
+    assert "primary" in out.split("\n")[2]
     assert "DISPLAY2" in out
 
-
 def test_format_displays_no_modes():
-    """连接但无模式列表的显示器。"""
     displays = [DisplayInfo(
         name=r"\\.\DISPLAY1", friendly_name="", connected=True,
         width=1920, height=1080, refresh_rate=60.0,
@@ -261,9 +231,7 @@ def test_format_displays_no_modes():
     assert "DISPLAY1 connected" in out
     assert "1920x1080" in out
 
-
 def test_format_monitor_list_no_connected():
-    """--listmonitors 当无连接显示器时输出 0。"""
     displays = [DisplayInfo(
         name=r"\\.\DISPLAY1", friendly_name="", connected=False,
         width=0, height=0, refresh_rate=0.0, position_x=0, position_y=0,
@@ -272,29 +240,47 @@ def test_format_monitor_list_no_connected():
     out = format_monitor_list(displays)
     assert "Monitors: 0" in out
 
-
 def test_fmt_props_empty():
-    """空属性字典不产生输出行。"""
     lines = []
     _fmt_props(lines, {})
     assert lines == []
 
+def test_fmt_props_with_data():
+    lines = []
+    _fmt_props(lines, {"device_id": "TEST\\123", "state_flags": "attached"})
+    assert "device id: TEST\\123" in lines[0]
+    assert "state flags: attached" in lines[1]
+
+def test_fmt_modes_empty():
+    lines = ["preexisting"]
+    fmt_modes(lines, [])
+    assert len(lines) == 1
+
+def test_format_displays_single_disconnected():
+    d = DisplayInfo(name=r"\\.\DISPLAY1", friendly_name="", connected=False,
+                    width=0, height=0, refresh_rate=0.0, position_x=0, position_y=0,
+                    is_primary=False, rotation=0, width_mm=0, height_mm=0, modes=[])
+    out = format_displays([d])
+    assert "Screen 0:" in out
+    assert "no active displays" in out
+    assert "DISPLAY1 disconnected" in out
 
 def test_rotation_part_normal():
     assert "(normal left inverted right)" in _rotation_part(0)
-
 
 def test_rotation_part_left():
     result = _rotation_part(90)
     assert "left" in result
     assert "(normal left inverted right)" in result
 
-
 def test_rotation_part_inverted():
     result = _rotation_part(180)
     assert "inverted" in result
 
-
 def test_rotation_part_right():
     result = _rotation_part(270)
     assert "right" in result
+
+def test_rotation_part_unknown():
+    result = _rotation_part(45)
+    assert "(normal left inverted right)" in result

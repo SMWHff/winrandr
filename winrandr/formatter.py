@@ -2,21 +2,22 @@
 
 from collections import defaultdict
 
+from winrandr.models import DisplayInfo, DisplayMode
 from winrandr.win32.constants import ROTATION_NAMES, ROTATION_MAP
 
 _ALL_ROTATIONS = "normal left inverted right"
 
 
-def _short_name(name: str) -> str:
+def short_name(name: str) -> str:
     return name.replace("\\\\.\\", "").strip()
 
 
-def format_monitor_list(displays) -> str:
+def format_monitor_list(displays: list[DisplayInfo]) -> str:
     """--listmonitors 格式：带编号的显示器列表。"""
     connected = [d for d in displays if d.connected]
     lines = [f"Monitors: {len(connected)}"]
     for i, d in enumerate(connected):
-        name = _short_name(d.name)
+        name = short_name(d.name)
         pri = "*" if d.is_primary else " "
         mm_w = d.width_mm or 0
         mm_h = d.height_mm or 0
@@ -35,7 +36,7 @@ def _rotation_part(degrees: int) -> str:
     return f"{name} ({_ALL_ROTATIONS})"
 
 
-def format_displays(displays) -> str:
+def format_displays(displays: list[DisplayInfo]) -> str:
     """以标准 xrandr 风格输出显示器信息。"""
     lines = []
 
@@ -54,7 +55,7 @@ def format_displays(displays) -> str:
         lines.append("")
 
     for d in displays:
-        name = _short_name(d.name)
+        name = short_name(d.name)
         status = "connected" if d.connected else "disconnected"
 
         if d.connected:
@@ -74,7 +75,7 @@ def format_displays(displays) -> str:
                 f"+{d.position_x}+{d.position_y} {_rotation_part(d.rotation)}{mm}"
             )
             if d.modes:
-                _fmt_modes(lines, d.modes)
+                fmt_modes(lines, d.modes)
         else:
             lines.append(f"{name} {status}")
 
@@ -86,14 +87,14 @@ def format_displays(displays) -> str:
     return "\n".join(lines)
 
 
-def _fmt_props(lines: list[str], props: dict) -> None:
+def _fmt_props(lines: list[str], props: dict[str, str]) -> None:
     """格式化扩展属性。"""
     for key, val in props.items():
         label = key.replace("_", " ")
         lines.append(f"\t{label}: {val}")
 
 
-def _fmt_modes(lines: list[str], modes) -> None:
+def fmt_modes(lines: list[str], modes: list[DisplayMode]) -> None:
     """格式化模式列表，类似 xrandr 的显示方式。"""
     grouped = defaultdict(list)
     for m in modes:

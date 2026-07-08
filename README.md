@@ -10,6 +10,7 @@
 [![License](https://img.shields.io/github/license/SMWHff/winrandr?color=green)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13-blue)](pyproject.toml)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)]()
+[![CI](https://github.com/SMWHff/winrandr/actions/workflows/test.yml/badge.svg)](https://github.com/SMWHff/winrandr/actions/workflows/test.yml)
 
 </div>
 
@@ -23,6 +24,9 @@ winrandr
 
 # 设置分辨率和刷新率
 winrandr --output DISPLAY1 --mode 1920x1080 --rate 60
+
+# 查看所有可用分辨率
+winrandr --listmodes
 
 # 双屏布局
 winrandr --output DISPLAY1 --pos 0x0 --primary
@@ -108,8 +112,8 @@ DISPLAY2 disconnected
 
 | 命令 | 说明 |
 |------|------|
-| `--brightness VAL` | 亮度（0.1–2.0，1.0 正常） |
-| `--gamma R:G:B` | 伽马校正（如 1.0:0.9:0.8） |
+| `--brightness VAL` | 亮度（0.1–2.0，1.0 正常），不带 `--output` 时批量设置所有显示器 |
+| `--gamma R:G:B` | 伽马校正（如 1.0:0.9:0.8），不带 `--output` 时批量设置所有显示器 |
 | `--reflect xy` | 镜像翻转（等同旋转 180°） |
 
 ### 其他
@@ -127,6 +131,18 @@ DISPLAY2 disconnected
 | `--listactivemonitors` | 带编号的显示器列表（同 --listmonitors） |
 | `--json` | JSON 格式输出（脚本解析用） |
 | `--noprimary` | 清除所有显示器的主显示器标记 |
+| `--identify` | 闪屏识别显示器（需配合 --output） |
+
+### 配置存档
+
+| 命令 | 说明 |
+|------|------|
+| `--save-profile NAME` | 保存当前布局为存档 |
+| `--load-profile NAME` | 恢复存档布局 |
+| `--load-profile NAME --dry-run` | 预览存档变更，不实际执行 |
+| `--list-profiles` | 列出所有存档 |
+| `--list-profiles --json` | JSON 格式输出存档列表 |
+| `--delete-profile NAME` | 删除存档 |
 
 ## 与 xrandr 对照
 
@@ -185,9 +201,15 @@ DISPLAY2 disconnected
 ```powershell
 # PowerShell 临时加载
 . ./scripts/completions.ps1
-
 # 永久生效
 Add-Content $PROFILE "`n. 'C:\path\to\winrandr\scripts\completions.ps1'"
+```
+
+```bash
+# Bash / Zsh（WSL / Cygwin / Git Bash）
+source scripts/completions.bash
+# 永久生效：追加到 ~/.bashrc 或 ~/.zshrc
+echo "source '$(pwd)/scripts/completions.bash'" >> ~/.bashrc
 ```
 
 ## 从源码构建
@@ -202,8 +224,9 @@ bash scripts/build.sh
 ## 测试
 
 ```bash
-bash scripts/test.sh        # 集成测试
-uv run pytest tests/ -v     # 单元测试（141 项）
+bash scripts/test.sh        # 集成测试（lint + pytest + 覆盖率）
+bash scripts/lint.sh        # Lint 检查
+uv run pytest tests/ -v     # 单元测试（393 项，100% 覆盖率）
 ```
 
 ## 技术栈
@@ -220,7 +243,8 @@ main.py                   简易入口，转发到 winrandr.cli（主要用 `pyt
 winrandr/                 核心包
 ├── __init__.py           版本号 + 公开 API 重导出
 ├── __main__.py           python -m winrandr 入口
-├── cli.py                CLI 层：argparse 解析 + 主流程编排
+├── cli.py                CLI 层：argparse 解析 + 主流程编排（≤300 行）
+├── cli_handlers.py       CLI 操作处理函数 + 通用工具 + 类型注解
 ├── api.py                公开 API：list_displays / set_resolution 等
 ├── edid.py               EDID 读取与解析
 ├── formatter.py          xrandr 风格格式化输出

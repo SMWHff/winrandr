@@ -1,0 +1,437 @@
+"""Tests for profile save/load/list/delete."""
+
+import json
+import os
+import sys
+import tempfile
+from unittest.mock import patch
+
+import pytest
+
+from winrandr.profiles import (
+    _load_all, _save_all, save_profile, load_profile,
+    list_profiles, delete_profile, get_profile_names, diff_profile,
+    preview_save,
+)
+from winrandr.models import DisplayInfo, DisplayMode
+
+
+def _make_display(name="DISPLAY1", x=0, y=0, w=1920, h=1080, rr=60.0,
+                  rot=0, primary=True) -> DisplayInfo:
+    dm = DisplayMode(w, h, rr, True, True)
+    return DisplayInfo(
+        name=rf"\\.\{name}", friendly_name="Test",
+        connected=True, width=w, height=h,
+        refresh_rate=rr, position_x=x, position_y=y,
+        is_primary=primary, rotation=rot,
+        width_mm=527, height_mm=296, modes=[dm],
+    )
+
+
+@pytest.fixture
+def temp_profiles(monkeypatch):
+    """用临时文件覆盖配置路径。"""
+    tmp = tempfile.mkdtemp()
+    pf = os.path.join(tmp, "profiles.json")
+    monkeypatch.setattr("winrandr.profiles._PROFILES_FILE", pf)
+    return pf
+
+
+# ---- _load_all / _save_all ----
+
+def test_load_all_missing(temp_profiles):
+    assert _load_all() == {}
+
+
+def test_load_all_corrupt(temp_profiles):
+    with open(temp_profiles, "w") as f:
+        f.write("not json")
+    assert _load_all() == {}
+
+
+def test_save_and_load(temp_profiles):
+    data = {"test": {"displays": [], "created": "now", "version": "0.3.5"}}
+    assert _save_all(data) is True
+    assert _load_all() == data
+
+
+# ---- save_profile ----
+
+def test_save_profile_no_displays(temp_profiles):
+    with patch("winrandr.profiles.list_displays", return_value=[]):
+        assert save_profile("test") is False
+
+
+def test_save_profile_success(temp_profiles):
+    d1 = _make_display("DISPLAY1", 0, 0, 1920, 1080, 60.0, 0, True)
+    d2 = _make_display("DISPLAY2", 1920, 0, 1440, 900, 59.0, 0, False)
+    with patch("winrandr.profiles.list_displays", return_value=[d1, d2]):
+        assert save_profile("docked") is True
+
+    data = _load_all()
+    assert "docked" in data
+    assert len(data["docked"]["displays"]) == 2
+    assert data["docked"]["displays"][0]["name"] == r"\\.\DISPLAY1"
+    assert data["docked"]["displays"][0]["width"] == 1920
+
+
+def test_save_profile_overwrite(temp_profiles):
+    d1 = _make_display("DISPLAY1")
+    with patch("winrandr.profiles.list_displays", return_value=[d1]):
+        assert save_profile("cfg") is True
+    with patch("winrandr.profiles.list_displays", return_value=[d1]):
+        assert save_profile("cfg") is True
+
+
+# ---- load_profile ----
+
+def test_load_profile_not_found(temp_profiles):
+    assert load_profile("nonexistent") is False
+
+
+def test_load_profile_success(temp_profiles):
+    config = {
+        "myprofile": {
+            "displays": [{
+                "name": r"\\.\DISPLAY1", "x": 0, "y": 0,
+                "width": 1920, "height": 1080, "refresh_rate": 60.0,
+                "rotation": 0, "is_primary": True,
+            }],
+            "created": "2026-01-01T00:00:00",
+            "version": "0.3.5",
+        }
+    }
+    _save_all(config)
+
+    with patch("winrandr.profiles.list_displays",
+               return_value=[_make_display()]):
+        with patch("winrandr.api.set_auto", return_value=True) as sa:
+            with patch("winrandr.api.set_position", return_value=True):
+                with patch("winrandr.api.set_rotation", return_value=True):
+                    with patch("winrandr.api.set_resolution", return_value=True):
+                        with patch("winrandr.api.set_primary", return_value=True) as sp:
+                            assert load_profile("myprofile") is True
+                            sa.assert_called_once_with(r"\\.\DISPLAY1")
+                            sp.assert_called_once_with(r"\\.\DISPLAY1")
+
+
+def test_load_profile_display_not_connected(temp_profiles):
+    config = {
+        "p": {
+            "displays": [{
+                "name": r"\\.\DISPLAY3", "x": 0, "y": 0,
+                "width": 1920, "height": 1080, "refresh_rate": 60.0,
+                "rotation": 0, "is_primary": True,
+            }],
+            "created": "2026-01-01T00:00:00",
+            "version": "0.3.5",
+        }
+    }
+    _save_all(config)
+
+    with patch("winrandr.profiles.list_displays",
+               return_value=[_make_display("DISPLAY1")]):
+        with patch("winrandr.api.set_auto") as sa:
+            assert load_profile("p") is True  # skips DISPLAY3, no error
+            sa.assert_not_called()
+
+
+def test_load_profile_set_auto_fails(temp_profiles):
+    config = {
+        "p": {
+            "displays": [{
+                "name": r"\\.\DISPLAY1", "x": 0, "y": 0,
+                "width": 1920, "height": 1080, "refresh_rate": 60.0,
+                "rotation": 0, "is_primary": False,
+            }],
+            "created": "2026-01-01T00:00:00",
+            "version": "0.3.5",
+        }
+    }
+    _save_all(config)
+
+    with patch("winrandr.profiles.list_displays",
+               return_value=[_make_display()]):
+        with patch("winrandr.api.set_auto", return_value=False):
+            with patch("winrandr.api.set_position") as sp:
+                assert load_profile("p") is False
+                sp.assert_not_called()
+
+
+# ---- list_profiles / get_profile_names ----
+
+def test_list_profiles_empty(temp_profiles):
+    assert list_profiles() == []
+
+
+def test_list_profiles(temp_profiles):
+    data = {
+        "a": {"displays": [{"name": "D1"}], "created": "2026-01-01", "version": "1"},
+        "b": {"displays": [{"name": "D1"}, {"name": "D2"}], "created": "2026-06-01", "version": "2"},
+    }
+    _save_all(data)
+    result = list_profiles()
+    assert len(result) == 2
+    assert result[0]["name"] == "a"
+    assert result[0]["display_count"] == 1
+    assert result[1]["name"] == "b"
+    assert result[1]["display_count"] == 2
+
+
+def test_list_profiles_with_resolution(temp_profiles):
+    """带分辨率信息的存档应显示 DISPLAY1(1920x1080) 格式。"""
+    _save_all({"p": {
+        "displays": [{"name": r"\\.\DISPLAY1", "width": 1920, "height": 1080},
+                     {"name": r"\\.\DISPLAY2", "width": 1440, "height": 900}],
+        "created": "2026-01-01", "version": "1",
+    }})
+    result = list_profiles()
+    assert len(result[0]["displays"]) == 2
+    assert "DISPLAY1(1920x1080)" in result[0]["displays"]
+    assert "DISPLAY2(1440x900)" in result[0]["displays"]
+
+
+def test_get_profile_names(temp_profiles):
+    _save_all({"x": {}, "y": {}})
+    assert get_profile_names() == ["x", "y"]
+
+
+# ---- delete_profile ----
+
+def test_delete_profile_not_found(temp_profiles):
+    assert delete_profile("nonexistent") is False
+
+
+def test_delete_profile_success(temp_profiles):
+    _save_all({"delme": {"displays": []}})
+    assert delete_profile("delme") is True
+    assert _load_all() == {}
+
+
+# ---- diff_profile ----
+
+def test_diff_profile_not_found(temp_profiles):
+    lines = diff_profile("nonexistent")
+    assert "未找到存档" in lines[0]
+
+
+def test_diff_profile_all_match(temp_profiles):
+    config = {
+        "m": {
+            "displays": [{
+                "name": r"\\.\DISPLAY1", "x": 0, "y": 0,
+                "width": 1920, "height": 1080, "refresh_rate": 60.0,
+                "rotation": 0, "is_primary": True,
+            }],
+            "created": "2026-01-01T00:00:00",
+            "version": "0.3.5",
+        }
+    }
+    _save_all(config)
+    with patch("winrandr.profiles.list_displays",
+               return_value=[_make_display()]):
+        lines = diff_profile("m")
+        assert "无变更" in lines[1]
+
+
+def test_diff_profile_with_changes(temp_profiles):
+    config = {
+        "m": {
+            "displays": [{
+                "name": r"\\.\DISPLAY1", "x": 1920, "y": 0,
+                "width": 2560, "height": 1440, "refresh_rate": 120.0,
+                "rotation": 90, "is_primary": False,
+            }],
+            "created": "2026-01-01T00:00:00",
+            "version": "0.3.5",
+        }
+    }
+    _save_all(config)
+    cur = _make_display("DISPLAY1", 0, 0, 1920, 1080, 60.0, 0, True)
+    with patch("winrandr.profiles.list_displays", return_value=[cur]):
+        lines = diff_profile("m")
+        joined = " ".join(lines)
+        assert "位置" in joined
+        assert "旋转" in joined
+        assert "分辨率" in joined
+
+
+def test_diff_profile_not_connected(temp_profiles):
+    config = {
+        "m": {
+            "displays": [{
+                "name": r"\\.\DISPLAY3", "x": 0, "y": 0,
+                "width": 1920, "height": 1080, "refresh_rate": 60.0,
+                "rotation": 0, "is_primary": False,
+            }],
+            "created": "2026-01-01T00:00:00",
+            "version": "0.3.5",
+        }
+    }
+    _save_all(config)
+    with patch("winrandr.profiles.list_displays",
+               return_value=[_make_display("DISPLAY1")]):
+        lines = diff_profile("m")
+        assert "未连接" in " ".join(lines)
+
+
+# ---- preview_save ----
+
+def test_preview_save_no_displays():
+    with patch("winrandr.profiles.list_displays", return_value=[]):
+        lines = preview_save()
+        assert "未检测到" in lines[0]
+
+
+def test_preview_save_with_displays():
+    d1 = _make_display("DISPLAY1", 0, 0, 1920, 1080, 60.0, 0, True)
+    with patch("winrandr.profiles.list_displays", return_value=[d1]):
+        lines = preview_save()
+        assert "DISPLAY1" in " ".join(lines)
+        assert "1920x1080" in " ".join(lines)
+
+
+def test_preview_save_dry_run_integration():
+    """--save-profile --dry-run 应输出预览而非保存。"""
+    d1 = _make_display("DISPLAY1", 0, 0, 1920, 1080, 60.0, 0, True)
+    with patch("winrandr.profiles.list_displays", return_value=[d1]):
+        with patch("sys.argv", ["winrandr", "--save-profile", "test", "--dry-run"]):
+            from winrandr.cli import main
+            main()
+
+
+# ---- CLI integration ----
+
+def test_list_profiles_json_output(temp_profiles, capsys):
+    """--list-profiles --json 应输出合法 JSON。"""
+    _save_all({"a": {"displays": [{"name": "D1"}], "created": "2026-01-01", "version": "1"}})
+    from winrandr.cli import main
+    sys.argv = ["winrandr", "--list-profiles", "--json"]
+    main()
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+    assert len(data) == 1
+    assert data[0]["name"] == "a"
+
+
+# ---- JSON 序列化完整性 ----
+
+def test_profile_json_roundtrip(temp_profiles):
+    d1 = _make_display("DISPLAY1", 0, 0, 1920, 1080, 60.0, 0, True)
+    with patch("winrandr.profiles.list_displays", return_value=[d1]):
+        save_profile("roundtrip")
+
+    raw = json.load(open(temp_profiles, encoding="utf-8"))
+    assert "roundtrip" in raw
+    entry = raw["roundtrip"]
+    assert entry["displays"][0]["width"] == 1920
+    assert entry["displays"][0]["is_primary"] is True
+
+
+# ---- Coverage for uncovered branches ----
+
+def test_save_all_oserror(temp_profiles):
+    """_save_all 写入失败（OSError）时应返回 False 且不抛异常。"""
+    with patch("builtins.open", side_effect=OSError("disk full")):
+        assert _save_all({"x": {"displays": []}}) is False
+
+
+def test_save_profile_save_all_fails(temp_profiles):
+    """save_profile 中 _save_all 失败时应返回 False。"""
+    d1 = _make_display("DISPLAY1")
+    with patch("winrandr.profiles.list_displays", return_value=[d1]):
+        with patch("winrandr.profiles._save_all", return_value=False):
+            assert save_profile("test") is False
+
+
+def test_delete_profile_save_all_fails(temp_profiles):
+    """delete_profile 中 _save_all 失败时应返回 False。"""
+    _save_all({"delme": {"displays": []}})
+    with patch("winrandr.profiles._save_all", return_value=False):
+        assert delete_profile("delme") is False
+
+
+def test_diff_profile_primary_change(temp_profiles):
+    """diff_profile 检测到 is_primary 变化时应输出「设为主显示器」。"""
+    config = {
+        "p": {
+            "displays": [{
+                "name": r"\\.\DISPLAY1", "x": 0, "y": 0,
+                "width": 1920, "height": 1080, "refresh_rate": 60.0,
+                "rotation": 0, "is_primary": True,
+            }],
+            "created": "2026-01-01T00:00:00",
+            "version": "0.3.6",
+        }
+    }
+    _save_all(config)
+    # current display is NOT primary
+    cur = _make_display("DISPLAY1", 0, 0, 1920, 1080, 60.0, 0, primary=False)
+    with patch("winrandr.profiles.list_displays", return_value=[cur]):
+        lines = diff_profile("p")
+        assert "设为主显示器" in " ".join(lines)
+
+
+def test_load_profile_set_position_fails(temp_profiles):
+    """load_profile 中 set_position 失败时应继续执行后续操作。"""
+    config = {"p": {"displays": [{
+        "name": r"\\.\DISPLAY1", "x": 0, "y": 0,
+        "width": 1920, "height": 1080, "refresh_rate": 60.0,
+        "rotation": 0, "is_primary": False,
+    }], "created": "", "version": ""}}
+    _save_all(config)
+    with patch("winrandr.profiles.list_displays", return_value=[_make_display()]):
+        with patch("winrandr.api.set_auto", return_value=True):
+            with patch("winrandr.api.set_position", return_value=False):
+                with patch("winrandr.api.set_rotation", return_value=True):
+                    with patch("winrandr.api.set_resolution", return_value=True):
+                        assert load_profile("p") is False
+
+
+def test_load_profile_set_rotation_fails(temp_profiles):
+    """load_profile 中 set_rotation 失败时应继续执行后续操作。"""
+    config = {"p": {"displays": [{
+        "name": r"\\.\DISPLAY1", "x": 0, "y": 0,
+        "width": 1920, "height": 1080, "refresh_rate": 60.0,
+        "rotation": 90, "is_primary": False,
+    }], "created": "", "version": ""}}
+    _save_all(config)
+    with patch("winrandr.profiles.list_displays", return_value=[_make_display()]):
+        with patch("winrandr.api.set_auto", return_value=True):
+            with patch("winrandr.api.set_position", return_value=True):
+                with patch("winrandr.api.set_rotation", return_value=False):
+                    with patch("winrandr.api.set_resolution", return_value=True):
+                        assert load_profile("p") is False
+
+
+def test_load_profile_set_resolution_fails(temp_profiles):
+    """load_profile 中 set_resolution 失败时应继续执行后续操作。"""
+    config = {"p": {"displays": [{
+        "name": r"\\.\DISPLAY1", "x": 0, "y": 0,
+        "width": 1920, "height": 1080, "refresh_rate": 60.0,
+        "rotation": 0, "is_primary": False,
+    }], "created": "", "version": ""}}
+    _save_all(config)
+    with patch("winrandr.profiles.list_displays", return_value=[_make_display()]):
+        with patch("winrandr.api.set_auto", return_value=True):
+            with patch("winrandr.api.set_position", return_value=True):
+                with patch("winrandr.api.set_rotation", return_value=True):
+                    with patch("winrandr.api.set_resolution", return_value=False):
+                        assert load_profile("p") is False
+
+
+def test_load_profile_set_primary_fails(temp_profiles):
+    """load_profile 中 set_primary 失败时仍应返回 False。"""
+    config = {"p": {"displays": [{
+        "name": r"\\.\DISPLAY1", "x": 0, "y": 0,
+        "width": 1920, "height": 1080, "refresh_rate": 60.0,
+        "rotation": 0, "is_primary": True,
+    }], "created": "", "version": ""}}
+    _save_all(config)
+    with patch("winrandr.profiles.list_displays", return_value=[_make_display()]):
+        with patch("winrandr.api.set_auto", return_value=True):
+            with patch("winrandr.api.set_position", return_value=True):
+                with patch("winrandr.api.set_rotation", return_value=True):
+                    with patch("winrandr.api.set_resolution", return_value=True):
+                        with patch("winrandr.api.set_primary", return_value=False):
+                            assert load_profile("p") is False

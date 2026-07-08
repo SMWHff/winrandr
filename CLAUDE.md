@@ -12,8 +12,11 @@ uv sync --dev
 bash scripts/run.sh
 bash scripts/run.sh --output DISPLAY1 --mode 1920x1080 --rate 60
 
+# Lint 检查
+bash scripts/lint.sh
+
 # 运行测试
-bash scripts/test.sh                    # 集成测试（导入检查 + pytest）
+bash scripts/test.sh                    # 集成测试（导入检查 + pytest + 覆盖率）
 uv run pytest tests/test_cli.py -v      # 单个测试文件
 uv run pytest tests/test_cli.py::test_parser_basic -v  # 单个测试
 
@@ -33,11 +36,13 @@ main.py                   简易入口，转发到 winrandr.cli（主要用 `pyt
 winrandr/                 核心包
 ├── __init__.py           版本号 + 公开 API 重导出
 ├── __main__.py           python -m winrandr 入口
-├── cli.py                CLI 层：argparse 解析 + 主流程编排
+├── cli.py                CLI 层：argparse 解析 + 主流程编排（≤300 行）
+├── cli_handlers.py       CLI 操作处理函数 + 通用工具 + 类型注解
 ├── api.py                公开 API：list_displays / set_resolution 等
 ├── edid.py               EDID 读取与解析（注册表 + 二进制解析）
 ├── formatter.py          xrandr 风格格式化输出
 ├── models.py             数据模型 (DisplayInfo, DisplayMode)
+├── profiles.py           配置存档管理（保存/恢复显示器布局）
 ├── features/
 │   ├── __init__.py
 │   ├── gamma.py          伽马校正与亮度（SetDeviceGammaRamp）
@@ -50,20 +55,35 @@ winrandr/                 核心包
     ├── bindings.py       Win32 API 函数绑定 (ctypes 声明)
     └── utils.py          内部工具函数 (查询/过滤/应用配置)
 
-tests/                    测试
-├── test_cli.py           CLI 工具函数测试（_fail / _normalize_name）
-├── test_cli_handlers.py  CLI 操作处理函数测试
-├── test_parser.py        CLI 参数解析测试（50+ 项，含 parametrize 合并的布尔标记测试）
-├── test_edid.py          EDID 解析纯逻辑测试（15 项）
-├── test_formatter.py     格式化输出测试
-├── test_constants.py     常量与旋转映射一致性测试
-└── test_models.py        数据模型测试
+tests/                    测试（393 项，100% 覆盖率）
+├── unit/                 单元测试
+│   ├── test_cli.py           CLI 工具函数测试
+│   ├── test_cli_handlers.py  CLI 操作处理函数测试
+│   ├── test_formatter.py     格式化输出测试
+│   ├── test_parser.py        CLI 参数解析测试
+│   └── test_win32_utils.py   Win32 工具函数测试
+├── features/             功能模块测试
+│   ├── test_gamma.py         gamma 校正/亮度
+│   ├── test_layout.py        位置/旋转/主屏/关闭/相对定位
+│   └── test_resolution.py    分辨率/刷新率设置
+└── integration/          集成测试
+    ├── test_api.py           API 函数
+    ├── test_cli_main.py      main() 入口
+    └── test_models.py        数据模型 + EDID + 常量
 
 scripts/
 ├── build.sh              构建 exe（Nuitka，入口 winrandr 包）
-├── test.sh               集成测试脚本
+├── test.sh               集成测试脚本（导入 + lint + pytest + 覆盖率）
+├── lint.sh               Lint 检查（ruff + 导入验证）
 ├── run.sh                uv run -m winrandr 快捷脚本
-└── completions.ps1       PowerShell Tab 补全
+├── completions.ps1       PowerShell Tab 补全
+├── completions.bash      Bash/Zsh Tab 补全（WSL/Cygwin）
+└── clean.sh              清理构建缓存和 __pycache__
+
+.github/
+├── workflows/
+│   └── test.yml           GitHub Actions CI（4 Python 版本矩阵）
+└── PULL_REQUEST_TEMPLATE.md  PR 模板
 ```
 
 ## Win32 API 选型

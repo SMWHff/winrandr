@@ -9,4 +9,7 @@ echo "==> 清理 Python 缓存..."
 find . -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null && echo "  __pycache__ 已清理" || true
 find . -type f -name "*.pyc" -delete 2>/dev/null && echo "  .pyc 已清理" || true
 
+echo "==> 清理测试和工具缓存..."
+rm -rf .pytest_cache .ruff_cache *.egg-info 2>/dev/null && echo "  .pytest_cache / .ruff_cache / *.egg-info 已清理" || true
+
 echo "==> 清理完成"

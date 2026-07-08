@@ -18,8 +18,7 @@ from winrandr.win32.constants import (
 from winrandr.win32.structures import (
     DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO,
     DISPLAYCONFIG_SOURCE_DEVICE_NAME, DISPLAYCONFIG_TARGET_DEVICE_NAME,
-    DISPLAYCONFIG_ADAPTER_NAME, DISPLAYCONFIG_DEVICE_INFO_HEADER,
-    DISPLAY_DEVICE, DEVMODE,
+    DISPLAYCONFIG_ADAPTER_NAME, DISPLAY_DEVICE, DEVMODE,
 )
 from winrandr.win32.bindings import (
     _GetDisplayConfigBufferSizes, _QueryDisplayConfig, _SetDisplayConfig,
@@ -31,11 +30,13 @@ logger = logging.getLogger(__name__)
 
 _SDC_AVAILABLE = None
 _QDC_CACHE = None
+_QDC_ALL_CACHE = None
 
 
-def _invalidate_qdc_cache():
-    global _QDC_CACHE
+def _invalidate_qdc_cache() -> None:
+    global _QDC_CACHE, _QDC_ALL_CACHE
     _QDC_CACHE = None
+    _QDC_ALL_CACHE = None
 
 
 def get_gdi_name(path) -> str:
@@ -71,7 +72,7 @@ def get_monitor_device_path(path) -> str:
     return tname.monitorDevicePath if ret == 0 else ""
 
 
-def query_active_config():
+def query_active_config() -> tuple | None:
     """查询当前活动显示配置（内部缓存，apply_config 成功后自动失效）。"""
     global _QDC_CACHE
     if _QDC_CACHE is not None:
@@ -100,8 +101,11 @@ def query_active_config():
     return _QDC_CACHE
 
 
-def query_all_config():
-    """查询所有显示配置（含已断开的），同上返回格式。"""
+def query_all_config() -> tuple | None:
+    """查询所有显示配置（含已断开的），同上返回格式（内部缓存，apply_config 成功后自动失效）。"""
+    global _QDC_ALL_CACHE
+    if _QDC_ALL_CACHE is not None:
+        return _QDC_ALL_CACHE
     path_count = c_uint32(0)
     mode_count = c_uint32(0)
 
@@ -121,10 +125,11 @@ def query_all_config():
         logger.error("QueryDisplayConfig (all) 失败, 错误码=%d", ret)
         return None
 
-    return paths, modes, path_count.value, mode_count.value
+    _QDC_ALL_CACHE = (paths, modes, path_count.value, mode_count.value)
+    return _QDC_ALL_CACHE
 
 
-def get_screen_size_mm(gdi_name: str):
+def get_screen_size_mm(gdi_name: str) -> tuple[int, int]:
     """获取显示器物理尺寸（mm），通过 GDI CreateDCW + GetDeviceCaps。"""
     if not gdi_name:
         return 0, 0
@@ -156,7 +161,7 @@ def get_friendly_name_via_enum(gdi_name: str) -> str:
     return ""
 
 
-def get_resolution_refresh_via_enum(gdi_name: str):
+def get_resolution_refresh_via_enum(gdi_name: str) -> tuple[int, int, float, int]:
     """使用 EnumDisplaySettings 获取分辨率、刷新率、色深。"""
     dm = DEVMODE()
     dm.dmSize = sizeof(DEVMODE)
@@ -174,7 +179,7 @@ SDC_ERROR_MESSAGES = {
     1610: "显示配置无效（虚拟显示器驱动可能干扰）",
 }
 
-def apply_config(paths, path_count, modes, mode_count, flags=None):
+def apply_config(paths, path_count: int, modes, mode_count: int, flags: int | None = None) -> bool:
     """应用显示配置，成功后自动失效 QDC 缓存。"""
     if flags is None:
         flags = (
@@ -207,7 +212,7 @@ def set_display_config_available() -> bool:
     return _SDC_AVAILABLE
 
 
-def find_path_idx(paths, count, device_name):
+def find_path_idx(paths, count: int, device_name: str) -> int | None:
     """通过 GDI 设备名查找路径在数组中的索引。"""
     for i in range(count):
         gdi_name = get_gdi_name(paths[i])
@@ -216,7 +221,7 @@ def find_path_idx(paths, count, device_name):
     return None
 
 
-def filter_valid_paths(paths, path_count, modes, mode_count):
+def filter_valid_paths(paths, path_count: int, modes, mode_count: int) -> list[int]:
     """过滤出有效路径：mode 索引需指向对应类型的 mode 条目。"""
     valid = []
     for i in range(path_count):
@@ -238,10 +243,11 @@ def filter_valid_paths(paths, path_count, modes, mode_count):
     return valid
 
 
-def apply_filtered(paths, path_count, modes, mode_count, flags=None):
+def apply_filtered(paths, path_count: int, modes, mode_count: int, flags: int | None = None) -> bool:
     """过滤出有效路径后应用配置（避免虚拟显示器幽灵路径导致 SDC 失败）。"""
     valid_idxs = filter_valid_paths(paths, path_count, modes, mode_count)
     if not valid_idxs:
+        logger.warning("所有 %d 个路径均被过滤（无效 mode 索引），跳过 SetDisplayConfig", path_count)
         return False
     valid = (DISPLAYCONFIG_PATH_INFO * len(valid_idxs))()
     for dest, src_idx in enumerate(valid_idxs):

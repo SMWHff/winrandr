@@ -11,6 +11,7 @@ from winrandr.win32.bindings import (
 from winrandr.win32.constants import (
     ENUM_REGISTRY_SETTINGS, ENUM_CURRENT_SETTINGS,
     CDS_UPDATEREGISTRY, DISP_CHANGE_SUCCESSFUL, DISP_CHANGE_MESSAGES,
+    DM_BITSPERPEL, DM_PELSWIDTH, DM_PELSHEIGHT, DM_DISPLAYFREQUENCY,
 )
 
 logger = logging.getLogger(__name__)
@@ -58,11 +59,11 @@ def set_resolution(device_name: str, width: int, height: int, refresh_rate: floa
     dm.dmPelsWidth = width
     dm.dmPelsHeight = height
     dm.dmBitsPerPel = 32
-    dm.dmFields |= 0x00080000 | 0x00100000 | 0x00040000
+    dm.dmFields |= DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT
 
     if refresh_rate > 0:
         dm.dmDisplayFrequency = int(refresh_rate)
-        dm.dmFields |= 0x00400000
+        dm.dmFields |= DM_DISPLAYFREQUENCY
 
     ret = _ChangeDisplaySettingsEx(device_name, byref(dm), None, CDS_UPDATEREGISTRY, None)
     if ret != DISP_CHANGE_SUCCESSFUL:

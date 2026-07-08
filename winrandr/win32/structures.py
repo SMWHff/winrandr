@@ -1,6 +1,5 @@
 """Win32 显示 API 相关的 ctypes 结构体定义。"""
 
-import ctypes
 from ctypes import (
     wintypes, Structure, Union,
     c_uint32, c_uint64,
