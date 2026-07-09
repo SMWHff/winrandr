@@ -6,6 +6,9 @@ import sys
 from argparse import Namespace
 
 from winrandr.api import list_displays, list_providers
+from winrandr.win32.constants import GDI_DEVICE_PREFIX
+
+logger = logging.getLogger(__name__)
 
 
 def _setup_logging() -> None:
@@ -27,7 +30,7 @@ def _setup_logging() -> None:
 
 def _normalize_name(name: str) -> str:
     n = name.strip().upper()
-    prefix = "\\\\.\\"
+    prefix = GDI_DEVICE_PREFIX
     if n.startswith(prefix):
         return n
     if n.startswith("DISPLAY"):
@@ -49,9 +52,9 @@ def _msg(args: Namespace, text: str) -> None:
 
 
 def _list_available_displays() -> str:
-    names = {d.name.replace("\\\\.\\", "") for d in list_displays()}
+    names = {d.name.replace(GDI_DEVICE_PREFIX, "") for d in list_displays()}
     for p in list_providers():
-        sn = p["name"].replace("\\\\.\\", "")
+        sn = p["name"].replace(GDI_DEVICE_PREFIX, "")
         if sn.startswith("DISPLAY"):
             names.add(sn)
 
@@ -70,6 +73,7 @@ _MOD_OP_ATTRS = [
     "preferred",
     "off",
     "brightness",
+    "night_mode",
     "reflect",
     "gamma",
     "left_of",
@@ -97,12 +101,17 @@ def _apply_aliases(args: Namespace) -> None:
         args.listmonitors = True
     if args.reflect == "normal":
         args.reflect = None
-    if args.x and args.y:
-        args.reflect = "xy"
-    elif args.x:
-        args.reflect = "x"
-    elif args.y:
-        args.reflect = "y"
+    # --reflect 已显式设置时跳过 -x/-y 的覆盖
+    if args.reflect is not None:
+        if args.x or args.y:
+            logger.warning("检测到 --reflect 与 -x/-y 同时使用，-x/-y 将被忽略")
+    else:
+        if args.x and args.y:
+            args.reflect = "xy"
+        elif args.x:
+            args.reflect = "x"
+        elif args.y:
+            args.reflect = "y"
 
 
 def _check_relative_mutex(args: Namespace) -> None:

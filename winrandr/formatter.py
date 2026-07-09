@@ -3,13 +3,13 @@
 from collections import defaultdict
 
 from winrandr.models import DisplayInfo, DisplayMode
-from winrandr.win32.constants import ROTATION_MAP, ROTATION_NAMES
+from winrandr.win32.constants import GDI_DEVICE_PREFIX, ROTATION_MAP, ROTATION_NAMES
 
 _ALL_ROTATIONS = "normal left inverted right"
 
 
 def short_name(name: str) -> str:
-    return name.replace("\\\\.\\", "").strip()
+    return name.replace(GDI_DEVICE_PREFIX, "").strip()
 
 
 def format_monitor_list(displays: list[DisplayInfo]) -> str:

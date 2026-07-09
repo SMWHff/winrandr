@@ -3,6 +3,7 @@
 __version__ = "0.7.1"
 
 __all__ = [
+    "GDI_DEVICE_PREFIX",
     "ROTATION_FROM_NAME",
     "ROTATION_NAMES",
     "DisplayInfo",
@@ -22,6 +23,7 @@ __all__ = [
     "set_auto",
     "set_brightness",
     "set_gamma",
+    "set_night_mode",
     "set_noprimary",
     "set_off",
     "set_position",
@@ -42,6 +44,7 @@ from winrandr.api import (
     set_auto,
     set_brightness,
     set_gamma,
+    set_night_mode,
     set_noprimary,
     set_off,
     set_position,
@@ -62,4 +65,4 @@ from winrandr.profiles import (
     preview_save,
     save_profile,
 )
-from winrandr.win32.constants import ROTATION_FROM_NAME, ROTATION_NAMES
+from winrandr.win32.constants import GDI_DEVICE_PREFIX, ROTATION_FROM_NAME, ROTATION_NAMES

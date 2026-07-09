@@ -16,6 +16,7 @@ from winrandr.api import (
     set_resolution,
     set_rotation,
 )
+from winrandr.win32.constants import GDI_DEVICE_PREFIX
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ def preview_save() -> list[str]:
         return ["未检测到活动显示器"]
     lines = [f"将保存以下 {len(displays)} 台显示器的配置："]
     for d in displays:
-        sn = d.name.replace("\\\\.\\", "")
+        sn = d.name.replace(GDI_DEVICE_PREFIX, "")
         primary = " (主)" if d.is_primary else ""
         rot = f" {d.rotation}°" if d.rotation else ""
         lines.append(
@@ -119,7 +120,7 @@ def diff_profile(name: str) -> list[str]:  # noqa: C901
             continue
         found = True
         changes = []
-        sn = dn.replace("\\\\.\\", "")
+        sn = dn.replace(GDI_DEVICE_PREFIX, "")
         if (cur.position_x, cur.position_y) != (dc["x"], dc["y"]):
             changes.append(f"位置 ({cur.position_x},{cur.position_y})→({dc['x']},{dc['y']})")
         if cur.rotation != dc["rotation"]:
@@ -210,7 +211,7 @@ def list_profiles() -> list[dict[str, str | int | list[str]]]:
         displays_raw = info.get("displays", [])
         display_summary = []
         for d in displays_raw:
-            sn = d.get("name", "?").replace("\\\\.\\", "")
+            sn = d.get("name", "?").replace(GDI_DEVICE_PREFIX, "")
             if "width" in d and "height" in d:
                 display_summary.append(f"{sn}({d['width']}x{d['height']})")
             else:
