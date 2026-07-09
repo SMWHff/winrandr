@@ -48,7 +48,7 @@ winrandr/                 核心包
 ├── profiles.py           配置存档管理（保存/恢复显示器布局）
 ├── features/
 │   ├── __init__.py
-│   ├── gamma.py          伽马校正与亮度（SetDeviceGammaRamp）
+│   ├── gamma.py          伽马校正、亮度与夜览模式（SetDeviceGammaRamp）
 │   ├── layout.py         位置/旋转/主屏/关闭/相对定位（SetDisplayConfig）
 │   └── resolution.py     分辨率/刷新率枚举与设置（ChangeDisplaySettingsEx）
 └── win32/                底层 Win32 绑定层
@@ -58,7 +58,8 @@ winrandr/                 核心包
     ├── bindings.py       Win32 API 函数绑定 (ctypes 声明)
     └── utils.py          内部工具函数 (查询/过滤/应用配置)
 
-tests/                    测试（400 项，100% 覆盖率）
+tests/                    测试（438 项，100% 覆盖率）
+├── conftest.py           共享测试夹具（_fake_display 工厂）
 ├── unit/                 单元测试
 │   ├── test_win32_utils.py   Win32 工具函数测试
 │   ├── cli/                  CLI 参数/工具/处理器测试（6 文件）
@@ -73,7 +74,7 @@ tests/                    测试（400 项，100% 覆盖率）
     └── test_models.py         数据模型
 
 scripts/
-├── WinRandr.psm1         PowerShell 模块（7 个 cmdlet）
+├── WinRandr.psm1         PowerShell 模块（20 个 cmdlet）
 ├── dev/
 │   ├── run.sh            uv run -m winrandr 快捷脚本
 │   ├── lint.sh           Lint 检查（ruff + 导入验证）
@@ -88,7 +89,8 @@ scripts/
 
 .github/
 ├── workflows/
-│   └── test.yml           GitHub Actions CI（4 Python 版本矩阵）
+│   ├── test.yml           GitHub Actions CI（4 Python 版本矩阵，已关闭自动触发）
+│   └── release.yml        发布构建（Nuitka 打包 exe + GitHub Release）
 └── PULL_REQUEST_TEMPLATE.md  PR 模板
 ```
 
@@ -103,6 +105,7 @@ scripts/
 | 读物理尺寸 | `CreateDCW` + `GetDeviceCaps(HORZSIZE/VERTSIZE)` | utils.py |
 | 亮度和伽马 | `GetDeviceGammaRamp` / `SetDeviceGammaRamp` | features/gamma.py |
 | 查适配器/设备路径 | `DisplayConfigGetDeviceInfo` (SOURCE_NAME/TARGET_NAME/ADAPTER_NAME) | utils.py |
+| 查连接类型 | `DISPLAYCONFIG_TARGET_DEVICE_NAME.targetFlags` 解析 | utils.py → api.py |
 
 ## 关键设计决策
 
@@ -111,6 +114,8 @@ scripts/
 - **去重策略**：Windows 可能为同一显示器返回多条 QDC 路径，按 GDI 设备名去重
 - **回退机制**：QDC mode 数组可能不含当前 target mode 的刷新率，此时用 `EnumDisplaySettings` 获取
 - **虚拟驱动屏蔽**：OrayIddDriver 可能破坏 `SetDisplayConfig`，通过 `apply_filtered()` 过滤无效路径
+- **夜览模式**：利用 `SetDeviceGammaRamp` 计算蓝光过滤伽马表，支持 `light/medium/heavy` 或 0.0–1.0 强度
+- **连接类型检测**：通过 `DISPLAYCONFIG_TARGET_DEVICE_NAME.targetFlags` 低 8 位判断 HDMI/DP/USB-C/DVI/VGA
 
 ## xrandr 兼容清单
 ```
@@ -177,7 +182,7 @@ usage: xrandr [options]
   --setmonitor <name> {auto|<w>/<mmw>x<h>/<mmh>+<x>+<y>} {none|<output>,<output>,...}
   --delmonitor <name>
 ```
-**已实现：** 查询/列模式/分辨率/刷新率/位置/旋转/主屏/关闭/亮度/伽马/镜像翻转(xy)/相对定位/首选分辨率/auto/dry-run/GPU 列表/扩展属性/JSON 输出/listmonitors
+**已实现：** 查询/列模式/分辨率/刷新率/位置/旋转/主屏/关闭/亮度/伽马/夜览模式/镜像翻转(xy)/相对定位/首选分辨率/auto/dry-run/GPU 列表/扩展属性/JSON 输出/listmonitors/连接类型/profiles
 
 **不支持（无标准 Win32 API）：** `--reflect x|y` 单轴、`--scale`、`--transform`、`--fb`、`--panning`
 

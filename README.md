@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/github/license/SMWHff/winrandr?color=green)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13-blue)](pyproject.toml)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)]()
-[![CI](https://github.com/SMWHff/winrandr/actions/workflows/test.yml/badge.svg)](https://github.com/SMWHff/winrandr/actions/workflows/test.yml)
+[![PyPI](https://img.shields.io/pypi/v/winrandr?color=blue)](https://pypi.org/project/winrandr/)
 
 </div>
 
@@ -42,9 +42,11 @@ winrandr --output DISPLAY1 --brightness 0.8 --gamma 1.0:0.9:0.8
 
 从 [Releases](https://github.com/SMWHff/winrandr/releases) 下载 `winrandr.exe`，放入 PATH 目录即可使用。
 
-### pip 安装（暂不支持）
+### pip 安装
 
-`winrandr` 尚未发布到 PyPI，pip 安装暂不可用。请使用 exe 或源码方式运行。
+```bash
+pip install winrandr
+```
 
 ### 源码运行
 
@@ -65,7 +67,7 @@ uv run python -m winrandr --help
 | `winrandr --current` | 查询当前显示状态 |
 | `winrandr --output DISPLAY1` | 查询指定显示器 |
 | `winrandr --listmodes` | 列出所有可用分辨率 |
-| `winrandr --prop` | 显示显示器扩展属性（设备 ID、状态标志等） |
+| `winrandr --prop` | 显示显示器扩展属性（设备 ID、状态标志、连接类型等） |
 | `winrandr --json` | JSON 格式输出（脚本解析用） |
 
 输出示例：
@@ -115,6 +117,7 @@ DISPLAY2 disconnected
 | `--brightness VAL` | 亮度（0.1–2.0，1.0 正常），不带 `--output` 时批量设置所有显示器 |
 | `--gamma R:G:B` | 伽马校正（如 1.0:0.9:0.8），不带 `--output` 时批量设置所有显示器 |
 | `--reflect xy` | 镜像翻转（等同旋转 180°） |
+| `--night-mode MODE` | 夜览模式减少蓝光（light/medium/heavy 或 0.0–1.0），不带 `--output` 时批量设置所有显示器 |
 
 ### 其他
 
@@ -212,6 +215,39 @@ source scripts/completions/completions.bash
 echo "source '$(pwd)/scripts/completions/completions.bash'" >> ~/.bashrc
 ```
 
+## PowerShell 模块
+
+项目提供 `scripts/WinRandr.psm1` PowerShell 模块，封装了 20 个 cmdlet：
+
+| Cmdlet | 说明 |
+|--------|------|
+| `Get-WinRandrDisplays` | 查询显示器状态 |
+| `Set-WinRandrResolution` | 设置分辨率和刷新率 |
+| `Set-WinRandrPosition` | 设置桌面位置 |
+| `Set-WinRandrRotation` | 设置旋转方向 |
+| `Set-WinRandrPrimary` | 设为主显示器 |
+| `Clear-WinRandrPrimary` | 清除主显示器标记 |
+| `Set-WinRandrOff` | 关闭显示器 |
+| `Set-WinRandrAuto` | 启用显示器并使用首选分辨率 |
+| `Set-WinRandrBrightness` | 调节亮度 |
+| `Set-WinRandrGamma` | 伽马校正 |
+| `Set-WinRandrReflect` | 镜像翻转 |
+| `Set-WinRandrPreferred` | 恢复首选分辨率 |
+| `Set-WinRandrRelative` | 相对定位（left-of/right-of/above/below/same-as） |
+| `Set-WinRandrNightMode` | 夜览模式减少蓝光 |
+| `Get-WinRandrListModes` | 列出所有可用分辨率 |
+| `Invoke-WinRandrIdentify` | 闪屏识别显示器 |
+| `Save-WinRandrProfile` | 保存当前布局为存档 |
+| `Restore-WinRandrProfile` | 恢复存档布局 |
+| `Get-WinRandrProfile` | 列出存档 |
+| `Remove-WinRandrProfile` | 删除存档 |
+
+```powershell
+Import-Module ./scripts/WinRandr.psm1
+Get-WinRandrDisplays
+Set-WinRandrResolution -Name DISPLAY1 -Width 1920 -Height 1080 -Rate 60
+```
+
 ## 从源码构建
 
 ```bash
@@ -226,7 +262,7 @@ bash scripts/build/build.sh
 ```bash
 bash scripts/dev/test.sh        # 集成测试（lint + pytest + 覆盖率）
 bash scripts/dev/lint.sh        # Lint 检查
-uv run pytest tests/ -v     # 单元测试（400 项，100% 覆盖率）
+uv run pytest tests/ -v     # 单元测试（438 项，100% 覆盖率）
 ```
 
 ## 技术栈
@@ -244,15 +280,17 @@ winrandr/                 核心包
 ├── __init__.py           版本号 + 公开 API 重导出
 ├── __main__.py           python -m winrandr 入口
 ├── cli/                  CLI 子包
-│   ├── __init__.py       argparse 解析 + 主流程编排
-│   └── handlers.py       CLI 操作处理函数 + 通用工具
+│   ├── __init__.py       主流程编排 main()
+│   ├── parser.py         argparse 参数解析器
+│   ├── common.py         CLI 通用工具函数（日志/参数校验/辅助）
+│   └── handlers.py       CLI 操作处理函数
 ├── api.py                公开 API：list_displays / set_resolution 等
 ├── edid.py               EDID 读取与解析
 ├── formatter.py          xrandr 风格格式化输出
 ├── models.py             数据模型 (DisplayInfo, DisplayMode)
 ├── features/
 │   ├── __init__.py
-│   ├── gamma.py          伽马校正与亮度（SetDeviceGammaRamp）
+│   ├── gamma.py          伽马校正、亮度与夜览模式（SetDeviceGammaRamp）
 │   ├── layout.py         位置/旋转/主屏/关闭/相对定位（SetDisplayConfig）
 │   └── resolution.py     分辨率/刷新率枚举与设置（ChangeDisplaySettingsEx）
 └── win32/                底层 Win32 绑定层
@@ -261,6 +299,12 @@ winrandr/                 核心包
     ├── structures.py     ctypes 结构体定义
     ├── bindings.py       Win32 API 函数绑定 (ctypes 声明)
     └── utils.py          内部工具函数 (查询/过滤/应用配置)
+
+tests/
+├── conftest.py           共享测试夹具
+├── unit/                 单元测试（CLI/格式化/配置存档/Win32）
+├── features/             功能模块测试（gamma/layout/resolution）
+└── integration/          集成测试（CLI 入口/API/EDID/数据模型）
 ```
 
 ## 已知限制
