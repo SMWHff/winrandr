@@ -1,8 +1,8 @@
 name: Release
 
 on:
-  push:
-    tags: ["v*"]
+  # 账户欠费，GitHub Actions 被锁定，CI 暂时关闭
+  workflow_dispatch:
 
 jobs:
   build:

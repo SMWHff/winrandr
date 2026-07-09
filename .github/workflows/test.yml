@@ -1,10 +1,7 @@
 name: Test
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  # 账户欠费，GitHub Actions 被锁定，CI 暂时关闭
   workflow_dispatch:
 
 jobs:
