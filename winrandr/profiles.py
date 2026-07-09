@@ -100,7 +100,7 @@ def save_profile(name: str) -> bool:
     return True
 
 
-def diff_profile(name: str) -> list[str]:  # noqa: C901
+def diff_profile(name: str) -> list[str]:
     """比较当前配置与存档的差异，返回人类可读的变更列表。"""
     data = _load_all()
     profile = data.get(name)
@@ -127,10 +127,8 @@ def diff_profile(name: str) -> list[str]:  # noqa: C901
             changes.append(f"旋转 {cur.rotation}°→{dc['rotation']}°")
         if (cur.width, cur.height, cur.refresh_rate) != (dc["width"], dc["height"], dc["refresh_rate"]):
             changes.append(f"分辨率 {cur.width}x{cur.height}→{dc['width']}x{dc['height']}")
-        if dc["is_primary"] and not cur.is_primary:
-            changes.append("设为主显示器")
-        if cur.is_primary and not dc["is_primary"]:
-            changes.append("取消主显示器")
+        if dc["is_primary"] != cur.is_primary:
+            changes.append("设为主显示器" if dc["is_primary"] else "取消主显示器")
         if changes:
             lines.append(f"  {sn}: {', '.join(changes)}")
         else:
