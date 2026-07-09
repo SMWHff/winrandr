@@ -266,7 +266,7 @@ bash scripts/build/build.sh
 ```bash
 bash scripts/dev/test.sh        # 集成测试（lint + pytest + 覆盖率）
 bash scripts/dev/lint.sh        # Lint 检查
-uv run pytest tests/ -v     # 单元测试（445 项，99.90% 覆盖率）
+uv run pytest tests/ -v     # 单元测试（446 项，100% 覆盖率）
 ```
 
 ## 技术栈
