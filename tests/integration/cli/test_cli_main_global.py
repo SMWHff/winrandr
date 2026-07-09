@@ -74,3 +74,12 @@ def test_main_global_op_requires_output_for_other_ops():
         with pytest.raises(SystemExit):
             with patch("sys.argv", ["winrandr", "--brightness", "0.8", "--mode", "1920x1080"]):
                 cli_main()
+
+
+def test_main_night_mode_with_output():
+    """--night-mode 带 --output 只应用到指定显示器。"""
+    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
+        with patch("winrandr.cli.handlers.set_night_mode", return_value=True) as mock_fn:
+            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "--night-mode", "light"]):
+                cli_main()
+            assert mock_fn.called is True
