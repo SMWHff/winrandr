@@ -142,6 +142,38 @@ def test_load_profile_display_not_connected(temp_profiles):
                 sa.assert_not_called()
 
 
+def test_load_profile_set_noprimary_fails(temp_profiles):
+    """set_noprimary 失败时应返回 False 而非静默成功。"""
+    config = {
+        "p": {
+            "displays": [
+                {
+                    "name": r"\\.\DISPLAY1",
+                    "x": 0,
+                    "y": 0,
+                    "width": 1920,
+                    "height": 1080,
+                    "refresh_rate": 60.0,
+                    "rotation": 0,
+                    "is_primary": True,
+                }
+            ],
+            "created": "2026-01-01T00:00:00",
+            "version": "0.3.5",
+        },
+    }
+    _save_all(config)
+
+    with patch("winrandr.profiles.list_displays", return_value=[_make_display()]):
+        with patch("winrandr.profiles.set_noprimary", return_value=False):
+            with patch("winrandr.profiles.set_auto", return_value=True):
+                with patch("winrandr.profiles.set_position", return_value=True):
+                    with patch("winrandr.profiles.set_rotation", return_value=True):
+                        with patch("winrandr.profiles.set_resolution", return_value=True):
+                            with patch("winrandr.profiles.set_primary", return_value=True):
+                                assert load_profile("p") is False
+
+
 def test_load_profile_set_auto_fails(temp_profiles):
     config = {
         "p": {
