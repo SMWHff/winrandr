@@ -3,7 +3,7 @@ cd "$(dirname "$0")/../.."
 set -euo pipefail
 
 echo "==> 清理 Nuitka 构建缓存..."
-rm -rf dist/winrandr.build dist/winrandr.dist dist/winrandr.onefile-build 2>/dev/null && echo "  dist/ 构建目录已清理" || echo "  部分构建目录正在使用中（跳过）"
+rm -rf dist/winrandr.exe dist/winrandr.build dist/winrandr.dist dist/winrandr.onefile-build 2>/dev/null && echo "  dist/ 构建目录和 exe 已清理" || echo "  部分构建目录正在使用中（跳过）"
 
 echo "==> 清理 Python 缓存..."
 find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null && echo "  __pycache__ 已清理" || true
