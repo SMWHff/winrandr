@@ -3,6 +3,7 @@
 import logging
 from ctypes import byref, c_uint32, sizeof
 
+from winrandr.models import QdcConfig
 from winrandr.win32.bindings import (
     _CreateDCW,
     _DeleteDC,
@@ -97,7 +98,7 @@ def get_connector_type(path: DISPLAYCONFIG_PATH_INFO) -> str:
     return "" if ret != 0 else CONNECTOR_TYPE_MAP.get(tname.targetFlags & 0xFF, "")
 
 
-def query_active_config() -> tuple[DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO, int, int] | None:
+def query_active_config() -> QdcConfig | None:
     """查询当前活动显示配置（内部缓存，apply_config 成功后自动失效）。"""
     global _QDC_CACHE
     if _QDC_CACHE is not None:
@@ -126,11 +127,11 @@ def query_active_config() -> tuple[DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_I
         logger.error("QueryDisplayConfig (active) 失败, 错误码=%d", ret)
         return None
 
-    _QDC_CACHE = (paths, modes, path_count.value, mode_count.value)
+    _QDC_CACHE = QdcConfig(paths, modes, path_count.value, mode_count.value)
     return _QDC_CACHE
 
 
-def query_all_config() -> tuple[DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO, int, int] | None:
+def query_all_config() -> QdcConfig | None:
     """查询所有显示配置（含已断开的），同上返回格式（内部缓存，apply_config 成功后自动失效）。"""
     global _QDC_ALL_CACHE
     if _QDC_ALL_CACHE is not None:
@@ -158,7 +159,7 @@ def query_all_config() -> tuple[DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO
         logger.error("QueryDisplayConfig (all) 失败, 错误码=%d", ret)
         return None
 
-    _QDC_ALL_CACHE = (paths, modes, path_count.value, mode_count.value)
+    _QDC_ALL_CACHE = QdcConfig(paths, modes, path_count.value, mode_count.value)
     return _QDC_ALL_CACHE
 
 

@@ -2,6 +2,7 @@
 
 import logging
 
+from winrandr.models import QdcConfig
 from winrandr.win32.constants import DISPLAYCONFIG_PATH_MODE_IDX_INVALID, ROTATION_MAP
 from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO
 from winrandr.win32.utils import (
@@ -16,7 +17,7 @@ from winrandr.win32.utils import (
 logger = logging.getLogger(__name__)
 
 
-def _require_active_config() -> tuple | None:
+def _require_active_config() -> QdcConfig | None:
     """获取活动 QDC 配置，SDC 不可用时返回 None。"""
     if not set_display_config_available():
         return None
