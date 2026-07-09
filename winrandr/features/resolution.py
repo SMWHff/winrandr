@@ -40,7 +40,12 @@ def enumerate_modes(gdi_name: str, cur_width: int, cur_height: int, cur_refresh:
         if dm.dmPelsWidth > 0 and dm.dmPelsHeight > 0 and dm.dmDisplayFrequency > 0:
             rr = float(dm.dmDisplayFrequency)
             is_cur = dm.dmPelsWidth == cur_width and dm.dmPelsHeight == cur_height and abs(rr - cur_refresh) < 0.5
-            is_pref = bool(has_reg and dm.dmPelsWidth == reg_dm.dmPelsWidth and dm.dmPelsHeight == reg_dm.dmPelsHeight)
+            is_pref = bool(
+                has_reg
+                and dm.dmPelsWidth == reg_dm.dmPelsWidth
+                and dm.dmPelsHeight == reg_dm.dmPelsHeight
+                and dm.dmDisplayFrequency == reg_dm.dmDisplayFrequency
+            )
             modes.append(
                 DisplayMode(
                     width=dm.dmPelsWidth,
