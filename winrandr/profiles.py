@@ -10,6 +10,7 @@ from winrandr import __version__
 from winrandr.api import (
     list_displays,
     set_auto,
+    set_noprimary,
     set_position,
     set_primary,
     set_resolution,
@@ -98,7 +99,7 @@ def save_profile(name: str) -> bool:
     return True
 
 
-def diff_profile(name: str) -> list[str]:
+def diff_profile(name: str) -> list[str]:  # noqa: C901
     """比较当前配置与存档的差异，返回人类可读的变更列表。"""
     data = _load_all()
     profile = data.get(name)
@@ -127,6 +128,8 @@ def diff_profile(name: str) -> list[str]:
             changes.append(f"分辨率 {cur.width}x{cur.height}→{dc['width']}x{dc['height']}")
         if dc["is_primary"] and not cur.is_primary:
             changes.append("设为主显示器")
+        if cur.is_primary and not dc["is_primary"]:
+            changes.append("取消主显示器")
         if changes:
             lines.append(f"  {sn}: {', '.join(changes)}")
         else:
@@ -149,6 +152,11 @@ def load_profile(name: str) -> bool:  # noqa: C901  # 循环中含多条 API 调
     configs = profile["displays"]
     current = {d.name for d in list_displays()}
     success = True
+
+    # 先清除所有主屏标记，避免加载无主屏配置时保留旧主屏
+    if not set_noprimary():
+        logger.warning("清除主屏标记失败")
+        print("警告: 清除主屏标记失败", file=sys.stderr)
 
     for dc in configs:
         dn = dc["name"]
