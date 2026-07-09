@@ -2,6 +2,11 @@
 cd "$(dirname "$0")/../.."
 set -euo pipefail
 
+if ! command -v uv &>/dev/null; then
+    echo "错误: 未找到 uv，请先安装 https://docs.astral.sh/uv/"
+    exit 1
+fi
+
 PY_MAJOR=$(uv run python -c "import sys; print(sys.version_info.major)")
 PY_MINOR=$(uv run python -c "import sys; print(sys.version_info.minor)")
 UV_VERSION=$(uv run python -c "import winrandr; print(winrandr.__version__)")
