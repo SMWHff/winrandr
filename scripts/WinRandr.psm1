@@ -149,7 +149,8 @@ function Set-WinRandrRotation {
         [Parameter(Mandatory)] [string]$Output,
         [Parameter(Mandatory)] [ValidateSet(0, 90, 180, 270)] [int]$Degree
     )
-    return _InvokeWinRandr @("--output", $Output, "--rotate", "$Degree")
+    $rotateMap = @{0 = "normal"; 90 = "left"; 180 = "inverted"; 270 = "right"}
+    return _InvokeWinRandr @("--output", $Output, "--rotate", $rotateMap[$Degree])
 }
 
 function Set-WinRandrOff {
@@ -198,6 +199,60 @@ function Set-WinRandrRelative {
         [string]$Position
     )
     return _InvokeWinRandr @("--output", $Output, "--$Position", $Reference)
+}
+
+function Set-WinRandrReflect {
+    <#
+    .SYNOPSIS
+        设置显示器镜像翻转
+    .PARAMETER Output
+        显示器名称（如 DISPLAY1）
+    .PARAMETER ReflectMode
+        镜像模式（normal、x、y、xy；仅 xy 受支持，x/y 会提示无标准 API）
+    .EXAMPLE
+        Set-WinRandrReflect -Output DISPLAY1 -ReflectMode xy
+    #>
+    param(
+        [Parameter(Mandatory)] [string]$Output,
+        [Parameter(Mandatory)] [ValidateSet("normal", "x", "y", "xy")] [string]$ReflectMode
+    )
+    return _InvokeWinRandr @("--output", $Output, "--reflect", $ReflectMode)
+}
+
+function Set-WinRandrPreferred {
+    <#
+    .SYNOPSIS
+        将显示器设为首选分辨率（注册表存储）
+    .PARAMETER Output
+        显示器名称（如 DISPLAY1）
+    .EXAMPLE
+        Set-WinRandrPreferred -Output DISPLAY1
+    #>
+    param([Parameter(Mandatory)] [string]$Output)
+    return _InvokeWinRandr @("--output", $Output, "--preferred")
+}
+
+function Clear-WinRandrPrimary {
+    <#
+    .SYNOPSIS
+        清除所有显示器的主显示器标记
+    .EXAMPLE
+        Clear-WinRandrPrimary
+    #>
+    return _InvokeWinRandr @("--noprimary")
+}
+
+function Invoke-WinRandrIdentify {
+    <#
+    .SYNOPSIS
+        通过闪烁屏幕识别指定显示器
+    .PARAMETER Output
+        显示器名称（如 DISPLAY1）
+    .EXAMPLE
+        Invoke-WinRandrIdentify -Output DISPLAY1
+    #>
+    param([Parameter(Mandatory)] [string]$Output)
+    return _InvokeWinRandr @("--identify", "--output", $Output)
 }
 
 function Save-WinRandrProfile {
@@ -260,6 +315,10 @@ Export-ModuleMember -Function @(
     "Set-WinRandrBrightness",
     "Set-WinRandrGamma",
     "Set-WinRandrRotation",
+    "Set-WinRandrReflect",
+    "Set-WinRandrPreferred",
+    "Clear-WinRandrPrimary",
+    "Invoke-WinRandrIdentify",
     "Set-WinRandrOff",
     "Set-WinRandrAuto",
     "Set-WinRandrRelative",
