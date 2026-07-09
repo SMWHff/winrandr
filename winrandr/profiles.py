@@ -230,8 +230,3 @@ def delete_profile(name: str) -> bool:
         return False
     logger.info("已删除存档: %s", name)
     return True
-
-
-def get_profile_names() -> list[str]:
-    """返回所有存档名称的列表。"""
-    return sorted(_load_all().keys())

@@ -10,7 +10,6 @@ from winrandr.models import DisplayInfo, DisplayMode
 from winrandr.profiles import (
     _load_all,
     _save_all,
-    get_profile_names,
     list_profiles,
     load_profile,
     save_profile,
@@ -168,7 +167,7 @@ def test_load_profile_set_auto_fails(temp_profiles):
                 sp.assert_not_called()
 
 
-# ---- list_profiles / get_profile_names ----
+# ---- list_profiles ----
 
 
 def test_list_profiles_empty(temp_profiles):
@@ -207,8 +206,3 @@ def test_list_profiles_with_resolution(temp_profiles):
     assert len(result[0]["displays"]) == 2
     assert "DISPLAY1(1920x1080)" in result[0]["displays"]
     assert "DISPLAY2(1440x900)" in result[0]["displays"]
-
-
-def test_get_profile_names(temp_profiles):
-    _save_all({"x": {}, "y": {}})
-    assert get_profile_names() == ["x", "y"]
