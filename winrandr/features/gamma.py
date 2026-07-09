@@ -105,16 +105,18 @@ def identify_display(device_name: str, duration: float = 2.0) -> bool:
         logger.error("无法为 %s 创建设备上下文", device_name)
         return False
 
+    ramp = (c_uint16 * (3 * 256))()
+    if not _GetDeviceGammaRamp(dc, ramp):
+        logger.error("无法获取 %s 的伽马校正表", device_name)
+        _DeleteDC(dc)
+        return False
+
     saved = (c_uint16 * (3 * 256))()
+    for i in range(3 * 256):
+        saved[i] = ramp[i]
+
     all_ok = True
     try:
-        ramp = (c_uint16 * (3 * 256))()
-        if not _GetDeviceGammaRamp(dc, ramp):
-            logger.error("无法获取 %s 的伽马校正表", device_name)
-            return False
-        for i in range(3 * 256):
-            saved[i] = ramp[i]
-
         flash = (c_uint16 * (3 * 256))()
         for i in range(3 * 256):
             flash[i] = 65535

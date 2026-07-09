@@ -98,20 +98,16 @@ def set_off(device_name: str) -> bool:
     paths, modes, path_count, mode_count = config
 
     logger.debug("关闭显示器: %s（共 %d 个路径）", device_name, path_count)
-    kept = []
-    for i in range(path_count):
-        gdi = get_gdi_name(paths[i])
-        if gdi != device_name:
-            kept.append(i)
+    gdi_names = [get_gdi_name(paths[i]) for i in range(path_count)]
+    kept = [i for i, gdi in enumerate(gdi_names) if gdi != device_name]
 
     if len(kept) == path_count:
         logger.error("未找到显示器（set_off）: %s — QDC 路径表中不存在", device_name)
         return False
 
-    # 保护：禁止关闭最后一块活动的显示器
-    from winrandr.api import list_displays
-
-    if len(list_displays()) <= 1:
+    # 保护：禁止关闭最后一块活动的显示器（通过 QDC 路径去重计数）
+    active_displays = {gdi for gdi in gdi_names if gdi}
+    if len(active_displays) <= 1:
         logger.warning("无法关闭最后一块活动的显示器: %s", device_name)
         return False
 

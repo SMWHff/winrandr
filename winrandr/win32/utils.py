@@ -1,7 +1,5 @@
 """内部工具函数：显示配置查询、设备信息获取、配置应用。"""
 
-from __future__ import annotations
-
 import logging
 from ctypes import byref, c_uint32, sizeof
 
