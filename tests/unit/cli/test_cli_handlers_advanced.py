@@ -10,6 +10,7 @@ from winrandr.cli.handlers import (
     _handle_brightness,
     _handle_gamma,
     _handle_mode,
+    _handle_night_mode,
     _handle_off,
     _handle_pos,
     _handle_preferred,
@@ -34,6 +35,7 @@ def _ns(**kwargs) -> Namespace:
         preferred=None,
         off=None,
         brightness=None,
+        night_mode=None,
         reflect=None,
         gamma=None,
         identify=False,
@@ -180,3 +182,41 @@ def test_auto_api_failure():
     with patch("winrandr.cli.handlers.set_auto", return_value=False):
         with pytest.raises(SystemExit):
             _handle_auto(_ns(auto=True, dry_run=False), DN)
+
+
+# --- _handle_night_mode (non-dry-run & failure) ---
+
+
+def test_night_mode_non_dry_run_light():
+    """Non dry-run with preset light: calls set_night_mode with strength=0.2."""
+    with patch("winrandr.cli.handlers.set_night_mode", return_value=True) as mock_fn:
+        _handle_night_mode(_ns(night_mode="light", dry_run=False), DN)
+        mock_fn.assert_called_once_with(DN, 0.2)
+
+
+def test_night_mode_non_dry_run_medium():
+    """Non dry-run with preset medium: calls set_night_mode with strength=0.5."""
+    with patch("winrandr.cli.handlers.set_night_mode", return_value=True) as mock_fn:
+        _handle_night_mode(_ns(night_mode="medium", dry_run=False), DN)
+        mock_fn.assert_called_once_with(DN, 0.5)
+
+
+def test_night_mode_non_dry_run_heavy():
+    """Non dry-run with preset heavy: calls set_night_mode with strength=0.8."""
+    with patch("winrandr.cli.handlers.set_night_mode", return_value=True) as mock_fn:
+        _handle_night_mode(_ns(night_mode="heavy", dry_run=False), DN)
+        mock_fn.assert_called_once_with(DN, 0.8)
+
+
+def test_night_mode_non_dry_run_numeric():
+    """Non dry-run with numeric string: calls set_night_mode with parsed float."""
+    with patch("winrandr.cli.handlers.set_night_mode", return_value=True) as mock_fn:
+        _handle_night_mode(_ns(night_mode="0.3", dry_run=False), DN)
+        mock_fn.assert_called_once_with(DN, 0.3)
+
+
+def test_night_mode_api_failure():
+    """API returns False -> SystemExit."""
+    with patch("winrandr.cli.handlers.set_night_mode", return_value=False):
+        with pytest.raises(SystemExit):
+            _handle_night_mode(_ns(night_mode="light", dry_run=False), DN)
