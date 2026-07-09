@@ -87,6 +87,7 @@ def identify_display(device_name: str, duration: float = 2.0) -> bool:
         return False
 
     saved = (c_uint16 * (3 * 256))()
+    all_ok = True
     try:
         ramp = (c_uint16 * (3 * 256))()
         if not _GetDeviceGammaRamp(dc, ramp):
@@ -102,11 +103,17 @@ def identify_display(device_name: str, duration: float = 2.0) -> bool:
 
         interval = duration / 6
         for _ in range(3):
-            _SetDeviceGammaRamp(dc, flash)
+            if not _SetDeviceGammaRamp(dc, flash):
+                logger.warning("设置 %s 闪烁白屏失败（伽马写入被拒绝）", device_name)
+                all_ok = False
+                break
             time.sleep(interval)
-            _SetDeviceGammaRamp(dc, blank)
+            if not _SetDeviceGammaRamp(dc, blank):
+                logger.warning("设置 %s 闪烁黑屏失败（伽马写入被拒绝）", device_name)
+                all_ok = False
+                break
             time.sleep(interval)
     finally:
         _SetDeviceGammaRamp(dc, saved)
         _DeleteDC(dc)
-    return True
+    return all_ok
