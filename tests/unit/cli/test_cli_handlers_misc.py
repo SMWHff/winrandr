@@ -136,3 +136,44 @@ def test_setup_logging_first_call():
             h.close()
         root.handlers.clear()
         root.handlers.extend(old_handlers)
+
+
+def test_setup_logging_frozen():
+    """frozen 环境下应使用 sys.executable 定位日志目录。"""
+    import logging as _logging
+
+    from winrandr.cli.common import _setup_logging
+
+    root = _logging.getLogger()
+    old_handlers = root.handlers[:]
+    root.handlers.clear()
+    try:
+        with patch("sys.frozen", True, create=True):
+            _setup_logging()
+        assert len(root.handlers) == 2
+    finally:
+        for h in root.handlers:
+            h.close()
+        root.handlers.clear()
+        root.handlers.extend(old_handlers)
+
+
+def test_setup_logging_makedirs_fails():
+    """os.makedirs 失败时应降级为仅控制台处理器。"""
+    import logging as _logging
+
+    from winrandr.cli.common import _setup_logging
+
+    root = _logging.getLogger()
+    old_handlers = root.handlers[:]
+    root.handlers.clear()
+    try:
+        with patch("winrandr.cli.common.os.makedirs", side_effect=OSError("permission denied")):
+            _setup_logging()
+        assert len(root.handlers) == 1
+        assert isinstance(root.handlers[0], _logging.StreamHandler)
+    finally:
+        for h in root.handlers:
+            h.close()
+        root.handlers.clear()
+        root.handlers.extend(old_handlers)
