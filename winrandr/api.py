@@ -49,7 +49,11 @@ from winrandr.win32.constants import (
     DISPLAYCONFIG_PATH_MODE_IDX_INVALID,
     ROTATION_DEGREES,
 )
-from winrandr.win32.structures import DISPLAY_DEVICE
+from winrandr.win32.structures import (
+    DISPLAY_DEVICE,
+    DISPLAYCONFIG_MODE_INFO,
+    DISPLAYCONFIG_PATH_INFO,
+)
 from winrandr.win32.utils import (
     get_adapter_name,
     get_connector_type,
@@ -63,6 +67,48 @@ from winrandr.win32.utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _source_resolution_position(
+    path: DISPLAYCONFIG_PATH_INFO,
+    modes: DISPLAYCONFIG_MODE_INFO,
+    mode_count: int,
+    gdi_name: str,
+) -> tuple[int, int, int, int]:
+    """从 QDC 获取源分辨率与桌面位置，失败时回退到 EnumDisplaySettings。"""
+    mode_idx = path.sourceInfo.modeInfoIdx
+    if (
+        mode_idx != DISPLAYCONFIG_PATH_MODE_IDX_INVALID
+        and mode_idx < mode_count
+        and modes[mode_idx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE
+    ):
+        sm = modes[mode_idx]._union.sourceMode
+        return sm.width, sm.height, sm.position.x, sm.position.y
+    w, h, _, _ = get_resolution_refresh_via_enum(gdi_name)
+    return w, h, 0, 0
+
+
+def _target_refresh_rate(
+    path: DISPLAYCONFIG_PATH_INFO,
+    modes: DISPLAYCONFIG_MODE_INFO,
+    mode_count: int,
+    gdi_name: str,
+) -> float:
+    """从 QDC 获取目标刷新率，Denominator=0 时回退到 EnumDisplaySettings。"""
+    refresh = 0.0
+    tmi = path.targetInfo.modeInfoIdx
+    if (
+        tmi != DISPLAYCONFIG_PATH_MODE_IDX_INVALID
+        and tmi < mode_count
+        and modes[tmi].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET
+    ):
+        vs = modes[tmi]._union.targetMode.targetVideoSignalInfo.vSyncFreq
+        if vs.Denominator:
+            refresh = vs.Numerator / vs.Denominator
+    if refresh == 0.0:
+        _, _, rr, _ = get_resolution_refresh_via_enum(gdi_name)
+        refresh = rr
+    return refresh
 
 
 def list_displays() -> list[DisplayInfo]:
@@ -85,34 +131,8 @@ def list_displays() -> list[DisplayInfo]:
         is_primary = bool(path.sourceInfo.statusFlags & 0x01)
         rotation = ROTATION_DEGREES.get(path.targetInfo.rotation, 0)
 
-        width = height = pos_x = pos_y = 0
-        mode_idx = path.sourceInfo.modeInfoIdx
-        if (
-            mode_idx != DISPLAYCONFIG_PATH_MODE_IDX_INVALID
-            and mode_idx < mode_count
-            and modes[mode_idx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE
-        ):
-            sm = modes[mode_idx]._union.sourceMode
-            width, height = sm.width, sm.height
-            pos_x, pos_y = sm.position.x, sm.position.y
-        else:
-            w, h, _, _ = get_resolution_refresh_via_enum(gdi_name)
-            width, height = w, h
-
-        refresh = 0.0
-        tmi = path.targetInfo.modeInfoIdx
-        if (
-            tmi != DISPLAYCONFIG_PATH_MODE_IDX_INVALID
-            and tmi < mode_count
-            and modes[tmi].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET
-        ):
-            vs = modes[tmi]._union.targetMode.targetVideoSignalInfo.vSyncFreq
-            if vs.Denominator:
-                refresh = vs.Numerator / vs.Denominator
-
-        if refresh == 0.0:
-            _, _, rr, _ = get_resolution_refresh_via_enum(gdi_name)
-            refresh = rr
+        width, height, pos_x, pos_y = _source_resolution_position(path, modes, mode_count, gdi_name)
+        refresh = _target_refresh_rate(path, modes, mode_count, gdi_name)
 
         active = width > 0 and height > 0
         friendly = get_friendly_name_via_enum(gdi_name)
