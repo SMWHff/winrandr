@@ -63,6 +63,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     g_img = p.add_argument_group("图像调节")
     g_img.add_argument("--brightness", type=float, help="亮度值（0.1-2.0，1.0 为正常）")
+    g_img.add_argument(
+        "--night-mode",
+        metavar="light|medium|heavy|0.0-1.0",
+        help="夜间模式：减少蓝光（预设 light/medium/heavy 或数值）",
+    )
     g_img.add_argument("--gamma", metavar="R:G:B", help="伽马校正（如 1.0:0.9:0.8）")
     g_img.add_argument("--reflect", choices=["normal", "x", "y", "xy"], help="镜像翻转（仅 xy 支持）")
     g_img.add_argument("-x", action="store_true", help=argparse.SUPPRESS)
