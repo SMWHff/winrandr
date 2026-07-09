@@ -122,6 +122,28 @@ def test_identify_getramp_fails():
                 assert identify_display(r"\\.\DISPLAY1") is False
 
 
+def test_identify_flash_fails():
+    from winrandr.features.gamma import identify_display
+
+    with patch("winrandr.features.gamma._CreateDCW", return_value=0x1234):
+        with patch("winrandr.features.gamma._GetDeviceGammaRamp", return_value=1):
+            with patch("winrandr.features.gamma._SetDeviceGammaRamp", side_effect=[0, 1]):
+                with patch("winrandr.features.gamma._DeleteDC"):
+                    with patch("winrandr.features.gamma.time.sleep"):
+                        assert identify_display(r"\\.\DISPLAY1") is False
+
+
+def test_identify_blank_fails():
+    from winrandr.features.gamma import identify_display
+
+    with patch("winrandr.features.gamma._CreateDCW", return_value=0x1234):
+        with patch("winrandr.features.gamma._GetDeviceGammaRamp", return_value=1):
+            with patch("winrandr.features.gamma._SetDeviceGammaRamp", side_effect=[1, 0, 1]):
+                with patch("winrandr.features.gamma._DeleteDC"):
+                    with patch("winrandr.features.gamma.time.sleep"):
+                        assert identify_display(r"\\.\DISPLAY1") is False
+
+
 def test_identify_exception():
     from winrandr.features.gamma import identify_display
 
