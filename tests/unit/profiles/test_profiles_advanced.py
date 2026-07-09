@@ -1,10 +1,6 @@
 """配置存档 diff 与 preview 边缘场景测试。"""
 
-import os
-import tempfile
 from unittest.mock import patch
-
-import pytest
 
 from tests.unit.profiles.helpers import _make_display
 from winrandr.profiles import (
@@ -12,15 +8,6 @@ from winrandr.profiles import (
     diff_profile,
     preview_save,
 )
-
-
-@pytest.fixture
-def temp_profiles(monkeypatch):
-    tmp = tempfile.mkdtemp()
-    pf = os.path.join(tmp, "profiles.json")
-    monkeypatch.setattr("winrandr.profiles._PROFILES_FILE", pf)
-    return pf
-
 
 # ---- diff_profile ----
 
