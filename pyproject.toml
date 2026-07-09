@@ -48,7 +48,7 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-filterwarnings = ["ignore::DeprecationWarning"]
+filterwarnings = ["ignore::DeprecationWarning:pkg_resources", "ignore::DeprecationWarning:distutils"]
 
 [tool.coverage.run]
 source = ["winrandr"]

@@ -58,7 +58,7 @@ winrandr/                 核心包
     ├── bindings.py       Win32 API 函数绑定 (ctypes 声明)
     └── utils.py          内部工具函数 (查询/过滤/应用配置)
 
-tests/                    测试（438 项，100% 覆盖率）
+tests/                    测试（443 项，99.70% 覆盖率）
 ├── conftest.py           共享测试夹具（_fake_display 工厂）
 ├── unit/                 单元测试
 │   ├── test_win32_utils.py   Win32 工具函数测试
@@ -74,7 +74,7 @@ tests/                    测试（438 项，100% 覆盖率）
     └── test_models.py         数据模型
 
 scripts/
-├── WinRandr.psm1         PowerShell 模块（20 个 cmdlet）
+├── WinRandr.psm1         PowerShell 模块（24 个 cmdlet）
 ├── dev/
 │   ├── run.sh            uv run -m winrandr 快捷脚本
 │   ├── lint.sh           Lint 检查（ruff + 导入验证）

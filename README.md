@@ -217,7 +217,7 @@ echo "source '$(pwd)/scripts/completions/completions.bash'" >> ~/.bashrc
 
 ## PowerShell 模块
 
-项目提供 `scripts/WinRandr.psm1` PowerShell 模块，封装了 20 个 cmdlet：
+项目提供 `scripts/WinRandr.psm1` PowerShell 模块，封装了 24 个 cmdlet：
 
 | Cmdlet | 说明 |
 |--------|------|
@@ -237,6 +237,10 @@ echo "source '$(pwd)/scripts/completions/completions.bash'" >> ~/.bashrc
 | `Set-WinRandrNightMode` | 夜览模式减少蓝光 |
 | `Get-WinRandrListModes` | 列出所有可用分辨率 |
 | `Invoke-WinRandrIdentify` | 闪屏识别显示器 |
+| `Set-WinRandrDryRun` | 启用干运行模式 |
+| `Set-WinRandrVerbose` | 启用详细输出 |
+| `Get-WinRandrProperties` | 获取显示器扩展属性 |
+| `Get-WinRandrProvider` | 列出 GPU 适配器 |
 | `Save-WinRandrProfile` | 保存当前布局为存档 |
 | `Restore-WinRandrProfile` | 恢复存档布局 |
 | `Get-WinRandrProfile` | 列出存档 |
@@ -262,7 +266,7 @@ bash scripts/build/build.sh
 ```bash
 bash scripts/dev/test.sh        # 集成测试（lint + pytest + 覆盖率）
 bash scripts/dev/lint.sh        # Lint 检查
-uv run pytest tests/ -v     # 单元测试（438 项，100% 覆盖率）
+uv run pytest tests/ -v     # 单元测试（443 项，99.70% 覆盖率）
 ```
 
 ## 技术栈
