@@ -167,6 +167,50 @@ def test_rel_position_short_name():
             assert "DISPLAY2" not in args[0]
 
 
+def test_get_display_props_connector_type():
+    """get_display_props 应包含 connector_type。"""
+    from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO
+
+    paths = (DISPLAYCONFIG_PATH_INFO * 1)()
+
+    def fake_enum(_name, _idx, dd_ptr, _flags):
+        dd_ptr._obj.DeviceID = r"MONITOR\ABC123"
+        dd_ptr._obj.StateFlags = 0x05
+        return True
+
+    with patch("winrandr.api._EnumDisplayDevices", side_effect=fake_enum):
+        with patch("winrandr.api.query_all_config", return_value=(paths, None, 1, 0)):
+            with patch("winrandr.api.get_gdi_name", return_value=r"\\.\DISPLAY1"):
+                with patch("winrandr.api.get_adapter_name", return_value=""):
+                    with patch("winrandr.api.get_monitor_device_path", return_value=""):
+                        with patch("winrandr.api.get_connector_type", return_value="HDMI"):
+                            with patch("winrandr.api.get_edid", return_value=None):
+                                props = get_display_props(r"\\.\DISPLAY1")
+                                assert props.get("connector_type") == "HDMI"
+
+
+def test_get_display_props_no_connector_type():
+    """get_display_props 当连接类型为空时不应包含 connector_type。"""
+    from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO
+
+    paths = (DISPLAYCONFIG_PATH_INFO * 1)()
+
+    def fake_enum(_name, _idx, dd_ptr, _flags):
+        dd_ptr._obj.DeviceID = r"MONITOR\ABC123"
+        dd_ptr._obj.StateFlags = 0x05
+        return True
+
+    with patch("winrandr.api._EnumDisplayDevices", side_effect=fake_enum):
+        with patch("winrandr.api.query_all_config", return_value=(paths, None, 1, 0)):
+            with patch("winrandr.api.get_gdi_name", return_value=r"\\.\DISPLAY1"):
+                with patch("winrandr.api.get_adapter_name", return_value=""):
+                    with patch("winrandr.api.get_monitor_device_path", return_value=""):
+                        with patch("winrandr.api.get_connector_type", return_value=""):
+                            with patch("winrandr.api.get_edid", return_value=None):
+                                props = get_display_props(r"\\.\DISPLAY1")
+                                assert "connector_type" not in props
+
+
 def test_list_displays_refresh_from_qdc():
     """vSyncFreq.Denominator 非零时从 QDC 直接获取刷新率。"""
     from winrandr.win32.constants import (
@@ -286,11 +330,13 @@ def test_get_display_props_full_success():
             with patch("winrandr.api.get_gdi_name", return_value=r"\\.\DISPLAY1"):
                 with patch("winrandr.api.get_adapter_name", return_value="GPU0"):
                     with patch("winrandr.api.get_monitor_device_path", return_value=r"\\.\DEVICE123"):
-                        with patch("winrandr.api.get_edid", return_value={"edid_name": "TestMonitor"}):
-                            props = get_display_props(r"\\.\DISPLAY1")
-                            assert props["device_id"] == r"MONITOR\ABC123\SomeExtra"
-                            assert "attached" in props["state_flags"]
-                            assert "primary" in props["state_flags"]
-                            assert props["adapter"] == "GPU0"
-                            assert props["monitor_path"] == r"\\.\DEVICE123"
-                            assert props["edid_name"] == "TestMonitor"
+                        with patch("winrandr.api.get_connector_type", return_value="HDMI"):
+                            with patch("winrandr.api.get_edid", return_value={"edid_name": "TestMonitor"}):
+                                props = get_display_props(r"\\.\DISPLAY1")
+                                assert props["device_id"] == r"MONITOR\ABC123\SomeExtra"
+                                assert "attached" in props["state_flags"]
+                                assert "primary" in props["state_flags"]
+                                assert props["adapter"] == "GPU0"
+                                assert props["monitor_path"] == r"\\.\DEVICE123"
+                                assert props.get("connector_type") == "HDMI"
+                                assert props["edid_name"] == "TestMonitor"

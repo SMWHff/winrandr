@@ -4,6 +4,7 @@ __all__ = [
     "get_display_props",
     "list_displays",
     "list_providers",
+    "set_night_mode",
     "set_position_relative",
 ]
 
@@ -15,6 +16,7 @@ from winrandr.features.gamma import (  # noqa: F401
     identify_display,
     set_brightness,
     set_gamma,
+    set_night_mode,
 )
 from winrandr.features.layout import (  # noqa: F401
     set_noprimary,
@@ -50,6 +52,7 @@ from winrandr.win32.constants import (
 from winrandr.win32.structures import DISPLAY_DEVICE
 from winrandr.win32.utils import (
     get_adapter_name,
+    get_connector_type,
     get_friendly_name_via_enum,
     get_gdi_name,
     get_monitor_device_path,
@@ -200,21 +203,32 @@ def get_display_props(device_name: str) -> dict[str, str]:
     config = query_all_config()
     if config:
         paths, _modes, path_count, _mode_count = config
-        for i in range(path_count):
-            gdi_name = get_gdi_name(paths[i])
-            if gdi_name == device_name:
-                adapter = get_adapter_name(paths[i])
-                if adapter:
-                    props["adapter"] = adapter
-                mon_path = get_monitor_device_path(paths[i])
-                if mon_path:
-                    props["monitor_path"] = mon_path
-                break
+        props.update(_get_config_props(device_name, paths, path_count))
 
     edid = get_edid(device_name)
     if edid:
         props.update(edid)
 
+    return props
+
+
+def _get_config_props(device_name: str, paths: tuple, path_count: int) -> dict[str, str]:
+    """从 QDC 路径列表中查找并收集指定显示器的配置属性。"""
+    props = {}
+    for i in range(path_count):
+        gdi_name = get_gdi_name(paths[i])
+        if gdi_name != device_name:
+            continue
+        adapter = get_adapter_name(paths[i])
+        if adapter:
+            props["adapter"] = adapter
+        mon_path = get_monitor_device_path(paths[i])
+        if mon_path:
+            props["monitor_path"] = mon_path
+        conn_type = get_connector_type(paths[i])
+        if conn_type:
+            props["connector_type"] = conn_type
+        break
     return props
 
 

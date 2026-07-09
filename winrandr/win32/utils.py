@@ -15,6 +15,7 @@ from winrandr.win32.bindings import (
     _SetDisplayConfig,
 )
 from winrandr.win32.constants import (
+    CONNECTOR_TYPE_MAP,
     DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME,
     DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME,
     DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME,
@@ -83,6 +84,17 @@ def get_monitor_device_path(path: DISPLAYCONFIG_PATH_INFO) -> str:
     tname.header.id = path.targetInfo.id
     ret = _DisplayConfigGetDeviceInfo(byref(tname.header))
     return tname.monitorDevicePath if ret == 0 else ""
+
+
+def get_connector_type(path: DISPLAYCONFIG_PATH_INFO) -> str:
+    """获取路径对应的连接器类型（HDMI/DisplayPort/USB-C 等）。"""
+    tname = DISPLAYCONFIG_TARGET_DEVICE_NAME()
+    tname.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME
+    tname.header.size = sizeof(DISPLAYCONFIG_TARGET_DEVICE_NAME)
+    tname.header.adapterId = path.targetInfo.adapterId
+    tname.header.id = path.targetInfo.id
+    ret = _DisplayConfigGetDeviceInfo(byref(tname.header))
+    return "" if ret != 0 else CONNECTOR_TYPE_MAP.get(tname.targetFlags & 0xFF, "")
 
 
 def query_active_config() -> tuple | None:
