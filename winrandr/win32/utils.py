@@ -42,7 +42,6 @@ from winrandr.win32.structures import (
 )
 
 logger = logging.getLogger(__name__)
-
 _SDC_AVAILABLE = None
 _QDC_CACHE = None
 _QDC_ALL_CACHE = None
