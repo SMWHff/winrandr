@@ -102,15 +102,12 @@ def query_active_config() -> QdcConfig | None:
     global _QDC_CACHE
     if _QDC_CACHE is not None:
         return _QDC_CACHE
-
     path_count = c_uint32(0)
     mode_count = c_uint32(0)
-
     ret = _GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, byref(path_count), byref(mode_count))
     if ret != 0:
         logger.error("GetDisplayConfigBufferSizes (active) 失败, 错误码=%d", ret)
         return None
-
     paths = (DISPLAYCONFIG_PATH_INFO * path_count.value)()
     modes = (DISPLAYCONFIG_MODE_INFO * mode_count.value)()
 
@@ -137,15 +134,12 @@ def query_all_config() -> QdcConfig | None:
         return _QDC_ALL_CACHE
     path_count = c_uint32(0)
     mode_count = c_uint32(0)
-
     ret = _GetDisplayConfigBufferSizes(QDC_ALL_PATHS, byref(path_count), byref(mode_count))
     if ret != 0:
         logger.error("GetDisplayConfigBufferSizes (all) 失败, 错误码=%d", ret)
         return None
-
     paths = (DISPLAYCONFIG_PATH_INFO * path_count.value)()
     modes = (DISPLAYCONFIG_MODE_INFO * mode_count.value)()
-
     ret = _QueryDisplayConfig(
         QDC_ALL_PATHS,
         byref(path_count),
@@ -294,7 +288,13 @@ def apply_filtered(
     if not valid_idxs:
         logger.warning("所有 %d 个路径均被过滤（无效 mode 索引），跳过 SetDisplayConfig", path_count)
         return False
-    valid = (DISPLAYCONFIG_PATH_INFO * len(valid_idxs))()
-    for dest, src_idx in enumerate(valid_idxs):
-        valid[dest] = paths[src_idx]
+    valid = _build_path_subset(paths, valid_idxs)
     return apply_config(valid, len(valid_idxs), modes, mode_count, flags)
+
+
+def _build_path_subset(paths: DISPLAYCONFIG_PATH_INFO, indices: list[int]) -> DISPLAYCONFIG_PATH_INFO:
+    """从源路径数组中按索引提取子集，返回紧凑的新数组。"""
+    result = (DISPLAYCONFIG_PATH_INFO * len(indices))()
+    for dest, src_idx in enumerate(indices):
+        result[dest] = paths[src_idx]
+    return result

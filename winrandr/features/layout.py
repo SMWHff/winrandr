@@ -4,8 +4,8 @@ import logging
 
 from winrandr.models import QdcConfig
 from winrandr.win32.constants import DISPLAYCONFIG_PATH_MODE_IDX_INVALID, ROTATION_MAP
-from winrandr.win32.structures import DISPLAYCONFIG_PATH_INFO
 from winrandr.win32.utils import (
+    _build_path_subset,
     apply_config,
     apply_filtered,
     find_path_idx,
@@ -112,9 +112,7 @@ def set_off(device_name: str) -> bool:
         logger.warning("无法关闭最后一块活动的显示器: %s", device_name)
         return False
 
-    new_paths = (DISPLAYCONFIG_PATH_INFO * len(kept))()
-    for dest, src_idx in enumerate(kept):
-        new_paths[dest] = paths[src_idx]
+    new_paths = _build_path_subset(paths, kept)
 
     return apply_config(new_paths, len(kept), modes, mode_count)
 
