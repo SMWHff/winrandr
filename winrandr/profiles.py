@@ -158,6 +158,7 @@ def load_profile(name: str) -> bool:  # noqa: C901  # 循环中含多条 API 调
     if not set_noprimary():
         logger.warning("清除主屏标记失败")
         print("警告: 清除主屏标记失败", file=sys.stderr)
+        success = False
 
     for dc in configs:
         dn = dc["name"]
