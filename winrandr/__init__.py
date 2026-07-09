@@ -1,6 +1,6 @@
 """winrandr — Windows xrandr-like display configuration tool."""
 
-__version__ = "0.9.0"
+__version__ = "0.9.1"
 
 __all__ = [
     "GDI_DEVICE_PREFIX",
