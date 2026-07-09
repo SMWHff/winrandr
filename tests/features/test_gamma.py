@@ -13,6 +13,17 @@ def test_set_brightness_success():
                     assert set_brightness(r"\\.\DISPLAY1", 0.8) is True
 
 
+def test_set_brightness_over_limit():
+    """API 层面不拒绝 brightness > 2.0（仅 handler 有警告）。"""
+    from winrandr.features.gamma import set_brightness
+
+    with patch("winrandr.features.gamma._CreateDCW", return_value=0x1234):
+        with patch("winrandr.features.gamma._GetDeviceGammaRamp", return_value=1):
+            with patch("winrandr.features.gamma._SetDeviceGammaRamp", return_value=1):
+                with patch("winrandr.features.gamma._DeleteDC"):
+                    assert set_brightness(r"\\.\DISPLAY1", 3.0) is True
+
+
 def test_set_brightness_negative():
     from winrandr.features.gamma import set_brightness
 

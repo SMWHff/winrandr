@@ -1,6 +1,7 @@
 """Tests for CLI handler functions with dry-run mode."""
 
 from argparse import Namespace
+from unittest.mock import patch
 
 import pytest
 
@@ -196,6 +197,13 @@ def test_preferred():
 
 def test_off():
     _handle_off(_ns(off=True), DN)
+
+
+def test_off_dry_run():
+    """dry-run 下 _handle_off 不调用 set_off。"""
+    with patch("winrandr.cli.handlers.set_off", return_value=True) as mock_fn:
+        _handle_off(_ns(off=True, dry_run=True), DN)
+        assert mock_fn.called is False
 
 
 # --- _msg (dry-run helper) ---
