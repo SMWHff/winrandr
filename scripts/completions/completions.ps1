@@ -25,7 +25,7 @@ Register-ArgumentCompleter -Native -CommandName winrandr, winrandr.exe -ScriptBl
         $displays = & winrandr --json 2>$null | ConvertFrom-Json 2>$null
         if ($displays) {
             $displays | ForEach-Object {
-                $name = $_.name -replace '\\\\\\.\\\\', ''
+                $name = $_.name -replace '\\\\\\.\\', ''
                 if ($name) {
                     [System.Management.Automation.CompletionResult]::new($name, $name, 'ParameterValue', "$($_.friendly_name) $($_.width)x$($_.height)")
                 }
@@ -77,8 +77,9 @@ Register-ArgumentCompleter -Native -CommandName winrandr, winrandr.exe -ScriptBl
         [PSCustomObject]@{Option='--preferred';      Description='首选分辨率'}
         [PSCustomObject]@{Option='--off';            Description='关闭显示器'}
         [PSCustomObject]@{Option='--brightness';     Description='设置亮度'; NeedsArg=$true}
+        [PSCustomObject]@{Option='--night-mode';     Description='夜间模式（减少蓝光）'; NeedsArg=$true}
         [PSCustomObject]@{Option='--gamma';          Description='伽马校正 R:G:B'; NeedsArg=$true}
-        [PSCustomObject]@{Option='--reflect';        Description='镜像翻转'; NeedsArg=$true; Args='x y xy'}
+        [PSCustomObject]@{Option='--reflect';        Description='镜像翻转'; NeedsArg=$true; Args='normal x y xy'}
         [PSCustomObject]@{Option='--left-of';        Description='放在左侧'; NeedsArg=$true}
         [PSCustomObject]@{Option='--right-of';       Description='放在右侧'; NeedsArg=$true}
         [PSCustomObject]@{Option='--above';          Description='放在上方'; NeedsArg=$true}

@@ -57,7 +57,7 @@ _winrandr_completions() {
         --json --verbose --version --dry-run --dryrun
         --output -o --mode -m --rate -r --refresh
         --pos -p --rotate --primary --preferred
-        --off --auto --brightness --gamma --reflect
+        --off --auto --brightness --night-mode --gamma --reflect
         --left-of --right-of --above --below --same-as
         --identify --noprimary
         --save-profile --load-profile --list-profiles --delete-profile
