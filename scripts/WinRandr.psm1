@@ -343,9 +343,59 @@ function Set-WinRandrNightMode {
     return _InvokeWinRandr @("--output", $Name, "--night-mode", $Strength)
 }
 
+function Set-WinRandrDryRun {
+    <#
+    .SYNOPSIS
+        启用干运行模式（仅显示将要执行的操作，不实际执行）
+    .EXAMPLE
+        Set-WinRandrDryRun
+    #>
+    return _InvokeWinRandr @("--dry-run")
+}
+
+function Set-WinRandrVerbose {
+    <#
+    .SYNOPSIS
+        启用详细输出模式
+    .EXAMPLE
+        Set-WinRandrVerbose
+    #>
+    return _InvokeWinRandr @("--verbose")
+}
+
+function Get-WinRandrProperties {
+    <#
+    .SYNOPSIS
+        获取显示器的扩展属性（EDID 信息、物理尺寸等）
+    .PARAMETER Name
+        显示器名称（如 DISPLAY1，可选；不提供时列出所有显示器的属性）
+    .EXAMPLE
+        Get-WinRandrProperties -Name DISPLAY1
+        Get-WinRandrProperties
+    #>
+    param([string]$Name)
+    if ($Name) {
+        return _InvokeWinRandr @("--output", $Name, "--prop")
+    }
+    return _InvokeWinRandr @("--prop")
+}
+
+function Get-WinRandrProvider {
+    <#
+    .SYNOPSIS
+        列出系统中的图形显示提供程序（GPU 列表）
+    .EXAMPLE
+        Get-WinRandrProvider
+    #>
+    return _InvokeWinRandr @("--listproviders")
+}
+
 Export-ModuleMember -Function @(
     "Get-WinRandrDisplays",
     "Get-WinRandrListModes",
+    "Get-WinRandrProfile",
+    "Get-WinRandrProperties",
+    "Get-WinRandrProvider",
     "Set-WinRandrResolution",
     "Set-WinRandrPosition",
     "Set-WinRandrPrimary",
@@ -355,12 +405,13 @@ Export-ModuleMember -Function @(
     "Set-WinRandrRotation",
     "Set-WinRandrReflect",
     "Set-WinRandrPreferred",
+    "Set-WinRandrDryRun",
+    "Set-WinRandrVerbose",
     "Clear-WinRandrPrimary",
     "Invoke-WinRandrIdentify",
     "Set-WinRandrOff",
     "Set-WinRandrAuto",
     "Set-WinRandrRelative",
-    "Get-WinRandrProfile",
     "Save-WinRandrProfile",
     "Restore-WinRandrProfile",
     "Remove-WinRandrProfile"
