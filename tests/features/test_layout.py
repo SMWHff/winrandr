@@ -234,9 +234,23 @@ def test_set_off_success():
         with patch("winrandr.features.layout.query_active_config", return_value=(paths, modes, 2, 2)):
             with patch("winrandr.features.layout.get_gdi_name", side_effect=fake_gdi):
                 with patch("winrandr.features.layout.apply_config", return_value=True) as mock_ac:
-                    assert set_off(r"\\.\DISPLAY1") is True
-                    mock_ac.assert_called_once()
-                    assert len(mock_ac.call_args[0][0]) == 1
+                    with patch("winrandr.api.list_displays", return_value=[MagicMock(), MagicMock()]):
+                        assert set_off(r"\\.\DISPLAY1") is True
+                        mock_ac.assert_called_once()
+                        assert len(mock_ac.call_args[0][0]) == 1
+
+
+def test_set_off_last_display_guard():
+    """验证禁止关闭最后一块活动的显示器。"""
+    from winrandr.features.layout import set_off
+
+    paths, modes = _make_valid_qdc(path_count=1)
+
+    with patch("winrandr.features.layout.set_display_config_available", return_value=True):
+        with patch("winrandr.features.layout.query_active_config", return_value=(paths, modes, 1, 2)):
+            with patch("winrandr.features.layout.get_gdi_name", return_value=r"\\.\DISPLAY1"):
+                with patch("winrandr.api.list_displays", return_value=[MagicMock()]):
+                    assert set_off(r"\\.\DISPLAY1") is False
 
 
 def test_set_noprimary_success():
