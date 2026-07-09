@@ -12,7 +12,6 @@
 
 # Markdown/docs
 *.md text eol=lf
-*.md text eol=lf
 
 # Config files
 *.yml text eol=lf
