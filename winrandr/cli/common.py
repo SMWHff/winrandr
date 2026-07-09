@@ -70,6 +70,7 @@ _MOD_OP_ATTRS = [
     "preferred",
     "off",
     "brightness",
+    "night_mode",
     "reflect",
     "gamma",
     "left_of",

@@ -75,6 +75,25 @@ def set_gamma(device_name: str, red: float, green: float, blue: float) -> bool:
     return ok
 
 
+def set_night_mode(device_name: str, strength: float) -> bool:
+    """通过衰减蓝光设置夜间模式。
+
+    strength: 0.0-1.0，0 为无变化，1 为完全移除蓝光。
+    """
+    if not 0.0 <= strength <= 1.0:
+        logger.error("夜间模式强度必须在 0.0-1.0 之间: %g", strength)
+        return False
+
+    def _modify(ramp: c_uint16) -> None:
+        for i in range(512, 768):
+            ramp[i] = max(0, min(65535, int(ramp[i] * (1.0 - strength))))
+
+    ok = _apply_gamma(device_name, _modify)
+    if ok:
+        logger.debug("设置 %s 夜间模式强度为 %.2f", device_name, strength)
+    return ok
+
+
 def identify_display(device_name: str, duration: float = 2.0) -> bool:
     """通过闪烁屏幕帮助识别指定显示器（闪 3 次后恢复原状）。"""
     try:

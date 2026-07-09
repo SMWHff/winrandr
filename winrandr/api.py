@@ -4,6 +4,7 @@ __all__ = [
     "get_display_props",
     "list_displays",
     "list_providers",
+    "set_night_mode",
     "set_position_relative",
 ]
 
@@ -15,6 +16,7 @@ from winrandr.features.gamma import (  # noqa: F401
     identify_display,
     set_brightness,
     set_gamma,
+    set_night_mode,
 )
 from winrandr.features.layout import (  # noqa: F401
     set_noprimary,

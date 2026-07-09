@@ -9,6 +9,7 @@ from winrandr.api import (
     set_auto,
     set_brightness,
     set_gamma,
+    set_night_mode,
     set_off,
     set_position,
     set_position_relative,
@@ -121,6 +122,22 @@ def _handle_brightness(args: Namespace, dn: str) -> None:
     if not args.dry_run and not set_brightness(dn, args.brightness):
         _fail("设置亮度失败", ["某些驱动或远程桌面环境不支持亮度调节", "使用 --verbose 查看详细日志"])
     _msg(args, f"已将 {args.output} 亮度设为 {args.brightness}")
+
+
+def _handle_night_mode(args: Namespace, dn: str) -> None:
+    val = args.night_mode
+    if val in ("light", "medium", "heavy"):
+        strength = {"light": 0.2, "medium": 0.5, "heavy": 0.8}[val]
+    else:
+        try:
+            strength = float(val)
+        except (ValueError, TypeError):
+            _fail("--night-mode 参数无效", ["使用 light(20%)/medium(50%)/heavy(80%) 或数值 0.0-1.0"])
+        if not 0.0 <= strength <= 1.0:
+            _fail("夜间模式强度必须在 0.0-1.0 之间")
+    if not args.dry_run and not set_night_mode(dn, strength):
+        _fail("设置夜间模式失败", ["某些驱动或远程桌面环境不支持伽马校正", "使用 --verbose 查看详细日志"])
+    _msg(args, f"已将 {args.output} 的蓝光强度减弱 {int(strength * 100)}%")
 
 
 def _handle_reflect(args: Namespace, dn: str) -> None:
