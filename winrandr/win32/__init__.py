@@ -1,3 +1,3 @@
 """Win32 底层显示 API：常量、结构体、函数绑定、工具函数。"""
 
-# 各子模块独立导入，不在此处 re-export
+from winrandr.win32.constants import GDI_DEVICE_PREFIX  # noqa: F401

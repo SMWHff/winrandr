@@ -23,6 +23,7 @@ from winrandr.cli.handlers import (
     _handle_identify,
     _handle_listmodes,
     _handle_mode,
+    _handle_night_mode,
     _handle_off,
     _handle_pos,
     _handle_preferred,
@@ -41,6 +42,7 @@ from winrandr.profiles import (
     preview_save,
     save_profile,
 )
+from winrandr.win32.constants import GDI_DEVICE_PREFIX
 
 
 def _handle_providers(args: Namespace) -> None:
@@ -160,10 +162,12 @@ def _handle_global_ops(args: Namespace) -> None:
     if not targets:
         _fail("没有已连接的显示器")
     for t in targets:
-        short = t.name.replace("\\\\.\\", "")
+        short = t.name.replace(GDI_DEVICE_PREFIX, "")
         args.output = short
         if args.brightness is not None:
             _handle_brightness(args, t.name)
+        if args.night_mode is not None:
+            _handle_night_mode(args, t.name)
         if args.gamma is not None:
             _handle_gamma(args, t.name)
 
@@ -186,6 +190,8 @@ def _dispatch_display_ops(args: Namespace, device_name: str) -> None:  # noqa: C
         _handle_off(args, device_name)
     if args.brightness is not None:
         _handle_brightness(args, device_name)
+    if args.night_mode is not None:
+        _handle_night_mode(args, device_name)
     if args.reflect:
         _handle_reflect(args, device_name)
     if args.gamma:
@@ -235,7 +241,7 @@ def main() -> None:  # noqa: C901  # 调度型函数，分支复杂度本质
         return
 
     # 全局操作：亮度/伽马可不带 --output，应用到所有已连接显示器
-    _global_only_attrs = frozenset({"brightness", "gamma"})
+    _global_only_attrs = frozenset({"brightness", "gamma", "night_mode"})
     if not args.output:
         mod_attrs = {a for a in _MOD_OP_ATTRS if getattr(args, a, None)}
         if mod_attrs and mod_attrs.issubset(_global_only_attrs):
