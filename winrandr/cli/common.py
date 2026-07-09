@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 from argparse import Namespace
+from typing import NoReturn
 
 from winrandr.api import list_displays, list_providers
 from winrandr.win32.constants import GDI_DEVICE_PREFIX
@@ -15,14 +16,26 @@ def _setup_logging() -> None:
     root = logging.getLogger()
     if root.handlers:
         return
-    log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
-    os.makedirs(log_dir, exist_ok=True)
+
+    # 可执行文件打包后，日志输出到 exe 同目录；否则输出到项目根目录下的 logs/
+    if getattr(sys, "frozen", False):
+        log_dir = os.path.join(os.path.dirname(sys.executable), "logs")
+    else:
+        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
+
     root.setLevel(logging.WARNING)
     fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-    handlers = [
-        logging.FileHandler(os.path.join(log_dir, "winrandr.log"), encoding="utf-8", delay=True),
+    handlers: list[logging.Handler] = [
         logging.StreamHandler(sys.stderr),
     ]
+    # 文件日志：目录创建失败或不可写时静默降级，不阻塞程序
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+        fh = logging.FileHandler(os.path.join(log_dir, "winrandr.log"), encoding="utf-8", delay=True)
+        handlers.insert(0, fh)
+    except OSError:
+        logger.warning("无法创建日志目录 %s，文件日志已禁用", log_dir)
+
     for h in handlers:
         h.setFormatter(fmt)
         root.addHandler(h)
@@ -38,7 +51,7 @@ def _normalize_name(name: str) -> str:
     return prefix + "DISPLAY" + n
 
 
-def _fail(msg: str, suggestions: list[str] | None = None) -> None:
+def _fail(msg: str, suggestions: list[str] | None = None) -> NoReturn:
     print(f"错误: {msg}", file=sys.stderr)
     if suggestions:
         print("建议:", file=sys.stderr)
