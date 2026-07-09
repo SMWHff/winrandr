@@ -10,6 +10,7 @@ from winrandr.cli.handlers import (
     _handle_brightness,
     _handle_gamma,
     _handle_mode,
+    _handle_night_mode,
     _handle_off,
     _handle_pos,
     _handle_preferred,
@@ -34,6 +35,7 @@ def _ns(**kwargs) -> Namespace:
         preferred=None,
         off=None,
         brightness=None,
+        night_mode=None,
         reflect=None,
         gamma=None,
         identify=False,
@@ -209,3 +211,45 @@ def test_msg_dry_run(capsys):
     _msg(_ns(dry_run=True), "测试消息")
     out, _ = capsys.readouterr()
     assert out == "(Dry-Run) 测试消息\n"
+
+
+# --- _handle_night_mode (dry-run) ---
+
+
+def test_night_mode_light():
+    """Preset light should work in dry-run mode."""
+    _handle_night_mode(_ns(night_mode="light"), DN)
+
+
+def test_night_mode_medium():
+    """Preset medium should work in dry-run mode."""
+    _handle_night_mode(_ns(night_mode="medium"), DN)
+
+
+def test_night_mode_heavy():
+    """Preset heavy should work in dry-run mode."""
+    _handle_night_mode(_ns(night_mode="heavy"), DN)
+
+
+def test_night_mode_numeric():
+    """Numeric string 0.3 should work in dry-run mode."""
+    _handle_night_mode(_ns(night_mode="0.3"), DN)
+
+
+def test_night_mode_invalid():
+    """Invalid string should raise SystemExit."""
+    with pytest.raises(SystemExit):
+        _handle_night_mode(_ns(night_mode="invalid"), DN)
+
+
+def test_night_mode_out_of_range():
+    """Out of range numeric string should raise SystemExit."""
+    with pytest.raises(SystemExit):
+        _handle_night_mode(_ns(night_mode="1.5"), DN)
+
+
+def test_night_mode_dry_run(capsys):
+    """Dry-run mode should print Dry-Run message and NOT call set_night_mode."""
+    _handle_night_mode(_ns(night_mode="medium"), DN)
+    out, _ = capsys.readouterr()
+    assert "Dry-Run" in out
