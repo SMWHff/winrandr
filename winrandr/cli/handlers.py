@@ -196,15 +196,17 @@ def _handle_identify(args: Namespace, dn: str) -> None:
     _msg(args, f"已对 {args.output} 执行闪屏识别")
 
 
+_RELATIONS = (
+    ("left_of", "left-of"),
+    ("right_of", "right-of"),
+    ("above", "above"),
+    ("below", "below"),
+    ("same_as", "same-as"),
+)
+
+
 def _handle_relative(args: Namespace, dn: str) -> None:
-    _relations = (
-        ("left_of", "left-of"),
-        ("right_of", "right-of"),
-        ("above", "above"),
-        ("below", "below"),
-        ("same_as", "same-as"),
-    )
-    for attr, rel in _relations:
+    for attr, rel in _RELATIONS:
         ref = getattr(args, attr, None)
         if ref:
             if not args.dry_run and not set_position_relative(dn, ref, rel):

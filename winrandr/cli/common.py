@@ -35,7 +35,7 @@ def _normalize_name(name: str) -> str:
         return n
     if n.startswith("DISPLAY"):
         return prefix + n
-    return prefix + "DISPLAY" + n if n.isdigit() else name
+    return prefix + "DISPLAY" + n
 
 
 def _fail(msg: str, suggestions: list[str] | None = None) -> None:

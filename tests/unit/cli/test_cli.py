@@ -25,7 +25,7 @@ from winrandr.cli import (
         ("2", r"\\.\DISPLAY2"),
         (r"\\.\DISPLAY1", r"\\.\DISPLAY1"),
         ("\\\\.\\DISPLAY1", r"\\.\DISPLAY1"),
-        ("WinDisc", "WinDisc"),
+        ("WinDisc", r"\\.\DISPLAYWINDISC"),
     ],
 )
 def test_normalize_name(input_name, expected):
