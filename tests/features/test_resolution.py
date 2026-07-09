@@ -12,6 +12,29 @@ def test_enumerate_modes_empty():
         assert modes == []
 
 
+def test_enumerate_modes_fractional_refresh_rates():
+    """QDC 报告的 59.94 应与 EnumDisplaySettings 的 60 匹配。"""
+    from ctypes import sizeof
+
+    from winrandr.features.resolution import enumerate_modes
+    from winrandr.win32.structures import DEVMODE
+
+    def fake_enum(_name, _i, dm_ptr):
+        dm_ptr._obj.dmSize = sizeof(DEVMODE)
+        if _i == 0:
+            dm_ptr._obj.dmPelsWidth = 1920
+            dm_ptr._obj.dmPelsHeight = 1080
+            dm_ptr._obj.dmDisplayFrequency = 60
+            return 1
+        return 0  # 无更多模式
+
+    with patch("winrandr.features.resolution._EnumDisplaySettings", side_effect=fake_enum):
+        # cur_refresh=59.94 模拟 QDC 报告分数刷新率
+        modes = enumerate_modes("DISPLAY1", 1920, 1080, 59.94)
+        assert len(modes) == 1
+        assert modes[0].is_current is True
+
+
 def test_enumerate_modes_skips_invalid():
     """无效尺寸（frequency=0）的 mode 应跳过（覆盖 33->44 分支）。"""
     from ctypes import sizeof
