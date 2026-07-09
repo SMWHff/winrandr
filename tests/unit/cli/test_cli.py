@@ -147,6 +147,38 @@ def test_apply_aliases_y_only():
     assert ns.reflect == "y"
 
 
+def test_apply_aliases_reflect_x_wins_over_y():
+    """--reflect x 与 -y 同时使用时，--reflect 优先，-y 被忽略，记录警告。"""
+    ns = _ns(reflect="x", x=False, y=True)
+    _apply_aliases(ns)
+    assert ns.reflect == "x"
+
+
+def test_apply_aliases_reflect_xy_wins_over_x(caplog):
+    """--reflect xy 与 -x 同时使用时，--reflect 优先，-x 被忽略，记录警告。"""
+    ns = _ns(reflect="xy", x=True, y=False)
+    _apply_aliases(ns)
+    assert ns.reflect == "xy"
+    assert len(caplog.records) == 1
+    assert "被忽略" in caplog.records[0].message
+
+
+def test_apply_aliases_reflect_y_wins_over_x(caplog):
+    """--reflect y 与 -x 同时使用时，--reflect 优先，-x 被忽略，记录警告。"""
+    ns = _ns(reflect="y", x=True, y=False)
+    _apply_aliases(ns)
+    assert ns.reflect == "y"
+    assert len(caplog.records) == 1
+    assert "被忽略" in caplog.records[0].message
+
+
+def test_apply_aliases_reflect_normal_with_x():
+    """--reflect normal（即清除）后 -x 仍生效，因为 normal 视为「未设置」。"""
+    ns = _ns(reflect="normal", x=True, y=False)
+    _apply_aliases(ns)
+    assert ns.reflect == "x"
+
+
 def test_is_mod_op_true():
     """修改类操作应返回 True。"""
     for attr in _MOD_OP_ATTRS:
