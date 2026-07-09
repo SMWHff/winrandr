@@ -1,5 +1,7 @@
 """内部工具函数：显示配置查询、设备信息获取、配置应用。"""
 
+from __future__ import annotations
+
 import logging
 from ctypes import byref, c_uint32, sizeof
 
@@ -97,7 +99,7 @@ def get_connector_type(path: DISPLAYCONFIG_PATH_INFO) -> str:
     return "" if ret != 0 else CONNECTOR_TYPE_MAP.get(tname.targetFlags & 0xFF, "")
 
 
-def query_active_config() -> tuple | None:
+def query_active_config() -> tuple[DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO, int, int] | None:
     """查询当前活动显示配置（内部缓存，apply_config 成功后自动失效）。"""
     global _QDC_CACHE
     if _QDC_CACHE is not None:
@@ -130,7 +132,7 @@ def query_active_config() -> tuple | None:
     return _QDC_CACHE
 
 
-def query_all_config() -> tuple | None:
+def query_all_config() -> tuple[DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO, int, int] | None:
     """查询所有显示配置（含已断开的），同上返回格式（内部缓存，apply_config 成功后自动失效）。"""
     global _QDC_ALL_CACHE
     if _QDC_ALL_CACHE is not None:
