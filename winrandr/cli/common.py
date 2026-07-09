@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 from argparse import Namespace
+from typing import NoReturn
 
 from winrandr.api import list_displays, list_providers
 from winrandr.win32.constants import GDI_DEVICE_PREFIX
@@ -38,7 +39,7 @@ def _normalize_name(name: str) -> str:
     return prefix + "DISPLAY" + n
 
 
-def _fail(msg: str, suggestions: list[str] | None = None) -> None:
+def _fail(msg: str, suggestions: list[str] | None = None) -> NoReturn:
     print(f"错误: {msg}", file=sys.stderr)
     if suggestions:
         print("建议:", file=sys.stderr)
