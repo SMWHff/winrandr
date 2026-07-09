@@ -48,6 +48,17 @@ def test_main_gamma_global():
             assert mock_fn.call_count == 2
 
 
+def test_main_night_mode_global():
+    """--night-mode 不带 --output 应应用到所有已连接显示器。"""
+    d1 = _fake_display("DISPLAY1")
+    d2 = _fake_display("DISPLAY2")
+    with patch("winrandr.cli.list_displays", return_value=[d1, d2]):
+        with patch("winrandr.cli.handlers.set_night_mode", return_value=True) as mock_fn:
+            with patch("sys.argv", ["winrandr", "--night-mode", "0.3"]):
+                cli_main()
+            assert mock_fn.call_count == 2
+
+
 def test_main_brightness_with_output_still_works():
     """--brightness 带 --output 仍只应用到指定显示器。"""
     with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
