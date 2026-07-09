@@ -307,11 +307,49 @@ function Remove-WinRandrProfile {
     return _InvokeWinRandr @("--delete-profile", $Name)
 }
 
+function Get-WinRandrListModes {
+    <#
+    .SYNOPSIS
+        列出显示器的所有可用分辨率模式
+    .PARAMETER Name
+        显示器名称（如 DISPLAY1，可选；不提供时列出所有显示器的模式）
+    .EXAMPLE
+        Get-WinRandrListModes -Name DISPLAY1
+        Get-WinRandrListModes
+    #>
+    param([string]$Name)
+    if ($Name) {
+        return _InvokeWinRandr @("--output", $Name, "--listmodes")
+    }
+    return _InvokeWinRandr @("--listmodes")
+}
+
+function Set-WinRandrNightMode {
+    <#
+    .SYNOPSIS
+        设置显示器夜间模式（减少蓝光）
+    .PARAMETER Name
+        显示器名称（如 DISPLAY1）
+    .PARAMETER Strength
+        夜间模式强度：预设 light/medium/heavy 或数值 0.0-1.0
+    .EXAMPLE
+        Set-WinRandrNightMode -Name DISPLAY1 -Strength medium
+        Set-WinRandrNightMode -Name DISPLAY1 -Strength "0.5"
+    #>
+    param(
+        [Parameter(Mandatory)] [string]$Name,
+        [Parameter(Mandatory)] [string]$Strength
+    )
+    return _InvokeWinRandr @("--output", $Name, "--night-mode", $Strength)
+}
+
 Export-ModuleMember -Function @(
     "Get-WinRandrDisplays",
+    "Get-WinRandrListModes",
     "Set-WinRandrResolution",
     "Set-WinRandrPosition",
     "Set-WinRandrPrimary",
+    "Set-WinRandrNightMode",
     "Set-WinRandrBrightness",
     "Set-WinRandrGamma",
     "Set-WinRandrRotation",
