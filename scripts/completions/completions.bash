@@ -9,7 +9,6 @@ _winrandr_completions() {
     # 需要显示器名的参数
     local rotate_args="normal inverted left right"
     local reflect_args="normal x y xy"
-    local orientation_args="normal inverted left right 0 1 2 3"
 
     # 判断前一个参数类型
     case $prev in
@@ -42,15 +41,7 @@ _winrandr_completions() {
             COMPREPLY=($(compgen -W "$reflect_args" -- "$cur"))
             return
             ;;
-        --orientation)
-            COMPREPLY=($(compgen -W "$orientation_args" -- "$cur"))
-            return
-            ;;
-        --screen)
-            COMPREPLY=($(compgen -W "0 1 2" -- "$cur"))
-            return
-            ;;
-        --mode|-m|-s|--size)
+        --mode|-m)
             # --mode 提示但不做动态补全（数据量大）
             return
             ;;
@@ -62,13 +53,13 @@ _winrandr_completions() {
     # 顶层选项
     local opts="
         --help -q --query --current --listmodes --listproviders
-        --listmonitors --listactivemonitors --prop --properties
+        --listmonitors --prop --properties
         --json --verbose --version --dry-run --dryrun
-        --output -o --mode -m -s --size --rate -r --refresh
-        --pos -p --rotate --orientation --primary --preferred
+        --output -o --mode -m --rate -r --refresh
+        --pos -p --rotate --primary --preferred
         --off --auto --brightness --gamma --reflect
         --left-of --right-of --above --below --same-as
-        --identify --noprimary -x -y --screen --nograb --listactivemonitors
+        --identify --noprimary
         --save-profile --load-profile --list-profiles --delete-profile
     "
 

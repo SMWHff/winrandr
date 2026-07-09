@@ -57,9 +57,6 @@ Register-ArgumentCompleter -Native -CommandName winrandr, winrandr.exe -ScriptBl
         [PSCustomObject]@{Option='-q';               Description='查询显示状态（别名 --query）'}
         [PSCustomObject]@{Option='--query';          Description='查询显示状态'}
         [PSCustomObject]@{Option='--current';        Description='查询当前配置'}
-        [PSCustomObject]@{Option='--orientation';    Description='旋转方向'; NeedsArg=$true; Args='normal|left|right|inverted'}
-        [PSCustomObject]@{Option='-x';               Description='水平镜像翻转'}
-        [PSCustomObject]@{Option='-y';               Description='垂直镜像翻转'}
         [PSCustomObject]@{Option='--version';        Description='显示版本号'}
         [PSCustomObject]@{Option='--listmodes';      Description='列出所有可用分辨率'}
         [PSCustomObject]@{Option='--prop';           Description='显示显示器扩展属性'}
@@ -99,7 +96,6 @@ Register-ArgumentCompleter -Native -CommandName winrandr, winrandr.exe -ScriptBl
         [PSCustomObject]@{Option='--delete-profile';Description='删除指定存档'; NeedsArg=$true}
         [PSCustomObject]@{Option='--listproviders';  Description='列出 GPU 适配器'}
         [PSCustomObject]@{Option='--listmonitors';  Description='列出带编号的显示器'}
-        [PSCustomObject]@{Option='--listactivemonitors'; Description='列出活动显示器（同 --listmonitors）'}
     )
 
     # 过滤：只返回尚未使用的参数 + 匹配当前输入
