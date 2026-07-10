@@ -33,4 +33,4 @@ jobs:
         with:
           files: dist/winrandr.exe
           body: |
-            使用 `bash scripts/dev/setup.sh` 初始化，详见 README。
+            详见 [CHANGELOG](https://github.com/SMWHff/winrandr/blob/main/docs/CHANGELOG.md) 和 [发版流程](https://github.com/SMWHff/winrandr/blob/main/docs/release-process.md)。
