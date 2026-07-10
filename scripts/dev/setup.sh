@@ -1,6 +1,6 @@
 #!/bin/bash
 cd "$(dirname "$0")/../.."
-set -e
+set -euo pipefail
 
 echo "==> 检查 uv..."
 if ! command -v uv &>/dev/null; then

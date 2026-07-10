@@ -1,6 +1,6 @@
 #!/bin/bash
 cd "$(dirname "$0")/../.."
-set -e
+set -euo pipefail
 
 echo "==> 安装依赖..."
 uv sync --dev

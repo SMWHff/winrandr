@@ -96,7 +96,7 @@ EXE="dist/winrandr.exe"
 if [ ! -f "$EXE" ]; then
     die "构建失败：$EXE 未生成"
 fi
-EXE_SIZE=$(stat -c%s "$EXE" 2>/dev/null || echo 0)
+EXE_SIZE=$(wc -c < "$EXE" 2>/dev/null || echo 0)
 if [ "$EXE_SIZE" -lt 1000000 ]; then  # 至少 1MB
     die "构建失败：$EXE 大小异常（${EXE_SIZE} bytes）"
 fi

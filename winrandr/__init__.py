@@ -8,6 +8,7 @@ __all__ = [
     "ROTATION_NAMES",
     "DisplayInfo",
     "DisplayMode",
+    "__version__",
     "delete_profile",
     "diff_profile",
     "enumerate_modes",

@@ -14,3 +14,10 @@ htmlcov/
 .coverage.*
 *.cover
 .claude/
+
+# Editor artifacts
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

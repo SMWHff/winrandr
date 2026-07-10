@@ -16,7 +16,7 @@
 
 ### CI
 
-- 覆盖率阈值从 85% 提升至 95%（test.yml + pyproject.toml）
+- CI 覆盖率阈值对齐本地配置（99%→99%，test.yml）
 - `.gitignore` 添加 `*.cover` 忽略 coverage 并行模式临时文件
 - 清理 `.claude/worktrees/` 遗留目录
 
