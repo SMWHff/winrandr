@@ -1,7 +1,7 @@
 name: Release
 
 on:
-  # 账户欠费，GitHub Actions 被锁定，CI 暂时关闭
+  # 因 GitHub Actions 账户欠费暂不可用，本地发版详见 docs/release-process.md
   workflow_dispatch:
 
 jobs:

@@ -55,7 +55,7 @@ source = ["winrandr"]
 branch = true
 
 [tool.coverage.report]
-fail_under = 95
+fail_under = 99
 
 [tool.ruff]
 target-version = "py310"

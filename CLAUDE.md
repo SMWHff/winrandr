@@ -23,6 +23,10 @@ uv run pytest tests/test_cli.py::test_parser_basic -v  # 单个测试
 # 构建单文件 exe（输出到 dist/winrandr.exe）
 bash scripts/build/build.sh
 
+# 发版（详见 docs/release-process.md）
+bash scripts/release/publish.sh patch    # 交互模式
+AUTO_CONFIRM=1 bash scripts/release/publish.sh patch  # 全自动
+
 # 构建 exe（清除 Nuitka 缓存后重建，变更包结构时必须）
 uv run nuitka --clean-cache=all && rm -rf dist/* && bash scripts/build/build.sh
 ```
@@ -84,6 +88,9 @@ scripts/
 ├── build/
 │   ├── build.sh          构建 exe（Nuitka，入口 winrandr 包）
 │   └── clean.sh          清理构建缓存和 __pycache__
+├── release/
+│   ├── publish.sh        一键发版流程（8 步，每步确认）
+│   └── bump-version.sh   版本号更新脚本
 └── completions/
     ├── completions.ps1   PowerShell Tab 补全
     └── completions.bash  Bash/Zsh Tab 补全

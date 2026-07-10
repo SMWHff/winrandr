@@ -29,6 +29,24 @@ winrandr/                 核心包
     └── repair.py         缺失 mode 条目修复（虚拟驱动补偿）
 ```
 
+### scripts/
+
+```
+scripts/
+├── WinRandr.psm1         PowerShell 模块（24 个 cmdlet）
+├── dev/                  开发工具（run/lint/test/setup）
+├── build/                构建脚本（build/clean）
+├── release/              发版流程（publish/bump-version）
+└── completions/          Tab 补全（ps1/bash）
+```
+
+### docs/
+
+- `docs/architecture.md` — 本文，架构设计
+- `docs/release-process.md` — 标准化发版流程文档
+- `docs/CHANGELOG.md` — 版本变更日志
+- `docs/usage.md` — CLI 使用指南
+
 ## 文件职责
 
 ### main.py
