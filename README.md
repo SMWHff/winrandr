@@ -266,7 +266,7 @@ bash scripts/build/build.sh
 ```bash
 bash scripts/dev/test.sh        # 集成测试（lint + pytest + 覆盖率）
 bash scripts/dev/lint.sh        # Lint 检查
-uv run pytest tests/ -v     # 单元测试（446 项，100% 覆盖率）
+uv run pytest tests/ -v     # 单元测试（442 项，99% 覆盖率）
 ```
 
 ## 技术栈
@@ -289,9 +289,10 @@ winrandr/                 核心包
 │   ├── common.py         CLI 通用工具函数（日志/参数校验/辅助）
 │   └── handlers.py       CLI 操作处理函数
 ├── api.py                公开 API：list_displays / set_resolution 等
-├── edid.py               EDID 读取与解析
+├── edid.py               EDID 读取与解析（注册表 + 二进制解析）
 ├── formatter.py          xrandr 风格格式化输出
 ├── models.py             数据模型 (DisplayInfo, DisplayMode)
+├── profiles.py           配置存档管理（保存/恢复显示器布局）
 ├── features/
 │   ├── __init__.py
 │   ├── gamma.py          伽马校正、亮度与夜览模式（SetDeviceGammaRamp）
@@ -300,9 +301,10 @@ winrandr/                 核心包
 └── win32/                底层 Win32 绑定层
     ├── __init__.py       子包统一 re-export
     ├── constants.py      Win32 API 常量 + 旋转映射表
-    ├── structures.py     ctypes 结构体定义
+    ├── structures.py     ctypes 结构体定义（DISPLAYCONFIG_*、DEVMODE 等）
     ├── bindings.py       Win32 API 函数绑定 (ctypes 声明)
-    └── utils.py          内部工具函数 (查询/过滤/应用配置)
+    ├── utils.py          内部工具函数 (查询/过滤/应用配置)
+    └── repair.py         缺失 mode 条目修复（虚拟驱动补偿）
 
 tests/
 ├── conftest.py           共享测试夹具

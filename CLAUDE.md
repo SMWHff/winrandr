@@ -56,9 +56,10 @@ winrandr/                 核心包
     ├── constants.py      Win32 API 常量 + 旋转映射表
     ├── structures.py     ctypes 结构体定义（DISPLAYCONFIG_*、DEVMODE 等）
     ├── bindings.py       Win32 API 函数绑定 (ctypes 声明)
-    └── utils.py          内部工具函数 (查询/过滤/应用配置)
+    ├── utils.py          内部工具函数 (查询/过滤/应用配置)
+    └── repair.py         缺失 mode 条目修复（虚拟驱动补偿）
 
-tests/                    测试（446 项，100% 覆盖率）
+tests/                    测试（442 项，99% 覆盖率）
 ├── conftest.py           共享测试夹具（_fake_display 工厂）
 ├── unit/                 单元测试
 │   ├── test_win32_utils.py   Win32 工具函数测试
@@ -185,6 +186,14 @@ usage: xrandr [options]
 **已实现：** 查询/列模式/分辨率/刷新率/位置/旋转/主屏/关闭/亮度/伽马/夜览模式/镜像翻转(xy)/相对定位/首选分辨率/auto/dry-run/GPU 列表/扩展属性/JSON 输出/listmonitors/连接类型/profiles
 
 **不支持（无标准 Win32 API）：** `--reflect x|y` 单轴、`--scale`、`--transform`、`--fb`、`--panning`
+
+## 测试规范
+
+- **关键规则：所有正向用例必须是真实的，只有异常分支在无法正常实现的情况下才能 MOCK**
+- 正向/快乐路径 (happy path) 必须使用真实硬件 API 调用
+- Mock 仅限于无法通过真实硬件触发的错误分支（如注册表拒绝访问、虚拟驱动破坏 SDC 等）
+- 避免 mock 整个函数返回值来测试正向路径 — 这不能验证真实行为
+- `conftest.py` 中的 `_fake_display` 工厂可用于构造显示器的数据结构，但仅用于 mock 错误分支的参数构造
 
 ## 代码规范
 

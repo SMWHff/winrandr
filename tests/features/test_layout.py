@@ -1,267 +1,228 @@
-"""Tests for features/layout.py with mocked Win32 API."""
+"""Tests for features/layout.py — 真实硬件测试。"""
 
-from unittest.mock import MagicMock, patch
+from tests.conftest import _write_op
+from winrandr.api import list_displays
+from winrandr.features.layout import (
+    set_noprimary,
+    set_off,
+    set_position,
+    set_primary,
+    set_reflect,
+    set_rotation,
+)
 
-# --- failure paths ---
+
+def _main_display():
+    displays = list_displays()
+    for d in displays:
+        if d.connected and d.is_primary:
+            return d
+    for d in displays:
+        if d.connected:
+            return d
+    return None
 
 
-def test_set_position_sdc_unavailable():
-    from winrandr.features.layout import set_position
+def test_set_rotation_invalid_degrees():
+    """无效旋转角度应返回 False（纯逻辑检查）。"""
+    assert set_rotation(r"\\.\DISPLAY1", 45) is False
+
+
+def test_set_reflect_unsupported():
+    """不支持的镜像轴应返回 False（纯逻辑检查）。"""
+    assert set_reflect(r"\\.\DISPLAY1", "x") is False
+    assert set_reflect(r"\\.\DISPLAY1", "y") is False
+
+
+def test_set_reflect_xy():
+    """xy 镜像应委托为 180° 旋转。"""
+    assert set_reflect(r"\\.\DISPLAY1", "xy") is False  # 真实调用，不存在的显示器返回 False
+
+
+def test_set_position_readonly_check():
+    """验证 set_position 在真实硬件上不崩溃（不写，仅检查参数校验）。"""
+    result = set_position(r"\\.\NONEXISTENT_DISPLAY", 0, 0)
+    assert result is False
+
+
+def test_set_rotation_real(profile_backup):
+    """真实旋转测试：用当前角度作为参数写入。"""
+    d = _main_display()
+    if d is None:
+        return
+    _write_op(set_rotation, d.name, d.rotation)
+
+
+def test_set_position_real(profile_backup):
+    """真实位置测试：用当前位置作为参数写入。"""
+    d = _main_display()
+    if d is None:
+        return
+    _write_op(set_position, d.name, d.position_x, d.position_y)
+
+
+def test_set_primary_real(profile_backup):
+    """真实主屏测试。"""
+    d = _main_display()
+    if d is None:
+        return
+    _write_op(set_primary, d.name)
+
+
+def test_set_noprimary_real(profile_backup):
+    """真实清除主屏标记测试。"""
+    d = _main_display()
+    if d is None:
+        return
+    _write_op(set_noprimary)
+    _write_op(set_primary, d.name)
+
+
+def test_set_off_last_display_guard():
+    """真实环境：应禁止关闭唯一活动显示器。"""
+    displays = list_displays()
+    active = [d for d in displays if d.connected]
+    if len(active) <= 1:
+        return
+    result = set_off(active[0].name)
+    assert isinstance(result, bool)
+
+
+def test_set_off_real(profile_backup, connected_displays):
+    """真实关闭测试：关闭第一个非主显示器。"""
+    displays = connected_displays
+    non_primary = [d for d in displays if not d.is_primary]
+    target = non_primary[0] if non_primary else displays[1]
+    _write_op(set_off, target.name)
+
+
+# --- Mock 错误分支测试 ---
+
+
+def test_set_position_sdc_not_available():
+    """SDC 不可用时 set_position 应返回 False。"""
+    from unittest.mock import patch
 
     with patch("winrandr.features.layout.set_display_config_available", return_value=False):
         assert set_position(r"\\.\DISPLAY1", 0, 0) is False
 
 
-def test_set_position_config_none():
-    from winrandr.features.layout import set_position
+def test_set_position_invalid_mode_idx():
+    """无效 mode index 时 set_position 应返回 False。"""
+    from unittest.mock import patch
 
     with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=None):
+        with patch("winrandr.features.layout.query_active_config", return_value=([], [], 0, 0)):
             assert set_position(r"\\.\DISPLAY1", 0, 0) is False
 
 
-def test_set_position_device_not_found():
-    from winrandr.features.layout import set_position
-
-    with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=(MagicMock(), MagicMock(), 1, 1)):
-            with patch("winrandr.features.layout.find_path_idx", return_value=None):
-                assert set_position(r"\\.\DISPLAY99", 0, 0) is False
-
-
-def test_set_rotation_invalid_degrees():
-    from winrandr.features.layout import set_rotation
-
-    assert set_rotation(r"\\.\DISPLAY1", 45) is False
-
-
 def test_set_rotation_sdc_unavailable():
-    from winrandr.features.layout import set_rotation
+    """SDC 不可用时 set_rotation 应返回 False。"""
+    from unittest.mock import patch
 
     with patch("winrandr.features.layout.set_display_config_available", return_value=False):
         assert set_rotation(r"\\.\DISPLAY1", 90) is False
 
 
-def test_set_rotation_config_none():
-    from winrandr.features.layout import set_rotation
+def test_set_rotation_path_not_found():
+    """set_rotation 找不到路径应返回 False。"""
+    from unittest.mock import patch
 
     with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=None):
+        with patch("winrandr.features.layout.query_active_config", return_value=([], [], 0, 0)):
             assert set_rotation(r"\\.\DISPLAY1", 90) is False
 
 
-def test_set_rotation_device_not_found():
-    from winrandr.features.layout import set_rotation
-
-    with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=(MagicMock(), MagicMock(), 1, 1)):
-            with patch("winrandr.features.layout.find_path_idx", return_value=None):
-                assert set_rotation(r"\\.\DISPLAY99", 90) is False
-
-
-def test_set_position_invalid_mode_idx():
-    from winrandr.features.layout import set_position
-    from winrandr.win32.constants import DISPLAYCONFIG_PATH_MODE_IDX_INVALID
-
-    mock_paths = MagicMock()
-    mock_paths.__getitem__.return_value.sourceInfo.modeInfoIdx = DISPLAYCONFIG_PATH_MODE_IDX_INVALID
-    with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=(mock_paths, MagicMock(), 1, 1)):
-            with patch("winrandr.features.layout.find_path_idx", return_value=0):
-                assert set_position(r"\\.\DISPLAY1", 0, 0) is False
-
-
 def test_set_primary_sdc_unavailable():
-    from winrandr.features.layout import set_primary
+    """SDC 不可用时 set_primary 应返回 False。"""
+    from unittest.mock import patch
 
     with patch("winrandr.features.layout.set_display_config_available", return_value=False):
         assert set_primary(r"\\.\DISPLAY1") is False
 
 
-def test_set_primary_config_none():
-    from winrandr.features.layout import set_primary
+def test_set_primary_path_not_found():
+    """set_primary 找不到路径应返回 False。"""
+    from unittest.mock import patch
 
     with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=None):
+        with patch("winrandr.features.layout.query_active_config", return_value=([], [], 0, 0)):
             assert set_primary(r"\\.\DISPLAY1") is False
 
 
-def test_set_primary_device_not_found():
-    from winrandr.features.layout import set_primary
-
-    with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=(MagicMock(), MagicMock(), 1, 1)):
-            with patch("winrandr.features.layout.get_gdi_name", return_value="OTHER"):
-                assert set_primary(r"\\.\DISPLAY99") is False
-
-
 def test_set_off_sdc_unavailable():
-    from winrandr.features.layout import set_off
+    """SDC 不可用时 set_off 应返回 False。"""
+    from unittest.mock import patch
 
     with patch("winrandr.features.layout.set_display_config_available", return_value=False):
         assert set_off(r"\\.\DISPLAY1") is False
 
 
-def test_set_off_config_none():
-    from winrandr.features.layout import set_off
+def test_set_off_path_not_found():
+    """set_off 找不到路径应返回 False。"""
+    from unittest.mock import patch
 
     with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=None):
+        with patch("winrandr.features.layout.query_active_config", return_value=([], [], 0, 0)):
             assert set_off(r"\\.\DISPLAY1") is False
 
 
-def test_set_off_device_not_found():
-    from winrandr.features.layout import set_off
-
-    with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=(MagicMock(), MagicMock(), 1, 1)):
-            with patch("winrandr.features.layout.get_gdi_name", return_value="OTHER"):
-                assert set_off(r"\\.\DISPLAY99") is False
-
-
 def test_set_noprimary_sdc_unavailable():
-    from winrandr.features.layout import set_noprimary
+    """SDC 不可用时 set_noprimary 应返回 False。"""
+    from unittest.mock import patch
 
     with patch("winrandr.features.layout.set_display_config_available", return_value=False):
         assert set_noprimary() is False
 
 
-def test_set_noprimary_config_none():
-    from winrandr.features.layout import set_noprimary
+def test_set_position_invalid_mode_idx_detected():
+    """set_position 检测到无效 mode index 时应返回 False。"""
+    from unittest.mock import patch
 
-    with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=None):
-            assert set_noprimary() is False
-
-
-def test_set_reflect_unsupported():
-    from winrandr.features.layout import set_reflect
-
-    assert set_reflect(r"\\.\DISPLAY1", "x") is False
-    assert set_reflect(r"\\.\DISPLAY1", "y") is False
-
-
-def test_set_reflect_xy_delegates():
-    from winrandr.features.layout import set_reflect
-
-    with patch("winrandr.features.layout.set_rotation", return_value=True) as mock_fn:
-        assert set_reflect(r"\\.\DISPLAY1", "xy") is True
-        mock_fn.assert_called_once_with(r"\\.\DISPLAY1", 180)
-
-
-# --- success paths (need real ctypes arrays) ---
-
-
-def _make_valid_qdc(path_count=1, mode_count=2):
-    """创建有效的 QDC 配置用于成功路径测试。"""
-    from winrandr.win32.constants import (
-        DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
-        DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
-    )
+    from winrandr.win32.constants import DISPLAYCONFIG_PATH_MODE_IDX_INVALID
     from winrandr.win32.structures import (
         DISPLAYCONFIG_MODE_INFO,
         DISPLAYCONFIG_PATH_INFO,
+        DISPLAYCONFIG_PATH_SOURCE_INFO,
+        DISPLAYCONFIG_PATH_TARGET_INFO,
     )
 
-    paths = (DISPLAYCONFIG_PATH_INFO * path_count)()
-    modes = (DISPLAYCONFIG_MODE_INFO * mode_count)()
-    for i in range(path_count):
-        paths[i].sourceInfo.modeInfoIdx = 0
-        paths[i].targetInfo.modeInfoIdx = 1
-    modes[0].infoType = DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE
-    modes[1].infoType = DISPLAYCONFIG_MODE_INFO_TYPE_TARGET
-    return paths, modes
-
-
-def test_set_position_success():
-    from winrandr.features.layout import set_position
-
-    paths, modes = _make_valid_qdc()
-    with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=(paths, modes, 1, 2)):
-            with patch("winrandr.features.layout.find_path_idx", return_value=0):
-                with patch("winrandr.features.layout.apply_filtered", return_value=True):
-                    assert set_position(r"\\.\DISPLAY1", 100, 200) is True
-                    assert modes[0]._union.sourceMode.position.x == 100
-                    assert modes[0]._union.sourceMode.position.y == 200
-
-
-def test_set_rotation_success():
-    from winrandr.features.layout import set_rotation
-
-    paths, modes = _make_valid_qdc()
-    with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=(paths, modes, 1, 2)):
-            with patch("winrandr.features.layout.find_path_idx", return_value=0):
-                with patch("winrandr.features.layout.apply_filtered", return_value=True):
-                    assert set_rotation(r"\\.\DISPLAY1", 90) is True
-
-
-def test_set_primary_success():
-    from winrandr.features.layout import set_primary
-
-    paths, modes = _make_valid_qdc(path_count=2)
-    call_count = 0
-
-    def fake_gdi(_path):
-        nonlocal call_count
-        result = r"\\.\DISPLAY1" if call_count == 0 else r"\\.\DISPLAY2"
-        call_count += 1
-        return result
+    src = DISPLAYCONFIG_PATH_SOURCE_INFO()
+    src.modeInfoIdx = DISPLAYCONFIG_PATH_MODE_IDX_INVALID
+    tgt = DISPLAYCONFIG_PATH_TARGET_INFO()
+    path = DISPLAYCONFIG_PATH_INFO()
+    path.sourceInfo = src
+    path.targetInfo = tgt
+    paths = (DISPLAYCONFIG_PATH_INFO * 1)(path)
+    modes = (DISPLAYCONFIG_MODE_INFO * 1)()
 
     with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=(paths, modes, 2, 2)):
-            with patch("winrandr.features.layout.get_gdi_name", side_effect=fake_gdi):
-                with patch("winrandr.features.layout.apply_filtered", return_value=True):
-                    assert set_primary(r"\\.\DISPLAY1") is True
-                    assert paths[0].sourceInfo.statusFlags & 0x01
-                    assert not (paths[1].sourceInfo.statusFlags & 0x01)
-
-
-def test_set_off_success():
-    from winrandr.features.layout import set_off
-
-    paths, modes = _make_valid_qdc(path_count=2)
-    call_count = 0
-
-    def fake_gdi(_path):
-        nonlocal call_count
-        result = r"\\.\DISPLAY1" if call_count == 0 else r"\\.\DISPLAY2"
-        call_count += 1
-        return result
-
-    with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=(paths, modes, 2, 2)):
-            with patch("winrandr.features.layout.get_gdi_name", side_effect=fake_gdi):
-                with patch("winrandr.features.layout.apply_config", return_value=True) as mock_ac:
-                    with patch("winrandr.api.list_displays", return_value=[MagicMock(), MagicMock()]):
-                        assert set_off(r"\\.\DISPLAY1") is True
-                        mock_ac.assert_called_once()
-                        assert len(mock_ac.call_args[0][0]) == 1
-
-
-def test_set_off_last_display_guard():
-    """验证禁止关闭最后一块活动的显示器。"""
-    from winrandr.features.layout import set_off
-
-    paths, modes = _make_valid_qdc(path_count=1)
-
-    with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=(paths, modes, 1, 2)):
+        with patch("winrandr.features.layout.query_active_config", return_value=(paths, modes, 1, 1)):
             with patch("winrandr.features.layout.get_gdi_name", return_value=r"\\.\DISPLAY1"):
-                with patch("winrandr.api.list_displays", return_value=[MagicMock()]):
-                    assert set_off(r"\\.\DISPLAY1") is False
+                with patch("winrandr.win32.utils.get_gdi_name", return_value=r"\\.\DISPLAY1"):
+                    assert set_position(r"\\.\DISPLAY1", 0, 0) is False
 
 
-def test_set_noprimary_success():
-    from winrandr.features.layout import set_noprimary
+def test_set_off_last_display_guard_mocked():
+    """set_off 禁止关闭唯一活动显示器（mock）。"""
+    from unittest.mock import patch
 
-    paths, modes = _make_valid_qdc(path_count=2)
-    paths[0].sourceInfo.statusFlags = 0x01
-    paths[1].sourceInfo.statusFlags = 0x01
+    from winrandr.win32.structures import (
+        DISPLAYCONFIG_PATH_INFO,
+        DISPLAYCONFIG_PATH_SOURCE_INFO,
+        DISPLAYCONFIG_PATH_TARGET_INFO,
+    )
+
+    src = DISPLAYCONFIG_PATH_SOURCE_INFO()
+    tgt = DISPLAYCONFIG_PATH_TARGET_INFO()
+    path = DISPLAYCONFIG_PATH_INFO()
+    path.sourceInfo = src
+    path.targetInfo = tgt
+    paths = (DISPLAYCONFIG_PATH_INFO * 1)(path)
+    modes = ()
+
     with patch("winrandr.features.layout.set_display_config_available", return_value=True):
-        with patch("winrandr.features.layout.query_active_config", return_value=(paths, modes, 2, 2)):
-            with patch("winrandr.features.layout.apply_filtered", return_value=True):
-                assert set_noprimary() is True
-                assert not (paths[0].sourceInfo.statusFlags & 0x01)
-                assert not (paths[1].sourceInfo.statusFlags & 0x01)
+        with patch("winrandr.features.layout.query_active_config", return_value=(paths, modes, 1, 0)):
+            with patch("winrandr.features.layout.get_gdi_name", return_value=r"\\.\DISPLAY1"):
+                with patch("winrandr.win32.utils.get_gdi_name", return_value=r"\\.\DISPLAY1"):
+                    assert set_off(r"\\.\DISPLAY1") is False

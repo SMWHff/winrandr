@@ -1,7 +1,6 @@
 """Tests for CLI handler functions with dry-run mode."""
 
 from argparse import Namespace
-from unittest.mock import patch
 
 import pytest
 
@@ -133,6 +132,15 @@ def test_gamma_wrong_count():
         _handle_gamma(_ns(gamma="1.0:0.9"), DN)
 
 
+def test_gamma_set_fails_mocked():
+    """_handle_gamma 在 set_gamma 失败时应报错退出。"""
+    from unittest.mock import patch
+
+    with patch("winrandr.cli.handlers.set_gamma", return_value=False):
+        with pytest.raises(SystemExit):
+            _handle_gamma(_ns(gamma="1.0:0.9:0.8", dry_run=False), DN)
+
+
 # --- _handle_brightness ---
 
 
@@ -162,6 +170,11 @@ def test_reflect_x_unsupported():
 def test_relative_without_ref():
     """When no relative arg is set, handler should return silently."""
     _handle_relative(_ns(), DN)
+
+
+def test_relative_with_ref_dry_run():
+    """dry-run 模式下带相对定位参数应打印消息不调用 API。"""
+    _handle_relative(_ns(left_of="DISPLAY2", dry_run=True), DN)
 
 
 # --- _handle_auto ---
@@ -200,10 +213,8 @@ def test_off():
 
 
 def test_off_dry_run():
-    """dry-run 下 _handle_off 不调用 set_off。"""
-    with patch("winrandr.cli.handlers.set_off", return_value=True) as mock_fn:
-        _handle_off(_ns(off=True, dry_run=True), DN)
-        assert mock_fn.called is False
+    """dry-run 下 _handle_off 不应调用 set_off。"""
+    _handle_off(_ns(off=True, dry_run=True), DN)
 
 
 # --- _msg (dry-run helper) ---

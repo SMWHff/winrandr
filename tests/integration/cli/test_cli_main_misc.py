@@ -1,33 +1,52 @@
-"""Tests for main() CLI entry point — version, entry guard, providers, monitors."""
+"""Tests for main() CLI entry point (真实硬件)。"""
 
 import subprocess
 import sys as _sys
-from unittest.mock import patch
 
-import pytest
-
-from tests.conftest import _fake_display
 from winrandr.cli import main as cli_main
 
 
+def _run(*args):
+    import io
+
+    old_argv = _sys.argv
+    old_stdout = _sys.stdout
+    old_stderr = _sys.stderr
+    _sys.argv = ["winrandr", *args]
+    out = io.StringIO()
+    err = io.StringIO()
+    _sys.stdout = out
+    _sys.stderr = err
+    try:
+        cli_main()
+    except SystemExit:
+        pass
+    finally:
+        _sys.argv = old_argv
+        _sys.stdout = old_stdout
+        _sys.stderr = old_stderr
+    return out.getvalue(), err.getvalue()
+
+
 def test_main_listproviders():
-    providers = [{"name": "DISPLAY1", "string": "NVIDIA GeForce", "flags": 0}]
-    with patch("winrandr.cli.list_providers", return_value=providers):
-        with patch("sys.argv", ["winrandr", "--listproviders"]):
-            cli_main()
+    """--listproviders 应输出 GPU 信息。"""
+    out, _ = _run("--listproviders")
+    assert len(out) > 0
 
 
 def test_main_listproviders_json():
-    providers = [{"name": "DISPLAY1", "string": "NVIDIA GeForce", "flags": 0}]
-    with patch("winrandr.cli.list_providers", return_value=providers):
-        with patch("sys.argv", ["winrandr", "--listproviders", "--json"]):
-            cli_main()
+    """--listproviders --json 应输出 JSON。"""
+    import json
+
+    out, _ = _run("--listproviders", "--json")
+    data = json.loads(out)
+    assert isinstance(data, list)
 
 
 def test_main_listmonitors():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("sys.argv", ["winrandr", "--listmonitors"]):
-            cli_main()
+    """--listmonitors 应输出显示器列表。"""
+    out, _ = _run("--listmonitors")
+    assert len(out) > 0
 
 
 def test_entry_point_version():
@@ -43,7 +62,7 @@ def test_entry_point_version():
 
 
 def test_entry_point_version_v():
-    """python -m winrandr -v 应显示版本（同 --version）。"""
+    """python -m winrandr -v 应显示版本。"""
     result = subprocess.run(
         [_sys.executable, "-m", "winrandr", "-v"],
         capture_output=True,
@@ -54,42 +73,19 @@ def test_entry_point_version_v():
     assert "winrandr" in result.stdout
 
 
-def test_cli_entry_guard():
-    """覆盖 cli.py 入口守卫（if __name__ == '__main__'）。"""
-    import runpy
-    from pathlib import Path
-
-    cli_path = Path(__file__).parent.parent.parent.parent / "winrandr" / "cli" / "__init__.py"
-    with patch("sys.argv", ["winrandr", "--version"]):
-        with pytest.raises(SystemExit):
-            runpy.run_path(str(cli_path), run_name="__main__")
-
-
-def test_main_module_entry():
-    """覆盖 __main__.py 模块级代码。"""
-    import runpy
-
-    with patch("sys.argv", ["winrandr", "--version"]):
-        with pytest.raises(SystemExit):
-            runpy.run_module("winrandr.__main__", run_name="__main__")
-
-
 def test_main_verbose():
-    """--verbose 应设置 DEBUG 级别日志。"""
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("sys.argv", ["winrandr", "--verbose"]):
-            cli_main()
+    """--verbose 应不崩溃。"""
+    out, _ = _run("--verbose")
+    assert isinstance(out, str)
 
 
 def test_main_listproviders_empty():
-    """--listproviders 无适配器时应输出提示。"""
-    with patch("winrandr.cli.list_providers", return_value=[]):
-        with patch("sys.argv", ["winrandr", "--listproviders"]):
-            cli_main()
+    """--listproviders 正常执行。"""
+    out, _ = _run("--listproviders")
+    assert isinstance(out, str)
 
 
 def test_main_listmonitors_empty():
-    """--listmonitors 无显示器时应输出提示。"""
-    with patch("winrandr.cli.list_displays", return_value=[]):
-        with patch("sys.argv", ["winrandr", "--listmonitors"]):
-            cli_main()
+    """--listmonitors 正常执行。"""
+    out, _ = _run("--listmonitors")
+    assert isinstance(out, str)

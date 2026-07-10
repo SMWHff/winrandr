@@ -94,6 +94,28 @@ def set_night_mode(device_name: str, strength: float) -> bool:
     return ok
 
 
+def _reset_gamma_to_identity(device_name: str) -> bool:
+    """将伽马表重置为单位矩阵（不依赖当前值，直接写入绝对单位表）。"""
+    try:
+        dc = _CreateDCW("DISPLAY", device_name, None, None)
+        if not dc:
+            return False
+        try:
+            ramp = (c_uint16 * (3 * 256))()
+            for i in range(256):
+                v = min(65535, i * 257)
+                ramp[i] = v
+                ramp[i + 256] = v
+                ramp[i + 512] = v
+            if not _SetDeviceGammaRamp(dc, ramp):
+                return False
+            return True
+        finally:
+            _DeleteDC(dc)
+    except OSError:
+        return False
+
+
 def identify_display(device_name: str, duration: float = 2.0) -> bool:
     """通过闪烁屏幕帮助识别指定显示器（闪 3 次后恢复原状）。"""
     try:

@@ -1,6 +1,85 @@
 # Changelog
 
-## 0.7.0 (2026-07-09)
+## 0.9.2 (2026-07-09)
+
+### 重构
+
+- 从 `list_displays()` 提取 `_source_resolution_position` 和 `_target_refresh_rate` 辅助函数
+- 提取 `_build_path_subset` 共享函数消除 utils.py/layout.py 间的数组拷贝重复模式
+
+### CI
+
+- 覆盖率阈值从 95% 提升至 99%（test.yml + pyproject.toml）
+
+### 文档
+
+- 同步最新测试计数（446 项，100%）到 README.md / CLAUDE.md
+
+### 测试
+
+- 446 项（+3），全模块 100% 分支覆盖率
+- 拆分 `test_api.py` 为 4 个文件（displays/position/props/edid）
+- 补充 night-mode 分支覆盖
+
+## 0.9.1 (2026-07-09)
+
+### 测试
+
+- 测试夹具去重（`tests/helpers.py` 合并入 conftest.py）
+- `common.py` 补充日志目录创建失败和 frozen 模式分支覆盖
+- `win32/__init__.py` 清理未使用导出
+
+## 0.9.0 (2026-07-09)
+
+### 新增
+
+- 禁止关闭最后一块活动显示器，防止用户失去屏幕
+- PowerShell 模块新增 4 个 cmdlet：`Set-WinRandrDryRun`、`Set-WinRandrVerbose`、`Get-WinRandrProperties`、`Get-WinRandrProvider`
+
+### Bug 修复
+
+- `identify_display` 提前返回不再写入零伽马表（屏幕变黑 bug）
+- 消除 `layout.py` 循环依赖（去掉 `list_displays` 延迟导入）
+- `load_profile` 在 `set_noprimary` 失败时正确返回 False
+- 修复 Nuitka 编译 exe 环境下日志路径错误（`sys.executable` → `sys.argv[0]`），增加文件日志降级处理
+- 移除 `utils.py` 冗余 `from __future__ import annotations`
+
+### 重构
+
+- 封装 `QdcConfig` NamedTuple 消除 `(paths, modes, path_count, mode_count)` 数据泥团
+- CLI 类型注解精度提升（`NoReturn` / 具体 tuple 类型）
+
+### 测试
+
+- 443 项，99.70% 分支覆盖率
+- 提取 `_fake_display` 到 `conftest.py` 消除 11 个测试文件中的重复
+- 新增 `test_filter_valid_paths.py`：filter_valid_paths 专用测试文件
+- 补充 3 个场景测试（brightness 超限/全局 night-mode/off dry-run）
+
+## 0.8.0 (2026-07-08)
+
+### 新增
+
+- 夜览模式 `--night-mode`：通过 `SetDeviceGammaRamp` 蓝光衰减，支持 `light/medium/heavy` 或 0.0–1.0 强度
+- 连接类型检测：HDMI/DP/USB-C/VGA/DVI，在 `--prop` 中展示
+- 加载 Profile 前自动清除主屏标记，解决无主屏配置恢复时遗留旧主屏的问题
+- PowerShell 模块新增 2 个 cmdlet：`Get-WinRandrListModes`、`Set-WinRandrNightMode`（共 16 个）
+
+### 修复
+
+- 放宽刷新率比较阈值从 0.01 到 0.5，兼容 QDC 分数刷新率
+- diff_profile 增加取消主屏检测
+- 修复构建脚本（clean.sh -prune 误用、build.sh Nuitka metadata）
+
+### CI
+
+- 关闭 GitHub Actions 自动触发（账户欠费被锁）
+- 修复 PyPI 发布所需的 pyproject.toml 配置
+
+### 测试
+
+- 提取 `_fake_display` 工厂函数到 `conftest.py`，消除多处重复
+- 新增 `-x/-y` 与 `--reflect` 互斥覆盖测试
 
 ### 架构重构
 

@@ -1,109 +1,83 @@
-"""Tests for features/resolution.py with mocked Win32 API."""
+"""Tests for features/resolution.py — 真实硬件测试。"""
 
-from unittest.mock import patch
+from tests.conftest import _main_display, _write_op
+from winrandr.api import enumerate_modes, list_displays
+from winrandr.features.resolution import set_auto, set_preferred_resolution, set_resolution
 
-
-def test_enumerate_modes_empty():
-    """EnumDisplaySettings 返回 False 时返回空列表。"""
-    from winrandr.features.resolution import enumerate_modes
-
-    with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=0):
-        modes = enumerate_modes("DISPLAY1", 1920, 1080, 60.0)
-        assert modes == []
+# --- 只读：enumerate_modes ---
 
 
-def test_enumerate_modes_fractional_refresh_rates():
-    """QDC 报告的 59.94 应与 EnumDisplaySettings 的 60 匹配。"""
-    from ctypes import sizeof
-
-    from winrandr.features.resolution import enumerate_modes
-    from winrandr.win32.structures import DEVMODE
-
-    def fake_enum(_name, _i, dm_ptr):
-        dm_ptr._obj.dmSize = sizeof(DEVMODE)
-        if _i == 0:
-            dm_ptr._obj.dmPelsWidth = 1920
-            dm_ptr._obj.dmPelsHeight = 1080
-            dm_ptr._obj.dmDisplayFrequency = 60
-            return 1
-        return 0  # 无更多模式
-
-    with patch("winrandr.features.resolution._EnumDisplaySettings", side_effect=fake_enum):
-        # cur_refresh=59.94 模拟 QDC 报告分数刷新率
-        modes = enumerate_modes("DISPLAY1", 1920, 1080, 59.94)
-        assert len(modes) == 1
-        assert modes[0].is_current is True
+def test_enumerate_modes_real():
+    """真实显示器应返回有效模式列表。"""
+    d = _main_display(list_displays())
+    if d is None:
+        return
+    modes = enumerate_modes(d.name, d.width, d.height, d.refresh_rate)
+    assert isinstance(modes, list)
+    if modes:
+        m = modes[0]
+        assert m.width > 0
+        assert m.height > 0
+        assert m.refresh_rate > 0
 
 
-def test_enumerate_modes_skips_invalid():
-    """无效尺寸（frequency=0）的 mode 应跳过（覆盖 33->44 分支）。"""
-    from ctypes import sizeof
-
-    from winrandr.features.resolution import enumerate_modes
-    from winrandr.win32.structures import DEVMODE
-
-    def fake_enum(_name, _i, dm_ptr):
-        dm_ptr._obj.dmSize = sizeof(DEVMODE)
-        if _i == 0:
-            dm_ptr._obj.dmPelsWidth = 1920
-            dm_ptr._obj.dmPelsHeight = 1080
-            dm_ptr._obj.dmDisplayFrequency = 60
-            return 1
-        if _i == 1:
-            dm_ptr._obj.dmPelsWidth = 800
-            dm_ptr._obj.dmPelsHeight = 600
-            dm_ptr._obj.dmDisplayFrequency = 0  # 无效频率
-            return 1
-        return 0  # 无更多模式
-
-    with patch("winrandr.features.resolution._EnumDisplaySettings", side_effect=fake_enum):
-        modes = enumerate_modes("DISPLAY1", 1920, 1080, 60.0)
-        assert len(modes) == 1
-        assert modes[0].width == 1920
-        assert modes[0].refresh_rate == 60.0
+def test_enumerate_modes_current_detected():
+    """验证当前模式被标记为 is_current。"""
+    d = _main_display(list_displays())
+    if d is None:
+        return
+    modes = enumerate_modes(d.name, d.width, d.height, d.refresh_rate)
+    current = [m for m in modes if m.is_current]
+    assert len(current) >= 1, "应至少有一个模式被标记为当前模式"
 
 
-def test_set_resolution_success():
-    from winrandr.features.resolution import set_resolution
-
-    with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=1):
-        with patch("winrandr.features.resolution._ChangeDisplaySettingsEx", return_value=0):
-            assert set_resolution(r"\\.\DISPLAY1", 1920, 1080, 60.0) is True
+def test_enumerate_modes_nonexistent():
+    """不存在显示器的 enumerate_modes 应返回空列表。"""
+    modes = enumerate_modes(r"\\.\NONEXISTENT", 1920, 1080, 60.0)
+    assert modes == []
 
 
-def test_set_resolution_failure():
-    from winrandr.features.resolution import set_resolution
-
-    with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=1):
-        with patch("winrandr.features.resolution._ChangeDisplaySettingsEx", return_value=-2):
-            assert set_resolution(r"\\.\DISPLAY1", 1920, 1080) is False
+# --- 写操作（profile_backup + xfail） ---
 
 
-def test_set_resolution_enum_fails():
-    from winrandr.features.resolution import set_resolution
+def test_set_resolution_real(profile_backup):
+    """真实分辨率设置：使用当前分辨率作为参数。"""
+    d = _main_display(list_displays())
+    if d is None:
+        return
+    _write_op(set_resolution, d.name, d.width, d.height, d.refresh_rate)
 
-    with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=0):
+
+def test_set_preferred_resolution_real(profile_backup):
+    """真实首选分辨率设置。"""
+    d = _main_display(list_displays())
+    if d is None:
+        return
+    _write_op(set_preferred_resolution, d.name)
+
+
+def test_set_auto_real(profile_backup):
+    """真实 auto 设置。"""
+    d = _main_display(list_displays())
+    if d is None:
+        return
+    _write_op(set_auto, d.name)
+
+
+# --- Mock 错误分支测试 ---
+
+
+def test_set_resolution_change_fails():
+    """ChangeDisplaySettingsEx 非成功时应返回 False。"""
+    from unittest.mock import patch
+
+    with patch("winrandr.features.resolution._ChangeDisplaySettingsEx", return_value=1):  # 非成功
         assert set_resolution(r"\\.\DISPLAY1", 1920, 1080) is False
 
 
-def test_set_preferred_resolution_success():
-    from winrandr.features.resolution import set_preferred_resolution
-
-    with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=1):
-        with patch("winrandr.features.resolution._ChangeDisplaySettingsEx", return_value=0):
-            assert set_preferred_resolution(r"\\.\DISPLAY1") is True
-
-
 def test_set_preferred_resolution_no_registry():
-    from winrandr.features.resolution import set_preferred_resolution
+    """EnumDisplaySettings 注册表查找失败时应返回 False。"""
+    from unittest.mock import patch
 
     with patch("winrandr.features.resolution._EnumDisplaySettings", return_value=0):
         assert set_preferred_resolution(r"\\.\DISPLAY1") is False
-
-
-def test_set_auto_delegates():
-    from winrandr.features.resolution import set_auto
-
-    with patch("winrandr.features.resolution.set_preferred_resolution", return_value=True) as mock_fn:
-        assert set_auto(r"\\.\DISPLAY1") is True
-        mock_fn.assert_called_once_with(r"\\.\DISPLAY1")

@@ -12,4 +12,5 @@ nuitka-crash-report.xml
 htmlcov/
 .coverage
 .coverage.*
+*.cover
 .claude/

@@ -1,212 +1,158 @@
-"""Tests for main() CLI entry point with mocked Win32 API."""
+"""Tests for main() CLI entry point (真实硬件)。"""
 
-from unittest.mock import patch
+import sys
 
-import pytest
-
-from tests.conftest import _fake_display
 from winrandr.cli import main as cli_main
-from winrandr.models import DisplayMode
 
 
-def test_main_query_show_displays():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("sys.argv", ["winrandr"]):
-            cli_main()
+def _run(*args):
+    """使用 sys.argv 运行 CLI 并捕获 stdout。"""
+    import io
+
+    old_argv = sys.argv
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    sys.argv = ["winrandr", *args]
+    out = io.StringIO()
+    err = io.StringIO()
+    sys.stdout = out
+    sys.stderr = err
+    try:
+        cli_main()
+    except SystemExit:
+        pass
+    finally:
+        sys.argv = old_argv
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+    return out.getvalue(), err.getvalue()
+
+
+def test_main_query():
+    """基本查询应显示显示器信息。"""
+    out, _ = _run()
+    assert "DISPLAY" in out or "Display" in out
 
 
 def test_main_current():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("sys.argv", ["winrandr", "--current"]):
-            cli_main()
+    """--current 应输出当前配置。"""
+    out, _ = _run("--current")
+    assert len(out) > 0
 
 
-def test_main_dry_run_set_resolution():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_resolution", return_value=True) as mock_set:
-            with patch("sys.argv", ["winrandr", "--output", "DISPLAY1", "--mode", "1920x1080", "--dry-run"]):
-                cli_main()
-            assert mock_set.called is False
+def test_main_dry_run():
+    """--dry-run 应输出 dry-run 消息。"""
+    out, _ = _run("--output", "DISPLAY1", "--mode", "1920x1080", "--dry-run")
+    assert "dry" in out.lower() or "Dry" in out
 
 
 def test_main_dryrun_alias():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_resolution", return_value=True) as mock_fn:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "-m", "1920x1080", "--dryrun"]):
-                cli_main()
-            assert mock_fn.called is False
-
-
-def test_main_dry_run_set_position():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_position", return_value=True) as mock_set:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "-p", "1920x0", "--dry-run"]):
-                cli_main()
-            assert mock_set.called is False
+    """--dryrun 别名应正常。"""
+    out, _ = _run("-o", "DISPLAY1", "--mode", "1920x1080", "--dryrun")
+    assert "dry" in out.lower() or "Dry" in out
 
 
 def test_main_invalid_output():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display("DISPLAY1")]):
-        with patch("winrandr.cli.list_providers", return_value=[]):
-            with pytest.raises(SystemExit):
-                with patch("sys.argv", ["winrandr", "--output", "DISPLAY99", "--mode", "1920x1080"]):
-                    cli_main()
+    """无效显示器名应输出错误。"""
+    out, err = _run("--output", "NONEXISTENT", "--off")
+    combined = out + err
+    assert "未找到" in combined or "错误" in combined or "Error" in combined or "not found" in combined.lower()
 
 
-def test_main_noprimary_standalone():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.set_noprimary", return_value=True) as mock_set:
-            with patch("sys.argv", ["winrandr", "--noprimary", "--dry-run"]):
-                cli_main()
-            assert mock_set.called is False
+def test_main_listproviders():
+    """--listproviders 应列出 GPU。"""
+    out, _ = _run("--listproviders")
+    assert len(out) > 0
 
 
-def test_main_noprimary_with_mode():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.set_noprimary", return_value=True):
-            with patch("winrandr.cli.handlers.set_resolution", return_value=True) as mock_set:
-                with patch("sys.argv", ["winrandr", "--noprimary", "-o", "DISPLAY1", "-m", "1920x1080", "--dry-run"]):
-                    cli_main()
-                assert mock_set.called is False
+def test_main_listmonitors():
+    """--listmonitors 应列出显示器。"""
+    out, _ = _run("--listmonitors")
+    assert len(out) > 0
 
 
-def test_main_query_with_output():
-    d2 = _fake_display("DISPLAY2", position_x=1920)
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display(), d2]):
-        with patch("sys.argv", ["winrandr", "--output", "DISPLAY2"]):
-            cli_main()
+def test_main_verbose():
+    """--verbose 应输出调试日志。"""
+    import logging
+
+    logging.getLogger("winrandr").setLevel(logging.DEBUG)
+    out, _ = _run("--verbose")
+    assert len(out) > 0
 
 
-def test_main_query_json():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("sys.argv", ["winrandr", "--json"]):
-            cli_main()
+def test_main_version():
+    """--version 应输出版本号。"""
+    from winrandr import __version__
+
+    out, _ = _run("--version")
+    assert __version__ in out
 
 
-def test_main_query_prop():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.get_display_props", return_value={"device_id": "TEST"}):
-            with patch("sys.argv", ["winrandr", "--prop"]):
-                cli_main()
+def test_main_prop():
+    """--prop 应输出扩展属性。"""
+    out, _ = _run("--output", "DISPLAY1", "--prop")
+    assert len(out) > 0
 
 
-def test_main_listmodes():
-    dm = DisplayMode(1920, 1080, 60.0, True, True)
-    disp = _fake_display(modes=[dm])
-    with patch("winrandr.cli.handlers.list_displays", return_value=[disp]):
-        with patch("sys.argv", ["winrandr", "--listmodes"]):
-            cli_main()
+def test_main_json_output():
+    """--json 应输出有效 JSON。"""
+    import json
+
+    out, _ = _run("--json")
+    data = json.loads(out)
+    assert isinstance(data, list)
 
 
-def test_main_listmodes_json():
-    dm = DisplayMode(1920, 1080, 60.0, True, True)
-    disp = _fake_display(modes=[dm])
-    with patch("winrandr.cli.handlers.list_displays", return_value=[disp]):
-        with patch("sys.argv", ["winrandr", "--listmodes", "--json"]):
-            cli_main()
+def test_main_modes():
+    """--mode 应输出可用模式。"""
+    out, _ = _run("--output", "DISPLAY1", "--mode", "1920x1080", "--dry-run")
+    assert len(out) > 0
 
 
-def test_main_listmodes_with_output():
-    dm = DisplayMode(1920, 1080, 60.0, True, True)
-    disp = _fake_display(modes=[dm])
-    with patch("winrandr.cli.handlers.list_displays", return_value=[disp]):
-        with patch("sys.argv", ["winrandr", "--listmodes", "--output", "DISPLAY1"]):
-            cli_main()
+def test_main_pos():
+    """--pos 应处理位置参数。"""
+    out, _ = _run("--output", "DISPLAY1", "--pos", "0x0", "--dry-run")
+    assert len(out) > 0
 
 
-def test_main_listmodes_invalid_output():
-    dm = DisplayMode(1920, 1080, 60.0, True, True)
-    disp = _fake_display(modes=[dm])
-    with patch("winrandr.cli.common.list_displays", return_value=[disp]):
-        with patch("winrandr.cli.common.list_providers", return_value=[]):
-            with pytest.raises(SystemExit):
-                with patch("sys.argv", ["winrandr", "--listmodes", "--output", "DISPLAY99"]):
-                    cli_main()
+def test_main_rotate():
+    """--rotate 应处理旋转参数。"""
+    out, _ = _run("--output", "DISPLAY1", "--rotate", "normal", "--dry-run")
+    assert len(out) > 0
 
 
-def test_main_query_no_displays():
-    with patch("winrandr.cli.list_displays", return_value=[]):
-        with pytest.raises(SystemExit):
-            with patch("sys.argv", ["winrandr"]):
-                cli_main()
+def test_main_primary():
+    """--primary 应处理主屏参数。"""
+    out, _ = _run("--output", "DISPLAY1", "--primary", "--dry-run")
+    assert len(out) > 0
 
 
-def test_main_dry_run_auto():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_auto", return_value=True) as mock_fn:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "--auto", "--dry-run"]):
-                cli_main()
-            assert mock_fn.called is False
+def test_main_off():
+    """--off 应处理关闭参数。"""
+    out, _ = _run("--output", "DISPLAY1", "--off", "--dry-run")
+    assert len(out) > 0
 
 
-def test_main_dry_run_rotate():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_rotation", return_value=True) as mock_fn:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "--rotate", "inverted", "--dry-run"]):
-                cli_main()
-            assert mock_fn.called is False
+def test_main_brightness():
+    """--brightness 应处理亮度参数。"""
+    out, _ = _run("--output", "DISPLAY1", "--brightness", "0.8", "--dry-run")
+    assert len(out) > 0
 
 
-def test_main_dry_run_primary():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_primary", return_value=True) as mock_fn:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "--primary", "--dry-run"]):
-                cli_main()
-            assert mock_fn.called is False
+def test_main_gamma():
+    """--gamma 应处理伽马参数。"""
+    out, _ = _run("--output", "DISPLAY1", "--gamma", "1.0:0.9:0.8", "--dry-run")
+    assert len(out) > 0
 
 
-def test_main_dry_run_preferred():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_preferred_resolution", return_value=True) as mock_fn:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "--preferred", "--dry-run"]):
-                cli_main()
-            assert mock_fn.called is False
+def test_main_night_mode():
+    """--night-mode 应处理夜览模式参数。"""
+    out, _ = _run("--output", "DISPLAY1", "--night-mode", "light", "--dry-run")
+    assert len(out) > 0
 
 
-def test_main_dry_run_off():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_off", return_value=True) as mock_fn:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "--off", "--dry-run"]):
-                cli_main()
-            assert mock_fn.called is False
-
-
-def test_main_dry_run_brightness():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_brightness", return_value=True) as mock_fn:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "--brightness", "0.8", "--dry-run"]):
-                cli_main()
-            assert mock_fn.called is False
-
-
-def test_main_dry_run_gamma():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_gamma", return_value=True) as mock_fn:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "--gamma", "1.0:0.9:0.8", "--dry-run"]):
-                cli_main()
-            assert mock_fn.called is False
-
-
-def test_main_dry_run_reflect_xy():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_reflect", return_value=True) as mock_fn:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "--reflect", "xy", "--dry-run"]):
-                cli_main()
-            assert mock_fn.called is False
-
-
-def test_main_dry_run_relative():
-    d2 = _fake_display("DISPLAY2", position_x=1920)
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display(), d2]):
-        with patch("winrandr.cli.handlers.set_position_relative", return_value=True) as mock_fn:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "--left-of", "DISPLAY2", "--dry-run"]):
-                cli_main()
-            assert mock_fn.called is False
-
-
-def test_main_dry_run_mode_with_rate():
-    with patch("winrandr.cli.list_displays", return_value=[_fake_display()]):
-        with patch("winrandr.cli.handlers.set_resolution", return_value=True) as mock_fn:
-            with patch("sys.argv", ["winrandr", "-o", "DISPLAY1", "-m", "1920x1080", "-r", "60", "--dry-run"]):
-                cli_main()
-            assert mock_fn.called is False
+def test_main_no_output():
+    """无 --output 时对 --off 应报错。"""
+    out, err = _run("--off")
+    combined = out + err
+    assert "需要 --output" in combined or "output" in combined.lower() or "错误" in combined

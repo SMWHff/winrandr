@@ -139,7 +139,39 @@ def diff_profile(name: str) -> list[str]:
     return lines
 
 
-def load_profile(name: str) -> bool:  # noqa: C901  # 循环中含多条 API 调用，分支多但线性
+def _restore_display(dc: dict, current: set) -> bool:
+    """恢复单个显示器配置，返回是否全部操作成功。"""
+    dn = dc["name"]
+    if dn not in current:
+        msg = f"显示器 {dn} 不在当前连接中，跳过"
+        logger.warning(msg)
+        print(f"警告: {msg}", file=sys.stderr)
+        return False
+    success = True
+    if not set_auto(dn):
+        msg = f"启用显示器 {dn} 失败"
+        logger.warning(msg)
+        print(f"警告: {msg}", file=sys.stderr)
+        success = False
+    if not set_position(dn, dc["x"], dc["y"]):
+        msg = f"设置 {dn} 位置失败"
+        logger.warning(msg)
+        print(f"警告: {msg}", file=sys.stderr)
+        success = False
+    if not set_rotation(dn, dc["rotation"]):
+        msg = f"设置 {dn} 旋转失败"
+        logger.warning(msg)
+        print(f"警告: {msg}", file=sys.stderr)
+        success = False
+    if not set_resolution(dn, dc["width"], dc["height"], dc["refresh_rate"]):
+        msg = f"设置 {dn} 分辨率失败"
+        logger.warning(msg)
+        print(f"警告: {msg}", file=sys.stderr)
+        success = False
+    return success
+
+
+def load_profile(name: str) -> bool:
     """恢复指定名称的显示器配置存档。"""
     data = _load_all()
     profile = data.get(name)
@@ -159,32 +191,7 @@ def load_profile(name: str) -> bool:  # noqa: C901  # 循环中含多条 API 调
         success = False
 
     for dc in configs:
-        dn = dc["name"]
-        if dn not in current:
-            msg = f"显示器 {dn} 不在当前连接中，跳过"
-            logger.warning(msg)
-            print(f"警告: {msg}", file=sys.stderr)
-            continue
-        if not set_auto(dn):
-            msg = f"启用显示器 {dn} 失败"
-            logger.warning(msg)
-            print(f"警告: {msg}", file=sys.stderr)
-            success = False
-            continue
-        if not set_position(dn, dc["x"], dc["y"]):
-            msg = f"设置 {dn} 位置失败"
-            logger.warning(msg)
-            print(f"警告: {msg}", file=sys.stderr)
-            success = False
-        if not set_rotation(dn, dc["rotation"]):
-            msg = f"设置 {dn} 旋转失败"
-            logger.warning(msg)
-            print(f"警告: {msg}", file=sys.stderr)
-            success = False
-        if not set_resolution(dn, dc["width"], dc["height"], dc["refresh_rate"]):
-            msg = f"设置 {dn} 分辨率失败"
-            logger.warning(msg)
-            print(f"警告: {msg}", file=sys.stderr)
+        if not _restore_display(dc, current):
             success = False
 
     # 最后设置主显示器

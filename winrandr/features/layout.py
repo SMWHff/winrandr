@@ -6,7 +6,6 @@ from winrandr.models import QdcConfig
 from winrandr.win32.constants import DISPLAYCONFIG_PATH_MODE_IDX_INVALID, ROTATION_MAP
 from winrandr.win32.utils import (
     _build_path_subset,
-    apply_config,
     apply_filtered,
     find_path_idx,
     get_gdi_name,
@@ -114,7 +113,7 @@ def set_off(device_name: str) -> bool:
 
     new_paths = _build_path_subset(paths, kept)
 
-    return apply_config(new_paths, len(kept), modes, mode_count)
+    return apply_filtered(new_paths, len(kept), modes, mode_count)
 
 
 def set_noprimary() -> bool:

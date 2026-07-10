@@ -25,7 +25,8 @@ winrandr/                 核心包
     ├── constants.py      Win32 API 常量 + 旋转映射表
     ├── structures.py     ctypes 结构体定义
     ├── bindings.py       Win32 API 函数绑定 (ctypes 声明)
-    └── utils.py          内部工具函数 (查询/过滤/应用配置)
+    ├── utils.py          内部工具函数 (查询/过滤/应用配置)
+    └── repair.py         缺失 mode 条目修复（虚拟驱动补偿）
 ```
 
 ## 文件职责
@@ -112,6 +113,7 @@ winrandr/                 核心包
 | `set_off(name)` | 设备名 | 禁用显示器 |
 | `set_brightness(name, val)` | 设备名、亮度值 | 伽马校正调亮度 |
 | `set_gamma(name, r, g, b)` | 设备名、红/绿/蓝乘数 | 伽马校正（三通道独立） |
+| `set_night_mode(name, val)` | 设备名、强度 (light/medium/heavy/0.0–1.0) | 夜览模式减少蓝光 |
 | `set_reflect(name, axis)` | 设备名、轴 (x/y/xy) | 镜像翻转（仅 xy） |
 | `set_noprimary()` | 无 | 清除所有显示器的主显示器标记 |
 | `enumerate_modes(name, w, h, rr)` | 设备名、宽、高、刷新率 | 枚举所有可用分辨率模式 |
@@ -136,8 +138,9 @@ winrandr/                 核心包
 | 改位置/旋转/主屏/关闭/清除主屏 | `SetDisplayConfig` + SDC flags | features/layout.py |
 | 读物理尺寸 | `CreateDCW` + `GetDeviceCaps(HORZSIZE/VERTSIZE)` | utils.py |
 | 亮度和伽马 | `GetDeviceGammaRamp` / `SetDeviceGammaRamp` | features/gamma.py |
-| 查适配器/设备路径 | `DisplayConfigGetDeviceInfo` (SOURCE/TARGET/ADAPTER_NAME) | bindings.py |
+| 查适配器/设备路径 | `DisplayConfigGetDeviceInfo` (SOURCE/TARGET/ADAPTER_NAME) | utils.py |
 | 读 EDID | `EnumDisplayDevices` 获取 DeviceID → `winreg` 读取注册表 `Enum\DISPLAY\{id}\{instance}\Device Parameters` | edid.py |
+| 修复缺失 mode | `EnumDisplaySettings` + `CreateDCW`/`GetDeviceCaps` 回退填充 | repair.py |
 
 ### 改分辨率流程
 

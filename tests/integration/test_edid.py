@@ -1,8 +1,6 @@
-"""EDID parsing tests — extracted from test_models.py."""
+"""EDID parsing tests — pure logic + 真实硬件。"""
 
-from unittest.mock import MagicMock, patch
-
-from winrandr.edid import _find_edid_name, _find_edid_serial, _parse_edid
+from winrandr.edid import _find_edid_name, _find_edid_serial, _parse_edid, get_edid
 
 
 def _build_edid(
@@ -46,6 +44,9 @@ def _build_edid(
         if len(raw) < 13:
             data[77 + len(raw)] = 0x0A
     return bytes(data)
+
+
+# --- 纯逻辑解析测试（构造 EDID 字节，不调 Win32） ---
 
 
 def test_parse_edid_valid():
@@ -103,21 +104,18 @@ def test_parse_edid_empty():
 
 
 def test_parse_edid_with_serial_str():
-    """EDID with text serial descriptor block."""
     edid = _build_edid(serial=0, serial_str="SN12345678")
     result = _parse_edid(edid)
     assert result["edid_serial"] == "SN12345678"
 
 
 def test_parse_edid_date_no_week():
-    """Week 0 falls back to year-only."""
     edid = _build_edid(week=0, year_offset=30)
     result = _parse_edid(edid)
     assert result["edid_date"] == "2020"
 
 
 def test_parse_edid_date_overflow_week():
-    """Week > 52 falls back to year-only."""
     edid = _build_edid(week=99, year_offset=30)
     result = _parse_edid(edid)
     assert result["edid_date"] == "2020"
@@ -165,7 +163,6 @@ def test_find_edid_serial_missing():
 
 
 def test_find_edid_name_decode_error():
-    """非 ASCII 字节导致 decode 失败时返回 None。"""
     from winrandr.edid import _find_edid_desc
 
     data = bytearray(128)
@@ -182,94 +179,27 @@ def _make_edid_bytes(name: str = "TestMon") -> bytes:
     return _build_edid(name=name)
 
 
-def test_get_edid_enum_fails():
-    """_EnumDisplayDevices 失败时返回空 dict。"""
-    from winrandr.edid import get_edid
-
-    with patch("winrandr.edid._EnumDisplayDevices", return_value=False):
-        assert get_edid(r"\\.\DISPLAY1") == {}
+# --- 真实硬件测试：get_edid ---
 
 
-def test_get_edid_no_device_id():
-    """DeviceID 为空时返回空 dict。"""
-    from winrandr.edid import get_edid
-
-    def fake_enum(_, __, dd_ptr, ___):
-        dd_ptr._obj.cb = 1
-        return True
-
-    with patch("winrandr.edid._EnumDisplayDevices", side_effect=fake_enum):
-        assert get_edid(r"\\.\DISPLAY1") == {}
+def test_get_edid_nonexistent():
+    """不存在显示器的 get_edid 应返回空 dict。"""
+    result = get_edid(r"\\.\NONEXISTENT")
+    assert result == {}
 
 
-def test_get_edid_short_device_id():
-    """DeviceID 格式异常（段数 < 2）时返回空 dict。"""
-    from winrandr.edid import get_edid
+def test_get_edid_real():
+    """真实显示器应返回 EDID 或空 dict。"""
+    from winrandr.api import list_displays
 
-    def fake_enum(_, __, dd_ptr, ___):
-        dd_ptr._obj.DeviceID = "NODELIMITERS"
-        return True
-
-    with patch("winrandr.edid._EnumDisplayDevices", side_effect=fake_enum):
-        assert get_edid(r"\\.\DISPLAY1") == {}
-
-
-def test_get_edid_registry_open_fails():
-    """winreg.OpenKey 失败时返回空 dict。"""
-    from winrandr.edid import get_edid
-
-    def fake_enum(_, __, dd_ptr, ___):
-        dd_ptr._obj.DeviceID = r"MONITOR\ABC123"
-        return True
-
-    with patch("winrandr.edid._EnumDisplayDevices", side_effect=fake_enum):
-        with patch("winrandr.edid.winreg.OpenKey", side_effect=OSError):
-            assert get_edid(r"\\.\DISPLAY1") == {}
-
-
-def test_get_edid_success():
-    """完整成功的 get_edid 路径。"""
-    from winrandr.edid import get_edid
-
-    edid_bytes = _make_edid_bytes("ProDisplay")
-
-    def fake_enum(_, __, dd_ptr, ___):
-        dd_ptr._obj.DeviceID = r"MONITOR\ABC123"
-        return True
-
-    fake_key = MagicMock()
-    fake_parent = MagicMock()
-    fake_enum_key = MagicMock(side_effect=["inst0", OSError()])
-
-    with patch("winrandr.edid._EnumDisplayDevices", side_effect=fake_enum):
-        with patch("winrandr.edid.winreg.OpenKey") as mock_open:
-            mock_open.side_effect = lambda key, path: fake_parent if "Enum\\DISPLAY" in path else fake_key
-            with patch("winrandr.edid.winreg.EnumKey", side_effect=fake_enum_key):
-                with patch("winrandr.edid.winreg.QueryValueEx", return_value=(edid_bytes, 0)):
-                    with patch("winrandr.edid.winreg.CloseKey"):
-                        result = get_edid(r"\\.\DISPLAY1")
-                        assert "edid_name" in result
-                        assert result["edid_name"] == "ProDisplay"
-
-
-def test_get_edid_all_instances_fail():
-    """所有实例均失败后返回空 dict（覆盖 inner/outer except 路径）。"""
-    from winrandr.edid import get_edid
-
-    def fake_enum(_, __, dd_ptr, ___):
-        dd_ptr._obj.DeviceID = r"MONITOR\ABC123"
-        return True
-
-    fake_parent = MagicMock()
-    fake_enum_key = MagicMock(side_effect=["inst0", OSError()])
-
-    with patch("winrandr.edid._EnumDisplayDevices", side_effect=fake_enum):
-        with patch("winrandr.edid.winreg.OpenKey") as mock_open:
-            mock_open.side_effect = [fake_parent, OSError()]
-            with patch("winrandr.edid.winreg.EnumKey", side_effect=fake_enum_key):
-                with patch("winrandr.edid.winreg.CloseKey"):
-                    result = get_edid(r"\\.\DISPLAY1")
-                    assert result == {}
+    displays = list_displays()
+    connected = [d for d in displays if d.connected]
+    if not connected:
+        return
+    result = get_edid(connected[0].name)
+    assert isinstance(result, dict)
+    if result:
+        assert "edid_mfg" in result or "manufacturer_id" in result
 
 
 def test_target_device_name_friendly_name():
@@ -279,3 +209,88 @@ def test_target_device_name_friendly_name():
     sdn = DISPLAYCONFIG_TARGET_DEVICE_NAME()
     sdn.monitorFriendlyDeviceName = "Test Monitor"
     assert sdn.friendly_name == "Test Monitor"
+
+
+# --- Mock 错误分支测试：get_edid ---
+
+
+def test_get_edid_no_device_id():
+    """_EnumDisplayDevices 成功但无 DeviceID 时应返回空 dict（默认初始化已为空）。"""
+    from unittest.mock import patch
+
+    from winrandr.edid import get_edid
+
+    with patch("winrandr.edid._EnumDisplayDevices", return_value=1):
+        assert get_edid(r"\\.\DISPLAY1") == {}
+
+
+def _patch_device_id(val: str):
+    """让 DISPLAY_DEVICE 实例化后 DeviceID 指向给定值。"""
+    from unittest.mock import patch
+
+    from winrandr.win32.structures import DISPLAY_DEVICE
+
+    orig_init = DISPLAY_DEVICE.__init__
+
+    def _new_init(self, *args, **kwargs):
+        orig_init(self, *args, **kwargs)
+        self.DeviceID = val
+
+    return patch.object(DISPLAY_DEVICE, "__init__", _new_init)
+
+
+def test_get_edid_open_key_fails():
+    """winreg.OpenKey 失败时应返回空 dict。"""
+    from unittest.mock import patch
+
+    from winrandr.edid import get_edid
+
+    with _patch_device_id(r"DISPLAY\DEL506E\5&36a3c1f3&0&UID16777488"):
+        with patch("winrandr.edid._EnumDisplayDevices", return_value=1):
+            with patch("winrandr.edid.winreg.OpenKey", side_effect=OSError("access denied")):
+                assert get_edid(r"\\.\DISPLAY1") == {}
+
+
+def test_get_edid_enum_key_fails():
+    """winreg.EnumKey 失败时应返回空 dict。"""
+    from unittest.mock import MagicMock, patch
+
+    from winrandr.edid import get_edid
+
+    with _patch_device_id(r"DISPLAY\DEL506E\5&36a3c1f3&0&UID16777488"):
+        with patch("winrandr.edid._EnumDisplayDevices", return_value=1):
+            with patch("winrandr.edid.winreg.OpenKey", return_value=MagicMock()):
+                with patch("winrandr.edid.winreg.EnumKey", side_effect=OSError("no more keys")):
+                    with patch("winrandr.edid.winreg.CloseKey"):
+                        assert get_edid(r"\\.\DISPLAY1") == {}
+
+
+def test_get_edid_bad_device_id_no_backslash():
+    """DeviceID 无反斜杠时应返回空 dict。"""
+    from unittest.mock import patch
+
+    from winrandr.edid import get_edid
+
+    with _patch_device_id("MONITOR123"):
+        with patch("winrandr.edid._EnumDisplayDevices", return_value=1):
+            assert get_edid(r"\\.\DISPLAY1") == {}
+
+
+def test_get_edid_open_key_continue_on_error():
+    """OpenKey 对第一个子项失败时继续枚举下一个。"""
+    from unittest.mock import MagicMock, patch
+
+    from winrandr.edid import get_edid
+
+    open_key_effects = [MagicMock(), OSError("access denied"), MagicMock()]
+    enum_key_effects = ["subkey1", "subkey2", OSError("no more")]
+    edid_data = b"\x00\xff\xff\xff\xff\xff\xff\x00" + b"\x00" * 120
+
+    with _patch_device_id(r"DISPLAY\DEL506E\5&36a3c1f3&0&UID16777488"):
+        with patch("winrandr.edid._EnumDisplayDevices", return_value=1):
+            with patch("winrandr.edid.winreg.OpenKey", side_effect=open_key_effects):
+                with patch("winrandr.edid.winreg.EnumKey", side_effect=enum_key_effects):
+                    with patch("winrandr.edid.winreg.QueryValueEx", return_value=(edid_data, 1)):
+                        with patch("winrandr.edid.winreg.CloseKey"):
+                            result = get_edid(r"\\.\DISPLAY1")
+    assert "edid_mfg" in result
