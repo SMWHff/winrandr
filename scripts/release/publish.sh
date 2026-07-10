@@ -156,7 +156,7 @@ echo "║  第 7 步: 创建 GitHub Release                ║"
 echo "╚══════════════════════════════════════════════╝"
 NOTES=$(python -c "
 import re
-with open('docs/CHANGELOG.md') as f:
+with open('docs/CHANGELOG.md', encoding='utf-8') as f:
     content = f.read()
 pattern = r'^## $NEW\s*\(.*?\)\s*\n(.*?)(?=\n## |\Z)'
 match = re.search(pattern, content, re.DOTALL | re.MULTILINE)
