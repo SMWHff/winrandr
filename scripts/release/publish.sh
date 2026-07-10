@@ -42,10 +42,17 @@ fi
 echo "  ✓ 分支: main"
 
 if ! git diff --quiet; then
-    echo "  ✗ 工作区有未提交的修改，请先提交或 stash"
-    exit 1
+    # 只允许 CHANGELOG.md 未提交（属于发版的一部分）
+    MODIFIED=$(git diff --name-only)
+    if [[ "$MODIFIED" != "docs/CHANGELOG.md" ]]; then
+        echo "  ✗ 工作区有未提交的修改，仅允许 CHANGELOG.md 未提交"
+        echo "    修改了: $MODIFIED"
+        exit 1
+    fi
+    echo "  ✓ CHANGELOG.md 已更新（将在发版提交中一起提交）"
+else
+    echo "  ✓ 工作区干净"
 fi
-echo "  ✓ 工作区干净"
 
 if ! gh auth status 2>&1 | grep -q "Logged in"; then
     echo "  ✗ gh CLI 未登录，请执行 gh auth login"
