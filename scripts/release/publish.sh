@@ -120,18 +120,21 @@ confirm
 
 # ── 7. GitHub Release ─────────────────────────────────
 step "第 7 步: 创建 GitHub Release"
-NOTES=$(python -c "
+NOTES_FILE="dist/.release_notes_$NEW.txt"
+python -c "
 import re, sys
 with open('docs/CHANGELOG.md', encoding='utf-8') as f:
     content = f.read()
 pattern = r'^## $NEW\s*\(.*?\)\s*\n(.*?)(?=\n## |\Z)'
 match = re.search(pattern, content, re.DOTALL | re.MULTILINE)
 if match:
-    print(match.group(1).strip())
+    with open('$NOTES_FILE', 'w', encoding='utf-8') as f:
+        f.write(match.group(1).strip())
 else:
     sys.exit(1)
-") || die "CHANGELOG 解析失败"
-gh release create "v$NEW" --title "v$NEW" --notes "$NOTES" "$EXE"
+" || die "CHANGELOG 解析失败"
+gh release create "v$NEW" --title "v$NEW" --notes-file "$NOTES_FILE" "$EXE"
+rm -f "$NOTES_FILE"
 echo "  ✓ GitHub Release v$NEW 已创建"
 echo "    https://github.com/SMWHff/winrandr/releases/tag/v$NEW"
 confirm
