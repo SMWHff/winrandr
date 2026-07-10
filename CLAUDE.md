@@ -63,7 +63,7 @@ winrandr/                 核心包
     ├── utils.py          内部工具函数 (查询/过滤/应用配置)
     └── repair.py         缺失 mode 条目修复（虚拟驱动补偿）
 
-tests/                    测试（442 项，99% 覆盖率）
+tests/                    测试（422 项，98% 覆盖率）
 ├── conftest.py           共享测试夹具（_fake_display 工厂）
 ├── unit/                 单元测试
 │   ├── test_win32_utils.py   Win32 工具函数测试
@@ -80,6 +80,7 @@ tests/                    测试（442 项，99% 覆盖率）
 
 scripts/
 ├── WinRandr.psm1         PowerShell 模块（24 个 cmdlet）
+├── _common.sh            共享函数库（版本提取/更新/exe 验证）
 ├── dev/
 │   ├── run.sh            uv run -m winrandr 快捷脚本
 │   ├── lint.sh           Lint 检查（ruff + 导入验证）

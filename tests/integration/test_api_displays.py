@@ -114,20 +114,52 @@ def test_get_display_props_no_device_info():
         assert isinstance(result, dict)
 
 
-def test_set_position_relative_valid_relation_mocked():
-    """有效 relation 时 set_position_relative 应调用 set_position。"""
-    from unittest.mock import patch
+def test_calc_relative_position_right_of():
+    """right-of 应在参考显示器右侧。"""
+    from winrandr.api import _calc_relative_position
 
-    from tests.conftest import _fake_display
-    from winrandr.api import set_position_relative
+    pos = _calc_relative_position(1920, 0, 1920, 1080, 1920, 1080, "right-of")
+    assert pos == (3840, 0)
 
-    d1 = _fake_display("DISPLAY1", position_x=0, position_y=0)
-    d2 = _fake_display("DISPLAY2", position_x=1920, position_y=0)
-    with patch("winrandr.api.list_displays", return_value=[d1, d2]):
-        with patch("winrandr.api.set_position", return_value=True) as mock_set:
-            result = set_position_relative("DISPLAY2", "DISPLAY1", "right-of")
-    assert result is True
-    mock_set.assert_called_once()
+
+def test_calc_relative_position_left_of():
+    """left-of 应在参考显示器左侧。"""
+    from winrandr.api import _calc_relative_position
+
+    pos = _calc_relative_position(1920, 0, 1920, 1080, 1920, 1080, "left-of")
+    assert pos == (0, 0)
+
+
+def test_calc_relative_position_below():
+    """below 应在参考显示器下侧。"""
+    from winrandr.api import _calc_relative_position
+
+    pos = _calc_relative_position(0, 1080, 1920, 1080, 1920, 1080, "below")
+    assert pos == (0, 2160)
+
+
+def test_calc_relative_position_above():
+    """above 应在参考显示器上侧。"""
+    from winrandr.api import _calc_relative_position
+
+    pos = _calc_relative_position(0, 1080, 1920, 1080, 1920, 1080, "above")
+    assert pos == (0, 0)
+
+
+def test_calc_relative_position_same_as():
+    """same-as 应与参考显示器位置一致。"""
+    from winrandr.api import _calc_relative_position
+
+    pos = _calc_relative_position(1920, 0, 1920, 1080, 2560, 1440, "same-as")
+    assert pos == (1920, 0)
+
+
+def test_calc_relative_position_invalid():
+    """无效 relation 应返回 None。"""
+    from winrandr.api import _calc_relative_position
+
+    pos = _calc_relative_position(0, 0, 1920, 1080, 1920, 1080, "invalid")
+    assert pos is None
 
 
 def test_get_config_props_extra_fields():

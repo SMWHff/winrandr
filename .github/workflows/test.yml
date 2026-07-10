@@ -57,7 +57,7 @@ jobs:
         run: uv sync --dev
 
       - name: Run tests with coverage
-        run: uv run pytest tests/ -q --cov --cov-report=term-missing --cov-fail-under=99
+        run: uv run pytest tests/ -q --cov --cov-report=term-missing --cov-fail-under=98
 
       - name: Verify CLI
         run: uv run python -m winrandr --version

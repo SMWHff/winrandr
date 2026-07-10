@@ -161,6 +161,26 @@ def list_displays() -> list[DisplayInfo]:
     return displays
 
 
+def _calc_relative_position(
+    ref_x: int,
+    ref_y: int,
+    ref_w: int,
+    ref_h: int,
+    target_w: int,
+    target_h: int,
+    relation: str,
+) -> tuple[int, int] | None:
+    """计算相对定位坐标（纯函数，不涉及硬件操作）。"""
+    pos_map: dict[str, tuple[int, int]] = {
+        "right-of": (ref_x + ref_w, ref_y),
+        "left-of": (ref_x - target_w, ref_y),
+        "below": (ref_x, ref_y + ref_h),
+        "above": (ref_x, ref_y - target_h),
+        "same-as": (ref_x, ref_y),
+    }
+    return pos_map.get(relation)
+
+
 def set_position_relative(device_name: str, reference_name: str, relation: str) -> bool:
     """相对定位，类似 xrandr --left-of / --right-of / --above / --below / --same-as。"""
     displays = list_displays()
@@ -182,14 +202,15 @@ def set_position_relative(device_name: str, reference_name: str, relation: str) 
         logger.error("未找到参考显示器: %s", reference_name)
         return False
 
-    pos_map = {
-        "right-of": (ref.position_x + ref.width, ref.position_y),
-        "left-of": (ref.position_x - target.width, ref.position_y),
-        "below": (ref.position_x, ref.position_y + ref.height),
-        "above": (ref.position_x, ref.position_y - target.height),
-        "same-as": (ref.position_x, ref.position_y),
-    }
-    pos = pos_map.get(relation)
+    pos = _calc_relative_position(
+        ref.position_x,
+        ref.position_y,
+        ref.width,
+        ref.height,
+        target.width,
+        target.height,
+        relation,
+    )
     if pos is None:
         logger.error("无效相对位置关系: %s", relation)
         return False
