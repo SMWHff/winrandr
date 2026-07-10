@@ -20,6 +20,10 @@ usage() {
 }
 
 confirm() {
+    if [[ "${AUTO_CONFIRM:-}" == "1" ]]; then
+        echo "  → 自动继续 (AUTO_CONFIRM=1)"
+        return
+    fi
     echo ""
     read -rp "  → 继续? (y/N) " REPLY
     [[ "$REPLY" != "y" ]] && echo "  已取消" && exit 1
