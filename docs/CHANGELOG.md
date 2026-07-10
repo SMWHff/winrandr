@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.9.3 (2026-07-10)
+
+### 重构
+
+- `profiles.py`: 从 `load_profile` 提取 `_restore_display` 辅助函数，消除 C901 复杂度过高
+- `utils.py`: 合并冗余错误日志，精简 `_build_path_subset`
+- 新增 `repair.py` 到版本控制（缺失 mode 修复模块）
+
+### 新增
+
+- 标准化发版流程：`scripts/release/publish.sh`（8 步确认）、`scripts/release/bump-version.sh`、`docs/release-process.md`
+- `.claude/skills/release.md`：`/release` 技能定义
+- `test_cli_main_mock.py`：异常分支 Mock 测试 253 行
+
+### CI
+
+- 覆盖率阈值从 85% 提升至 95%（test.yml + pyproject.toml）
+- `.gitignore` 添加 `*.cover` 忽略 coverage 并行模式临时文件
+- 清理 `.claude/worktrees/` 遗留目录
+
+### 文档
+
+- 同步 CHANGELOG / architecture.md / README.md / CLAUDE.md 最新状态
+- `release.yml` 更新默认发布说明
+
+### 测试
+
+- 测试夹具去重：3 个 profile 测试文件共享 `conftest.py` 的 `temp_profiles`
+- 覆盖率 99%，7 行未覆盖（入口样板/正向路径，不可 Mock）
+
 ## 0.9.2 (2026-07-09)
 
 ### 重构
