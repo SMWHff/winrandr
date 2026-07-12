@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.9.4 (2026-07-12)
+
+### 重构
+
+- 新增 `scripts/_common.sh` 共享函数库，消除 build.sh/publish.sh/bump-version.sh 中的版本管理重复代码
+- 提取 `_calc_relative_position()` 纯函数，替换 6 个零 mock 坐标计算测试
+
+### Bug 修复
+
+- 修复 GitHub Release 中文乱码（改用 `--notes-file` 避免 GBK 编码丢失）
+- 修复构建脚本默认压缩模式问题 + 发版脚本 UTF-8 编码修复
+
+### CI
+
+- 覆盖率阈值从 99% 降至 98%（适配真实硬件测试边界）
+- `--cov-fail-under` 与 `pyproject.toml` 对齐
+
+### 测试
+
+- Mock 审核修复：违规正向用例 Mock 替换为纯函数测试
+- 清除 `test_identify_display_full_success` 违规 Mock 测试
+
 ## 0.9.3 (2026-07-10)
 
 ### 重构
